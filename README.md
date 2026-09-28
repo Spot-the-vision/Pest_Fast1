@@ -1,60 +1,115 @@
-# Pest_Fast
+# Pest_Fast (Pest Free Monorepo)
 
-A platform connecting a pest-control agency, its workers, and its customers —
-single-agency booking, dispatch, KYC-verified workers, and live tracking.
+A comprehensive, production-oriented platform connecting a pest-control agency, its field workers, and customers — single-agency booking, dispatch, KYC-verified workers, and live tracking.
 
-## Team & Ownership
+---
 
-| Person | Owns |
-|---|---|
-| **A** | `apps/admin-dashboard`, `apps/agency-dashboard` (frontend) + drafts DB migrations (reviewed/merged by C) |
-| **B** | `apps/worker-app`, `apps/customer-app` (frontend, React Native) |
-| **C** | `apps/api` (backend), `packages/db` (schema + migrations), `packages/shared-types` (contracts) |
+## 👥 Team & Ownership Boundaries
 
-Read `CONTRIBUTING.md` before your first PR, and read `AGENTS.md` (root + your app's own
-`AGENTS.md`) before pointing any AI coding agent at this repo.
+| Role / Person | Owns | Responsibilities |
+|---|---|---|
+| **Person A** | `apps/admin-dashboard`, `apps/agency-dashboard` | Super-admin & agency owner dashboards (Web, React + Vite) |
+| **Person B** | `apps/worker-app`, `apps/customer-app` | Worker portal & customer booking app (React / Expo) |
+| **Person C** | `apps/api`, `packages/db`, `packages/shared-types` | NestJS backend, PostgreSQL/Prisma schemas, contracts |
 
-## Repo layout
+---
+
+## 🌐 Running Applications & Ports
+
+All four applications are independently hosted on distinct local ports to enable simultaneous local development and cross-role workflow testing:
+
+| Application | URL | Port | Default Role / Notes |
+| :--- | :--- | :--- | :--- |
+| **Customer App** | [http://localhost:3000/](http://localhost:3000/) | `3000` | Customer service browsing, card flipping & booking |
+| **Admin Dashboard** | [http://localhost:5174/](http://localhost:5174/) | `5174` | Hidden developer & super-admin metrics |
+| **Agency Dashboard** | [http://localhost:5175/](http://localhost:5175/) | `5175` | Agency dispatch, worker approvals & booking management |
+| **Worker App** | [http://localhost:5176/](http://localhost:5176/) | `5176` | Worker registration, KYC submission & job dispatch |
+
+---
+
+## 🔑 Login Credentials
+
+The frontend currently uses mock authentication suitable for offline development and UI verification:
+
+### 1. 🛡️ Admin Dashboard (Port 5174)
+- **Super-Admin Mode**:
+  - **Email**: `admin@pestfast.com`
+  - **Password**: Any password (e.g. `admin123`)
+- **Agency Simulation Mode**:
+  - **Email**: Any other email (e.g. `agency@pestfast.com`)
+  - **Password**: Any password
+
+### 2. 🏢 Agency Dashboard (Port 5175)
+- **Email**: Any valid agency email (e.g. `ecopest@pestfast.com` or `agency@test.com`)
+- **Password**: Any password (e.g. `agency123`)
+
+### 3. 👷 Worker App (Port 5176)
+- **Step 1 (Basic Details)**:
+  - **Full Name**: Any worker name (e.g. `Ramesh Kumar`)
+  - **Mobile Number**: Any 10-digit number (e.g. `9876543210`)
+- **Step 2 (KYC Document IDs)**:
+  - **PAN Card**: `ABCDE1234F`
+  - **Aadhaar Card**: `123456789012`
+  - **Voter ID**: `VOTER12345`
+  - Click **Verify & Access Portal**
+
+### 4. 🛒 Customer App (Port 3000)
+- **Step 1**: Name + Mobile Number ➔ Click **Send OTP**
+- **Step 2**: Enter any 4-digit OTP (e.g. `1234`) ➔ Click **Verify & Login**
+
+---
+
+## 🏗️ Monorepo Architecture & Evolution
 
 ```
-pest-free/
+pest-free/ (Pest_Fast1)
 ├── apps/
-│   ├── admin-dashboard/     # A — hidden super-admin/developer view
-│   ├── agency-dashboard/    # A — agency owner web dashboard
-│   ├── worker-app/          # B — React Native, worker-facing
-│   ├── customer-app/        # B — React Native, customer-facing
-│   └── api/                 # C — NestJS backend
+│   ├── admin-dashboard/     # Person A — Super-admin & platform metrics (Port 5174)
+│   ├── agency-dashboard/    # Person A — Agency operations & worker dispatch (Port 5175)
+│   ├── customer-app/        # Person B — Customer booking experience (Port 3000)
+│   ├── worker-app/          # Person B — Worker onboarding, KYC & active jobs (Port 5176)
+│   └── api/                 # Person C — NestJS backend API
 ├── packages/
-│   ├── shared-types/        # C-owned. The contract between frontend and backend.
-│   ├── ui-kit/               # A + B shared components. Announce changes before editing.
-│   ├── config/               # shared eslint/tsconfig/tailwind base
-│   └── db/                   # C-owned. Prisma/TypeORM schema + migrations.
-├── docs/
-│   ├── PRD.md / TRD.md / workflow.md / ui-ux.md / backend-schema.md / Implementation.md
-│   └── shared/               # security-privacy, Play Store checklist
-├── AGENTS.md                  # root-level agent instructions
-├── CONTRIBUTING.md
-├── turbo.json
-├── pnpm-workspace.yaml
-└── package.json
+│   ├── shared-types/        # Person C — Type contracts (booking, agency, worker, customer, mock)
+│   ├── ui-kit/              # Person A + B — Shared buttons, alerts, theme tokens
+│   ├── db/                  # Person C — Prisma/PostgreSQL schema & migrations
+│   └── config/              # Shared tooling configs (oxlint, tsconfig)
+├── docs/                    # PRD, TRD, workflow, UI-UX, backend schema
+├── dev.mjs                  # Multi-app process runner with dedicated ports
+├── AGENTS.md                # Agent directives, ownership rules & full migration ledger
+├── instructions.md          # Project instructions & feature checklist
+├── turbo.json               # Turborepo task pipeline
+└── package.json             # Root workspace definitions & unified scripts
 ```
 
-## Getting started
+---
+
+## 💻 Development Commands
+
+From the monorepo root:
 
 ```bash
-pnpm install
-pnpm dev            # runs all apps in parallel via Turborepo
-pnpm dev --filter=agency-dashboard   # run just your app
+# 1. Install all dependencies across all apps & packages
+npm install   # or: pnpm install
+
+# 2. Run all 4 applications concurrently
+npm run dev
+
+# 3. Run individual apps
+npm run dev:customer   # Customer App on http://localhost:3000
+npm run dev:admin      # Admin Dashboard on http://localhost:5174
+npm run dev:agency     # Agency Dashboard on http://localhost:5175
+npm run dev:worker     # Worker App on http://localhost:5176
+
+# 4. Build all apps for production
+npm run build
 ```
 
-## Stack
+---
 
-- **Frontend (mobile):** React Native (Expo/EAS) — customer-app, worker-app
-- **Frontend (web):** React — admin-dashboard, agency-dashboard
-- **Backend:** NestJS/TypeScript
-- **Database:** PostgreSQL + PostGIS
-- **Real-time / geo:** Redis (GEO + BullMQ), Socket.IO for live tracking
-- **Payments:** UPI via payment gateway
-- **KYC:** e-KYC provider (no raw Aadhaar stored)
+## 🚀 Path to Production
 
-See `docs/TRD.md` for the full technical rationale.
+1. **Backend Integration**: Replace front-end mock data in `packages/shared-types/mock.ts` with HTTP/WebSocket calls to `apps/api` (NestJS).
+2. **Real-time Geo-Tracking**: Connect Redis GEO + BullMQ + Socket.IO for live worker dispatch and location updates.
+3. **KYC Verification**: Integrate third-party e-KYC API (storing only provider verification tokens, never raw Aadhaar numbers).
+4. **Payments**: Wire up UPI / payment gateway on booking confirmation.
