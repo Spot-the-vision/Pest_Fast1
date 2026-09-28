@@ -1,0 +1,6 @@
+{
+  "name": "@pest-free/ui-kit",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts"
+}
