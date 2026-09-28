@@ -1,4 +1,4 @@
-# Pest Free (Pest_Fast)
+# Pest_Fast
 
 A platform connecting a pest-control agency, its workers, and its customers —
 single-agency booking, dispatch, KYC-verified workers, and live tracking.
