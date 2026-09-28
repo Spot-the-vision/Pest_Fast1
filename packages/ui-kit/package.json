@@ -2,5 +2,11 @@
   "name": "@pest-free/ui-kit",
   "version": "0.1.0",
   "private": true,
-  "main": "index.ts"
+  "main": "index.jsx",
+  "module": "index.jsx",
+  "types": "index.d.ts",
+  "dependencies": {
+    "lucide-react": "^0.400.0",
+    "react": "^19.2.8"
+  }
 }

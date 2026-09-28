@@ -2,8 +2,18 @@
   "name": "pest-free",
   "private": true,
   "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "node dev.mjs all",
+    "dev:turbo": "turbo run dev",
+    "dev:all": "node dev.mjs all",
+    "dev:customer": "node dev.mjs customer",
+    "dev:admin": "node dev.mjs admin",
+    "dev:agency": "node dev.mjs agency",
+    "dev:worker": "node dev.mjs worker",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
