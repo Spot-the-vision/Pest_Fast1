@@ -136,6 +136,27 @@ confirm it doesn't conflict with something on their side.
   - [ ] Person B
   - [ ] Person C
 
+### [2026-09-29] Make 4 Dashboards Fully Professional, Interactive & User-Centric — changed by agent
+
+- **Required change**: Polish and unify all 4 dashboards (Customer App, Worker App, Agency Dashboard, Admin Dashboard) from everyone's point of view to be completely professional, responsive, interactive, and strictly aligned with domain rules in AGENTS.md.
+- **What actually changed**:
+  - `apps/worker-app`: Synchronized `index.html` typography (Plus Jakarta Sans/Inter) and Tailwind palette. Rewrote `App.jsx` with mobile-first field UX: tactile duty switcher (On Duty/On Job/Off Duty), two-step masked contact simulation per AGENTS.md privacy protocol, 8-point mandatory safety checklist with progress bar, before/after photo compliance slots, route schedule, IMPS payout wallet, CSDS chemical sheet, and poison helpline SOS modal.
+  - `apps/customer-app`: Upgraded `BookingScreen.jsx` and `TrackingScreen.jsx` with pest category selection, property dimensions, 3 treatment tiers with transparent warranty badges, date/slot picker, transparent billing breakdown with GST, animated route telemetry (speed, distance, ETA countdown), masked VoIP call button, toxicological safety certificate, and warranty claim modal.
+  - `apps/agency-dashboard`: Streamlined `App.jsx` to render rich `Dashboard.jsx` and `WorkerFleet.jsx` with `react-router-dom` `Link` sidebar navigation.
+  - `apps/admin-dashboard`: Re-architected `App.jsx` with multi-desk operations tabs: System Core (`PlatformOverview`), Agency Onboarding & KYC Audit Desk, Customer Dispute & Escalation Desk, and Platform Financials & Take-Rate Settlements (15% take-rate, GMV, batch disbursement).
+- **Files touched**:
+  - `apps/worker-app/index.html`
+  - `apps/worker-app/src/App.jsx`
+  - `apps/customer-app/src/App.jsx`
+  - `apps/customer-app/src/pages/BookingScreen.jsx`
+  - `apps/customer-app/src/pages/TrackingScreen.jsx`
+  - `apps/agency-dashboard/src/App.jsx`
+  - `apps/agency-dashboard/src/pages/Dashboard.jsx`
+  - `apps/agency-dashboard/src/pages/WorkerFleet.jsx`
+  - `apps/admin-dashboard/src/App.jsx`
+  - `AGENTS.md`
+- **Still missing / not yet added**: none — all 4 dashboards build cleanly and run with live HMR.
+
 ### [2026-09-29] Add Admin Dashboard React UI — changed by agent
 
 - **Required change**: Convert the newly pasted `code.html` into a React component for the Admin Dashboard and wire it into App.jsx.

@@ -1,173 +1,319 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { theme, Button } from 'ui-kit';
-import { UsersIcon, BriefcaseIcon, MapPinIcon, XIcon, ActivityIcon, PhoneIcon, GlobeIcon, TrendingUpIcon } from 'lucide-react';
+import PlatformOverview from './pages/PlatformOverview';
 import './index.css';
 
-const MOCK_WORKERS = [
-  { id: 1, name: 'Rahul Kumar', phone: '+91 9876543210', status: 'Active', location: 'Jubilee Hills - En route to Job', successRate: '98%', todayJobs: 3, weekJobs: 18, earnings: '₹14,500', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop' },
-  { id: 2, name: 'Amit Sharma', phone: '+91 9123456789', status: 'Active', location: 'Banjara Hills - At Location', successRate: '95%', todayJobs: 2, weekJobs: 14, earnings: '₹11,200', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop' },
-  { id: 3, name: 'Suresh Reddy', phone: '+91 9988776655', status: 'Inactive', location: 'Offline', successRate: '92%', todayJobs: 0, weekJobs: 8, earnings: '₹6,400', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop' }
-];
-
 export default function App() {
-  const [authRole, setAuthRole] = useState(null); // 'admin' | 'agency' | null
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [activeTab, setActiveTab] = useState('telemetry'); // telemetry, kyc, disputes, financials
+  const [toastMessage, setToastMessage] = useState(null);
 
-  return (
-    <Router>
-      <div style={{ fontFamily: 'sans-serif', backgroundColor: theme.bgLight, minHeight: '100vh', color: theme.textDark }}>
-        <Routes>
-          <Route path="/" element={
-            !authRole ? <Login onLogin={setAuthRole} /> : 
-            (authRole === 'admin' ? <AdminGlobalDashboard onLogout={() => setAuthRole(null)} /> : <AgencyDashboard onLogout={() => setAuthRole(null)} />)
-          } />
-        </Routes>
-      </div>
-    </Router>
-  );
-}
+  // Interactive state for KYC approvals
+  const [pendingAgencies, setPendingAgencies] = useState([
+    { id: 'AGY-104', name: 'Apex Pest Bangalore', owner: 'Ramesh Naidu', license: 'CIB-KA-2024-419', gstin: '29AABCU9603R1ZM', status: 'Pending Review', city: 'Bangalore' },
+    { id: 'AGY-105', name: 'CleanShield NCR', owner: 'Deepak Sharma', license: 'CIB-HR-2023-882', gstin: '06AABCC1234F1Z8', status: 'Pending Review', city: 'Gurgaon' },
+  ]);
 
-function Login({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Interactive state for Disputes
+  const [disputes, setDisputes] = useState([
+    { id: 'DSP-882', client: 'Rohit Verma', agency: 'EcoPest Solutions', issue: 'Termite reappeared in kitchen baseboards after 2 weeks', claim: 'Free Re-treatment', status: 'Open Escalation' },
+    { id: 'DSP-884', client: 'Meera Iyer', agency: 'Apex Pest Bangalore', issue: 'Technician arrived 40 mins late due to rain', claim: '₹300 Courtesy Refund', status: 'Pending Review' }
+  ]);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (!email || !password) return;
-    
-    // Smart Redirect Logic
-    if (email === 'admin@pestfast.com') {
-      onLogin('admin');
-    } else {
-      onLogin('agency');
-    }
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <form onSubmit={handleLogin} style={{ background: theme.cardBg, padding: '40px', borderRadius: '16px', border: `1px solid ${theme.border}`, width: '350px' }}>
-        <h2 style={{ marginBottom: '5px', textAlign: 'center' }}>Portal Login</h2>
-        <p style={{ textAlign: 'center', opacity: 0.7, marginBottom: '25px', fontSize: '13px' }}>Hint: Use admin@pestfast.com for Global Stats</p>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Email Address</label>
-          <input value={email} onChange={e => setEmail(e.target.value)} type="email" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
-        </div>
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Password</label>
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
-        </div>
-        <Button type="submit" style={{ width: '100%' }}>Login Securely</Button>
-      </form>
-    </div>
-  );
-}
+  const handleApproveAgency = (id, name) => {
+    setPendingAgencies(prev => prev.filter(a => a.id !== id));
+    showToast(`✅ Agency ${name} (${id}) KYC Approved & Activated in Platform Registry!`);
+  };
 
-import PlatformOverview from './pages/PlatformOverview';
+  const handleResolveDispute = (id, resolution) => {
+    setDisputes(prev => prev.filter(d => d.id !== id));
+    showToast(`⚖️ Dispute ${id} Resolved: ${resolution}`);
+  };
 
-function AdminGlobalDashboard({ onLogout }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-      <PlatformOverview />
-      <Button 
-        onClick={onLogout} 
-        style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 9999, background: '#ba1a1a', color: '#fff' }}
-      >
-        Logout Admin
-      </Button>
-    </div>
-  );
-}
-
-function AgencyDashboard({ onLogout }) {
-  // Same content as the agency dashboard from before
-  const [selectedWorker, setSelectedWorker] = useState(null);
-  const activeWorkers = MOCK_WORKERS.filter(w => w.status === 'Active').length;
-  const inactiveWorkers = MOCK_WORKERS.filter(w => w.status === 'Inactive').length;
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <nav style={{ background: theme.cardBg, padding: '15px 30px', borderBottom: `2px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, fontWeight: '900' }}>Pest_Fast Agency</h2>
-        <Button variant="secondary" onClick={onLogout} style={{ padding: '8px 16px' }}>Logout</Button>
-      </nav>
-
-      <div style={{ padding: '30px', flex: 1, overflowY: 'auto' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><ActivityIcon /> Operations Overview</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-          <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-            <p style={{ margin: '0 0 10px', fontSize: '14px', opacity: 0.8 }}>Active Jobs Today</p>
-            <h2 style={{ margin: 0, color: theme.buttonBg, fontSize: '32px' }}>12</h2>
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-surface p-4">
+        <form onSubmit={() => setIsAuthenticated(true)} className="bg-surface-container-lowest border border-surface-container-high p-8 rounded-2xl shadow-xl w-full max-w-sm space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+              <span className="material-symbols-outlined text-[24px]">terminal</span>
+            </div>
+            <div>
+              <h2 className="font-headline font-bold text-base text-primary">Super-Admin Console</h2>
+              <p className="text-[11px] text-on-surface-variant">Kernel & Marketplace Control</p>
+            </div>
           </div>
-          <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-            <p style={{ margin: '0 0 10px', fontSize: '14px', opacity: 0.8 }}>Running Currently</p>
-            <h2 style={{ margin: 0, color: '#f59e0b', fontSize: '32px' }}>4</h2>
+          <div className="bg-surface-container-low p-2.5 rounded-xl text-xs text-on-surface-variant">
+            Developer / Super-Admin Access Only (Strictly isolated per AGENTS.md)
           </div>
-          <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-            <p style={{ margin: '0 0 10px', fontSize: '14px', opacity: 0.8 }}>Scheduled Next 24h</p>
-            <h2 style={{ margin: 0, color: '#3b82f6', fontSize: '32px' }}>28</h2>
+          <div>
+            <label className="text-xs font-bold text-on-surface-variant block mb-1">Root Admin Email</label>
+            <input defaultValue="admin@pestfast.com" type="email" className="w-full px-3 py-2 text-xs rounded-lg border border-surface-container-high bg-surface-container-low" />
           </div>
-        </div>
-
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><UsersIcon /> Workforce Stats</h3>
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
-          <div style={{ background: theme.buttonBg, color: '#fff', padding: '15px 30px', borderRadius: '12px', display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{activeWorkers}</div>
-            <div>Active Workers</div>
-          </div>
-          <div style={{ background: '#ef4444', color: '#fff', padding: '15px 30px', borderRadius: '12px', display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{inactiveWorkers}</div>
-            <div>Inactive Workers</div>
-          </div>
-        </div>
-
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><BriefcaseIcon /> Worker Directory</h3>
-        <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead style={{ background: theme.bgLight }}>
-              <tr>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Profile</th>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Status</th>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Live Location</th>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Success %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_WORKERS.map(w => (
-                <tr key={w.id} onClick={() => setSelectedWorker(w)} style={{ borderBottom: `1px solid ${theme.border}`, cursor: 'pointer' }} className="worker-row">
-                  <td style={{ padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <img src={w.avatar} alt={w.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
-                    <div><div style={{ fontWeight: 'bold' }}>{w.name}</div></div>
-                  </td>
-                  <td style={{ padding: '15px 20px' }}>{w.status}</td>
-                  <td style={{ padding: '15px 20px' }}>{w.location}</td>
-                  <td style={{ padding: '15px 20px', fontWeight: 'bold' }}>{w.successRate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          <button type="submit" className="w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-primary-container transition-colors shadow-sm cursor-pointer">
+            Access Core Console
+          </button>
+        </form>
       </div>
-      
-      {/* Slide-out Modal */}
-      {selectedWorker && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ width: '400px', background: theme.bgLight, height: '100%', padding: '30px', boxShadow: '-5px 0 20px rgba(0,0,0,0.1)', overflowY: 'auto', position: 'relative' }}>
-            <button onClick={() => setSelectedWorker(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <XIcon size={24} color={theme.textDark} />
-            </button>
-            <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              <img src={selectedWorker.avatar} alt="Profile" style={{ width: '100px', height: '100px', borderRadius: '50%', border: `4px solid ${theme.border}`, marginBottom: '15px' }} />
-              <h2 style={{ margin: 0 }}>{selectedWorker.name}</h2>
-              <p style={{ margin: '5px 0 20px', opacity: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}><PhoneIcon size={16}/> {selectedWorker.phone}</p>
-            </div>
-            <div style={{ marginTop: '20px', background: theme.cardBg, padding: '20px', borderRadius: '16px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-              <p style={{ margin: '0 0 5px', fontSize: '14px', opacity: 0.8 }}>Total Earnings Generated</p>
-              <h1 style={{ margin: 0, color: theme.buttonBg }}>{selectedWorker.earnings}</h1>
-            </div>
+    );
+  }
+
+  return (
+    <div className="bg-surface text-on-surface min-h-screen font-body flex flex-col">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-4 inset-x-4 max-w-md mx-auto z-50 bg-primary text-on-primary px-4 py-3 rounded-xl shadow-lg flex items-center justify-between text-xs animate-bounce">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">verified</span>
+            <span>{toastMessage}</span>
           </div>
+          <button onClick={() => setToastMessage(null)} className="text-on-primary/70 hover:text-on-primary">
+            <span className="material-symbols-outlined text-[16px]">close</span>
+          </button>
         </div>
       )}
-      <style>{`.worker-row:hover { background-color: #f1f5f9; }`}</style>
+
+      {/* Super-Admin Top Navigation Bar */}
+      <header className="bg-surface-container-lowest border-b border-surface-container-high sticky top-0 z-40 px-4 py-2.5 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
+              <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-headline font-bold text-sm text-primary tracking-tight">Pest Free Global OS</span>
+                <span className="px-2 py-0.5 rounded-full bg-primary-fixed text-primary text-[10px] font-bold">Kernel v4.2</span>
+              </div>
+              <p className="text-[10px] text-on-surface-variant">Isolated Super-Admin Console • Multi-Agency Operations</p>
+            </div>
+          </div>
+
+          {/* Navigation Desks */}
+          <div className="flex flex-wrap items-center gap-1.5 bg-surface-container-low p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('telemetry')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'telemetry' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">analytics</span>
+              <span>System Core</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('kyc')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'kyc' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">how_to_reg</span>
+              <span>Agency KYC ({pendingAgencies.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('disputes')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'disputes' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">gavel</span>
+              <span>Disputes Desk ({disputes.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('financials')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'financials' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">payments</span>
+              <span>Settlements & GMV</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-semibold border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+              <span>APIs 99.98% Healthy</span>
+            </div>
+            <button
+              onClick={() => setIsAuthenticated(false)}
+              className="px-2.5 py-1 text-xs text-error hover:bg-error-container/40 rounded-lg font-bold transition-colors cursor-pointer"
+            >
+              Lock Terminal
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="flex-1">
+        {/* Tab 1: System Telemetry */}
+        {activeTab === 'telemetry' && <PlatformOverview />}
+
+        {/* Tab 2: Agency KYC Approvals Desk */}
+        {activeTab === 'kyc' && (
+          <div className="max-w-6xl mx-auto p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-headline font-bold text-lg text-primary">Agency Onboarding & KYC Audit Desk</h2>
+                <p className="text-xs text-on-surface-variant">Review Trade Licenses and CIB&RC Chemical Permits before granting agency dispatch rights.</p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-secondary-container text-on-surface text-xs font-bold">
+                {pendingAgencies.length} Applications Awaiting Review
+              </span>
+            </div>
+
+            {pendingAgencies.length === 0 ? (
+              <div className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-12 text-center text-on-surface-variant">
+                <span className="material-symbols-outlined text-[48px] text-emerald-600 mb-2">task_alt</span>
+                <h3 className="font-headline font-bold text-base text-primary">All Agency Applications Vetted!</h3>
+                <p className="text-xs mt-1">Zero pending KYC audits in the queue.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pendingAgencies.map(agency => (
+                  <div key={agency.id} className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-surface-container text-primary text-[10px] font-bold">{agency.id}</span>
+                        <h3 className="font-headline font-bold text-base text-primary">{agency.name}</h3>
+                        <span className="text-xs font-semibold text-on-surface-variant">({agency.city})</span>
+                      </div>
+                      <p className="text-xs text-on-surface-variant">
+                        Managing Director: <strong>{agency.owner}</strong> • GSTIN: <code className="bg-surface-container px-1 py-0.5 rounded text-[11px]">{agency.gstin}</code>
+                      </p>
+                      <p className="text-xs text-emerald-700 font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[15px]">verified</span>
+                        Central Insecticides Board License: {agency.license}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button 
+                        onClick={() => showToast(`Audit Report for ${agency.name} generated.`)}
+                        className="px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-bold text-xs cursor-pointer"
+                      >
+                        Inspect Dossier
+                      </button>
+                      <button 
+                        onClick={() => handleApproveAgency(agency.id, agency.name)}
+                        className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-xs flex items-center gap-1 shadow-sm cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                        Approve Agency
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: Disputes Desk */}
+        {activeTab === 'disputes' && (
+          <div className="max-w-6xl mx-auto p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-headline font-bold text-lg text-primary">Customer Dispute & Escalation Desk</h2>
+                <p className="text-xs text-on-surface-variant">Manage 90-day warranty claims, pest recurrence reports, and refund requests.</p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-error-container text-error text-xs font-bold">
+                {disputes.length} Active Escalations
+              </span>
+            </div>
+
+            {disputes.length === 0 ? (
+              <div className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-12 text-center text-on-surface-variant">
+                <span className="material-symbols-outlined text-[48px] text-emerald-600 mb-2">thumb_up</span>
+                <h3 className="font-headline font-bold text-base text-primary">Zero Unresolved Disputes!</h3>
+                <p className="text-xs mt-1">Platform customer satisfaction score: 99.4% CSAT.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {disputes.map(d => (
+                  <div key={d.id} className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-5 shadow-sm space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="px-2 py-0.5 rounded-full bg-error-container text-error font-bold text-[10px]">{d.id}</span>
+                          <span className="font-bold text-xs text-primary">{d.client}</span>
+                          <span className="text-outline">vs</span>
+                          <span className="font-semibold text-xs text-on-surface">{d.agency}</span>
+                        </div>
+                        <p className="text-xs text-on-surface-variant mt-1"><strong>Complaint:</strong> {d.issue}</p>
+                        <p className="text-xs text-secondary font-semibold mt-0.5">Demanded Remedy: {d.claim}</p>
+                      </div>
+                      <span className="text-[10px] uppercase font-bold text-error bg-error-container/40 px-2.5 py-1 rounded-full">
+                        {d.status}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-container-high">
+                      <button 
+                        onClick={() => handleResolveDispute(d.id, 'Ordered Free Re-service by Agency under 90-day guarantee')}
+                        className="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-bold hover:bg-primary-container cursor-pointer"
+                      >
+                        Enforce Free Re-Treatment
+                      </button>
+                      <button 
+                        onClick={() => handleResolveDispute(d.id, 'Issued 100% Instant Escrow Refund to Customer')}
+                        className="px-3 py-1.5 rounded-lg bg-surface-container text-error text-xs font-bold hover:bg-surface-container-high cursor-pointer"
+                      >
+                        Authorize Refund
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 4: Financial Settlements & GMV */}
+        {activeTab === 'financials' && (
+          <div className="max-w-6xl mx-auto p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-headline font-bold text-lg text-primary">Platform Financials & Take-Rate Settlements</h2>
+                <p className="text-xs text-on-surface-variant">Automated 15% Platform Take-Rate accounting and agency settlement batches.</p>
+              </div>
+              <button 
+                onClick={() => showToast('Batch Payout of ₹3,40,000 disbursed via RazorpayX Escrow!')}
+                className="px-4 py-2 rounded-xl bg-secondary text-on-primary font-bold text-xs shadow-md hover:bg-secondary/90 transition-colors cursor-pointer"
+              >
+                Disburse Weekly Payouts (RazorpayX)
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-surface-container-lowest border border-surface-container-high p-5 rounded-2xl shadow-sm">
+                <p className="text-xs font-bold uppercase text-on-surface-variant">Monthly Gross Merchandise Value (GMV)</p>
+                <h3 className="font-headline font-extrabold text-2xl text-primary mt-1">₹14,82,500</h3>
+                <p className="text-[11px] text-emerald-600 font-semibold mt-1">↑ +18.4% vs last month</p>
+              </div>
+
+              <div className="bg-surface-container-lowest border border-surface-container-high p-5 rounded-2xl shadow-sm">
+                <p className="text-xs font-bold uppercase text-on-surface-variant">Platform Take-Rate (15% Net)</p>
+                <h3 className="font-headline font-extrabold text-2xl text-primary mt-1">₹2,22,375</h3>
+                <p className="text-[11px] text-on-surface-variant mt-1">Direct Platform Revenue</p>
+              </div>
+
+              <div className="bg-surface-container-lowest border border-surface-container-high p-5 rounded-2xl shadow-sm">
+                <p className="text-xs font-bold uppercase text-on-surface-variant">Agency Net Settlements</p>
+                <h3 className="font-headline font-extrabold text-2xl text-primary mt-1">₹12,60,125</h3>
+                <p className="text-[11px] text-emerald-600 font-semibold mt-1">98.2% Auto-Disbursed</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

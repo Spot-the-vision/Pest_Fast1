@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function WorkerFleet() {
   const [timeFilter, setTimeFilter] = useState('Day');
@@ -20,14 +21,14 @@ export default function WorkerFleet() {
         </div>
         
         <nav className="flex-1 px-space-md py-space-md space-y-space-xs overflow-y-auto">
-          <a href="#" className="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+          <Link to="/" className="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
             <span className="material-symbols-outlined text-[20px]">map</span>
             <span>Dashboard &amp; Live Map</span>
-          </a>
-          <a href="#" className="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-label-lg text-label-lg bg-primary-container text-on-primary shadow-[0_1px_3px_rgba(2,44,34,0.04)] transition-all">
+          </Link>
+          <Link to="/worker-fleet" className="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl font-label-lg text-label-lg bg-primary-container text-on-primary shadow-[0_1px_3px_rgba(2,44,34,0.04)] transition-all bg-primary-container text-on-primary shadow-sm">
             <span className="material-symbols-outlined text-[20px]">electric_moped</span>
             <span>Worker Fleet &amp; Rosters</span>
-          </a>
+          </Link>
           <a href="#" className="flex items-center justify-between px-space-md py-2.5 rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
             <div className="flex items-center gap-space-sm">
               <span className="material-symbols-outlined text-[20px]">approval_delegation</span>

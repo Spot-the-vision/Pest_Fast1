@@ -1,307 +1,338 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function TrackingScreen() {
+  const navigate = useNavigate();
+
+  // State
+  const [etaMinutes, setEtaMinutes] = useState(14);
+  const [distanceKm, setDistanceKm] = useState(2.8);
+  const [currentStep, setCurrentStep] = useState(3); // 1: Booked, 2: Approved, 3: En Route, 4: Treating, 5: Completed
+  const [showCsdsModal, setShowCsdsModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [callInitiated, setCallInitiated] = useState(false);
+
+  // Live simulation tick
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setEtaMinutes(prev => (prev > 1 ? prev - 1 : 1));
+      setDistanceKm(prev => (prev > 0.3 ? parseFloat((prev - 0.2).toFixed(1)) : 0.3));
+    }, 12000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="bg-surface font-body-md text-on-surface antialiased">
-<header className="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div className="h-20 px-margin flex items-center justify-between gap-space-xs"><div className="flex items-center gap-space-sm min-w-0 flex-1"><img alt="Brand logo. - Primary color: #064e3b - Font: plusJakartaSans - Mode: light - Roundness: rounded-md" className="h-8 w-auto object-contain shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1U3O0kc8EHfIIJEgzuRRaOBvzdQaXESpsLEU5jl_aABgxoOaomh-UuOtxiHKnAeyup5cA440HHrEW4GnNTDaZBkS98Q-0cKejJJj5JODixDKAQF2KM0K4gHl9l6c3joxvG4PiTjLUTp8HYx8XigNgjFV5sJdjIZgZ8a6B2-bah5iAZx8HfDC4Rik166Hz5d7MNPQcroBCXmhfe22zRfUM-oLbhGSW8SERbY-Gxe69y6NTobLBgsSmtbNVU"/><div className="flex flex-col min-w-0"><div className="flex items-center gap-1"><span className="font-headline-sm text-headline-sm text-primary leading-tight font-bold tracking-tight truncate">Pest Free</span></div><div className="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-full bg-primary-fixed/40 max-w-full"><span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span><span className="font-label-sm text-label-sm text-primary truncate">EcoPest Solutions ★ 4.9</span></div></div></div><div className="flex items-center gap-space-xs shrink-0"><button aria-label="Emergency SOS Support" className="w-11 h-11 rounded-full bg-error-container/50 text-error flex items-center justify-center hover:bg-error-container transition-colors"><span className="material-symbols-outlined text-[20px]">e911_emergency</span></button><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 ml-1"><span className="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main className="flex flex-col relative w-full pt-20 pb-24 bg-surface min-h-screen"><div className="flex flex-col w-full">
-{/* Map Container (Rapido/Uber High-Density Telemetry View) */}
-<div className="relative w-full h-[320px] overflow-hidden bg-surface-container-high shadow-md">
-{/* Static Map Simulation using data-location */}
-<div className="w-full h-full bg-cover bg-center" data-location="Outer Ring Road, Green Glen Palms, Bangalore, India" style={{ backgroundImage: 'url(\"https://lh3.googleusercontent.com/aida-public/AB6AXuD7IaoEd4_-HVI4Mut-81SsOS1GYkdWruByj-F-XlnNg6wus7gCoMMKKQmJubEKVA4w6AzXDHna-GP6XYWqrsE5rjwCJClXH2pe3rfjSzu0Du2erm--ZzYmri3qmrGqXbh6oTWNDrykgJmZzc8VFrljoh8LPFxLa8paeUOv2_puJeWYqBc85XZw80rMCkmFayZsY1n7_k6_aNJg0ObfSWImwCa6ZBxzo4Vn1pYwpFFN3wIs3Z3yVhQkjQ\")' }}></div>
-{/* Map Ambience Gradient Overlays */}
-<div className="absolute inset-0 bg-gradient-to-b from-primary/30 via-transparent to-surface pointer-events-none"></div>
-{/* Top Telemetry Status Pill (Glassmorphic) */}
-<div className="absolute top-3 left-4 right-4 flex items-center justify-between pointer-events-none">
-<div className="pointer-events-auto flex items-center gap-space-xs px-3 py-1.5 rounded-full bg-surface/90 backdrop-blur-md shadow-sm">
-<span className="relative flex h-2.5 w-2.5">
-<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-container opacity-75"></span>
-<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
-</span>
-<span className="font-label-sm text-label-sm text-primary uppercase tracking-wide">LIVE GPS SYNCED</span>
-</div>
-<div className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface/90 backdrop-blur-md shadow-sm">
-<span className="material-symbols-outlined text-secondary text-[16px]">traffic</span>
-<span className="font-label-sm text-label-sm text-on-surface font-semibold">Moderate Traffic</span>
-</div>
-</div>
-{/* Simulated Live Path SVG Overlay */}
-<svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<lineargradient id="routeGrad" x1="0%" x2="100%" y1="100%" y2="0%">
-<stop offset="0%" stop-color="#fea619"></stop>
-<stop offset="100%" stop-color="#064e3b"></stop>
-</lineargradient>
-</defs>
-{/* Dotted future route */}
-<path d="M 90 230 C 130 190, 160 210, 210 140 S 260 110, 290 85" fill="none" opacity="0.6" stroke="#fea619" strokeDasharray="6,6" strokeLinecap="round" strokeWidth="4"></path>
-{/* Solid active progress route */}
-<path d="M 90 230 C 130 190, 150 200, 175 168" fill="none" stroke="url(#routeGrad)" strokeLinecap="round" strokeWidth="5"></path>
-</svg>
-{/* Moving Technician Marker */}
-<div className="absolute left-[165px] top-[148px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-<div className="relative flex items-center justify-center">
-<span className="animate-ping absolute -inset-1 rounded-full bg-secondary-container opacity-70"></span>
-<div className="relative w-11 h-11 rounded-full bg-primary-container p-0.5 shadow-lg flex items-center justify-center">
-<img className="w-10 h-10 rounded-full object-cover" data-alt="Close-up headshot portrait of Rajesh Kumar, a skilled senior bio-technician wearing a dark pine green pest control uniform polo and a confident, warm smile. Clean studio natural lighting with eco-heritage tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7Gv6Fb4D7rMwNIwgaCTNQvouZIn1VRisGMFyB61iaRsR0N-ivkY-8vPZw6sUAY-BhPWV4MQqe2d3GPSxgMhqzNYiuRCMJtWLYzfj4sh6yfABPoKuIAf72eVAAkquVbUpXg_geEiuKmZzWG4LQTYYvywLJrWUOW5tMKmMv8Rtfl8N2InqIacENX1Ag2bik8-68uhhhhcGelmt3Fn9JTEtQ3ikv76TpRb6zIiNq_e1QjXzIMcHqjSdrKQ"/>
-<div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-secondary-container flex items-center justify-center shadow-xs">
-<span className="material-symbols-outlined text-primary text-[10px] font-bold">local_shipping</span>
-</div>
-</div>
-</div>
-<div className="mt-1 px-2 py-0.5 rounded-full bg-primary text-on-primary font-label-sm text-label-sm shadow-sm whitespace-nowrap">
-        Rajesh • 1.8 km away
-      </div>
-</div>
-{/* Customer Home Marker */}
-<div className="absolute right-[50px] top-[65px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-<div className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg">
-<span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>home_pin</span>
-</div>
-<span className="mt-1 px-2 py-0.5 rounded-full bg-surface-container-lowest text-primary font-label-sm text-label-sm shadow-xs whitespace-nowrap font-bold">
-        Flat 402
-      </span>
-</div>
-{/* Recenter & Map Controls Floating Action Button */}
-<button aria-label="Recenter map" className="absolute bottom-14 right-4 w-10 h-10 rounded-full bg-surface-container-lowest text-primary shadow-md flex items-center justify-center active:scale-95 transition-transform" id="recenterBtn">
-<span className="material-symbols-outlined text-[20px]">my_location</span>
-</button>
-{/* Bottom ETA Overlay Bubble */}
-<div className="absolute bottom-2 inset-x-4">
-<div className="w-full bg-primary text-on-primary rounded-xl px-4 py-2.5 shadow-md flex items-center justify-between">
-<div className="flex items-center gap-2.5 min-w-0">
-<div className="w-7 h-7 rounded-lg bg-on-primary-container/20 flex items-center justify-center shrink-0">
-<span className="material-symbols-outlined text-primary-fixed text-[18px]">near_me</span>
-</div>
-<div className="flex flex-col min-w-0">
-<div className="flex items-center gap-1.5">
-<span className="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
-<span className="font-label-md text-label-md font-bold truncate">Technician En Route</span>
-</div>
-<span className="font-body-sm text-body-sm text-primary-fixed truncate">ETA: 42 mins (Traffic Adjusted)</span>
-</div>
-</div>
-<div className="text-right shrink-0">
-<span className="font-headline-sm text-headline-sm text-secondary-container leading-none font-bold">11:18</span>
-<span className="block font-label-sm text-label-sm text-primary-fixed">AM ARRIVAL</span>
-</div>
-</div>
-</div>
-</div>
-{/* Content Stream */}
-<div className="px-margin flex flex-col gap-space-md -mt-1 pb-space-lg">
-{/* Active Dispatch Queue Banner */}
-<div className="bg-secondary-container/15 rounded-xl p-space-md flex flex-col gap-space-xs">
-<div className="flex items-center justify-between">
-<div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold">
-<span className="material-symbols-outlined text-[13px]">hourglass_top</span>
-          DISPATCH QUEUE: #1 IN LINE
+    <div className="bg-surface font-body text-on-surface min-h-screen pb-24">
+      {/* Top Header */}
+      <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b border-surface-container-high px-4 py-3">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => navigate('/')} 
+              className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            </button>
+            <div>
+              <h1 className="font-headline font-bold text-sm text-primary">Live Technician Dispatch</h1>
+              <p className="text-[11px] text-on-surface-variant">Booking #JOB-7491 • EcoPest Solutions</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-fixed text-primary text-xs font-bold">
+              <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+              En Route
+            </span>
+          </div>
         </div>
-<span className="font-label-sm text-label-sm text-secondary font-bold">Priority Slot</span>
-</div>
-<p className="font-headline-sm text-headline-sm text-on-surface font-semibold mt-1">
-        Rajesh is en route to Flat 402
-      </p>
-<p className="font-body-md text-body-md text-on-surface-variant">
-        Technician Rajesh has finished safe bio-sanitization and is scheduled to reach your location within 45 minutes.
-      </p>
-<div className="flex items-center gap-2 pt-1">
-<span className="material-symbols-outlined text-secondary text-[16px] shrink-0">info</span>
-<span className="font-body-sm text-body-sm text-secondary font-medium">
-          Moderate traffic on Outer Ring Road factored into current arrival time.
-        </span>
-</div>
-</div>
-{/* Assigned Verified Technician Card */}
-<div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
-{/* Top Row: Tech info */}
-<div className="flex items-start gap-space-sm justify-between">
-<div className="flex items-center gap-space-sm min-w-0">
-<div className="relative shrink-0">
-<img className="w-14 h-14 rounded-full object-cover" data-alt="Verified technician headshot Rajesh Kumar, Indian male technician in mid 30s with friendly approachable expression, wearing green eco-pest uniform cap and embroidered ID badge. Soft natural day lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEgjWNFLA47Dwqcc8XEAWeDZQZJPNeH1OTtHK2qTEnP-prbVNOoCIMi6Qg___qAyqI35b0DE8xK_k85fDphM4wIROrMrLfjp4CtzDC_5lkE5V5OaQXSNF93LGs1nHSpY6wJzcgRpy8Fa9pKytAXTYSS_VVS6n4XgDsFDbmkMcBV5aQe278cidCDypBNdU56gGqgFYwR7-QkukGi8H2woYvqqqcL9DaE2ZJAJS2m2Lg93erLSC2uJykMA"/>
-<div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center text-on-primary">
-<span className="material-symbols-outlined text-[13px]">verified</span>
-</div>
-</div>
-<div className="flex flex-col min-w-0">
-<div className="flex items-center gap-1 flex-wrap">
-<span className="font-headline-sm text-headline-sm text-on-surface font-bold truncate">Rajesh Kumar</span>
-</div>
-<span className="font-body-sm text-body-sm text-on-surface-variant">Sr. Bio-Tech • 184 Jobs Done</span>
-<div className="flex items-center gap-2 mt-0.5">
-<div className="inline-flex items-center gap-0.5 text-secondary font-bold font-label-sm text-label-sm">
-<span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                4.9
+      </header>
+
+      {/* Main Tracking Content */}
+      <main className="max-w-3xl mx-auto px-4 pt-4 space-y-5">
+        {/* Dynamic Simulated Map Widget */}
+        <section className="bg-surface-container-lowest border border-surface-container-high rounded-2xl overflow-hidden shadow-sm relative">
+          <div className="h-56 bg-slate-100 relative flex items-center justify-center overflow-hidden">
+            {/* Map Grid Pattern */}
+            <div 
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage: 'radial-gradient(#003527 1.5px, transparent 1.5px)',
+                backgroundSize: '24px 24px'
+              }}
+            ></div>
+
+            {/* Simulated Road Route Vector */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+              <path 
+                d="M 60 160 Q 180 80, 280 130 T 480 90" 
+                fill="none" 
+                stroke="#064e3b" 
+                strokeWidth="4" 
+                strokeDasharray="8,8"
+                className="animate-pulse"
+              />
+            </svg>
+
+            {/* Destination Pin */}
+            <div className="absolute right-12 top-14 flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-secondary text-on-primary flex items-center justify-center shadow-md">
+                <span className="material-symbols-outlined text-[18px]">home</span>
               </div>
-<span className="text-outline-variant font-body-sm text-body-sm">•</span>
-<span className="px-1.5 py-0.2 rounded bg-primary-fixed/40 text-primary font-label-sm text-label-sm">2-Step KYC</span>
-</div>
-</div>
-</div>
-{/* Call & Chat Actions */}
-<div className="flex items-center gap-1.5 shrink-0">
-<a aria-label="Call Rajesh" className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-xs active:scale-95 transition-transform" href="tel:5550192834">
-<span className="material-symbols-outlined text-[19px]">call</span>
-</a>
-<button aria-label="Chat with Rajesh" className="w-10 h-10 rounded-full bg-surface-container text-primary flex items-center justify-center active:scale-95 transition-transform" id="chatToggleBtn">
-<span className="material-symbols-outlined text-[19px]">chat</span>
-</button>
-</div>
-</div>
-{/* Vehicle & Equipment Details */}
-<div className="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low text-on-surface">
-<div className="flex items-center gap-2">
-<span className="material-symbols-outlined text-primary text-[20px]">electric_meter</span>
-<div className="flex flex-col">
-<span className="font-label-sm text-label-sm text-on-surface-variant uppercase">Assigned Unit</span>
-<span className="font-label-md text-label-md font-semibold text-on-surface">Eco-Van #14</span>
-</div>
-</div>
-<div className="px-2.5 py-1 rounded bg-surface-variant font-label-md text-label-md tracking-wider text-on-surface font-mono font-bold">
-          KA-01-EQ-4021
+              <span className="text-[10px] font-bold bg-surface px-2 py-0.5 rounded shadow-xs mt-1 text-primary">
+                Your Villa
+              </span>
+            </div>
+
+            {/* Moving Technician Marker */}
+            <div className="absolute left-20 bottom-14 flex flex-col items-center animate-bounce">
+              <div className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg border-2 border-primary-fixed">
+                <span className="material-symbols-outlined text-[20px]">two_wheeler</span>
+              </div>
+              <span className="text-[10px] font-bold bg-primary text-on-primary px-2 py-0.5 rounded-full shadow-xs mt-1">
+                Vikram (Tech)
+              </span>
+            </div>
+
+            {/* Floating Live Telemetry Badge */}
+            <div className="absolute bottom-3 left-3 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-surface-container-high shadow-sm text-xs flex items-center gap-3">
+              <div className="flex items-center gap-1 font-bold text-primary">
+                <span className="material-symbols-outlined text-[16px] text-secondary">speed</span>
+                <span>28 km/h</span>
+              </div>
+              <span className="text-outline">|</span>
+              <div className="text-on-surface-variant font-medium">
+                Sector 48 Approach
+              </div>
+            </div>
+          </div>
+
+          {/* ETA & Distance Hero Strip */}
+          <div className="p-4 bg-surface-container-low flex items-center justify-between border-t border-surface-container-high">
+            <div>
+              <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Estimated Arrival</p>
+              <h2 className="font-headline font-extrabold text-2xl text-primary mt-0.5">
+                {etaMinutes} Minutes <span className="text-xs font-normal text-on-surface-variant">({distanceKm} km away)</span>
+              </h2>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setCallInitiated(true)}
+                className="px-3 py-2 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center gap-1.5 shadow-sm hover:bg-primary-container transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">call</span>
+                <span>Call Tech</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Technician Profile Card with AGENTS.md Privacy Protection */}
+        <section className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-bold text-lg shadow-sm">
+                VR
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-headline font-bold text-sm text-primary">Vikram Rathore</h3>
+                  <span className="material-symbols-outlined text-[15px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                </div>
+                <p className="text-xs text-on-surface-variant">
+                  Master Chemical Applicator • <span className="font-semibold text-secondary">★ 4.95 (420+ services)</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <span className="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant text-[10px] font-bold">
+                Bio-Safety Verified
+              </span>
+            </div>
+          </div>
+
+          {/* Privacy Notice Banner (AGENTS.md) */}
+          <div className="bg-surface-container-low rounded-xl p-2.5 text-xs text-on-surface-variant flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[17px]">lock</span>
+              <span className="text-[11px]">Protected VoIP Proxy Connection: Your personal phone number is encrypted.</span>
+            </div>
+            <span className="text-[10px] font-bold text-primary shrink-0">Secured</span>
+          </div>
+
+          {/* Safety & Protocol Certifications */}
+          <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+            <div className="bg-surface-container-low p-2 rounded-lg">
+              <span className="material-symbols-outlined text-emerald-600 text-[18px]">masks</span>
+              <p className="font-semibold text-[10px] mt-0.5">Full PPE Kit</p>
+            </div>
+            <div className="bg-surface-container-low p-2 rounded-lg">
+              <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified</span>
+              <p className="font-semibold text-[10px] mt-0.5">KYC Verified</p>
+            </div>
+            <div className="bg-surface-container-low p-2 rounded-lg">
+              <span className="material-symbols-outlined text-emerald-600 text-[18px]">sanitizer</span>
+              <p className="font-semibold text-[10px] mt-0.5">Kit Sanitized</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Multi-Step Service Progression Timeline */}
+        <section className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-4 shadow-sm space-y-3">
+          <h3 className="font-headline font-bold text-xs uppercase tracking-wider text-primary">Service Progress Milestones</h3>
+          
+          <div className="space-y-4 text-xs relative pl-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container-high">
+            {[
+              { step: 1, title: 'Booking Request Placed', time: '10:15 AM', done: true, desc: 'Subterranean Termite Dual-Barrier Tier selected' },
+              { step: 2, title: 'Agency Approved & Tech Assigned', time: '10:18 AM', done: true, desc: 'EcoPest Operations assigned Vikram Rathore' },
+              { step: 3, title: 'Technician En Route', time: '10:25 AM', done: true, current: true, desc: 'Traveling via Subhash Marg • ETA ~14 mins' },
+              { step: 4, title: 'On-Site Inspection & Evacuation Check', time: 'Pending', done: false, desc: 'Thermal crevice scan & pet perimeter evacuation' },
+              { step: 5, title: 'Barrier Application & 90-Day Guarantee', time: 'Pending', done: false, desc: 'Odorless micro-encapsulated spray & digital sign-off' },
+            ].map(item => (
+              <div key={item.step} className="relative">
+                <span 
+                  className={`absolute -left-6 top-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    item.done 
+                      ? 'bg-primary text-on-primary' 
+                      : 'bg-surface-container-high text-on-surface-variant'
+                  } ${item.current ? 'ring-4 ring-primary/20' : ''}`}
+                >
+                  {item.done ? '✓' : item.step}
+                </span>
+                <div className="flex items-center justify-between">
+                  <h4 className={`font-headline font-bold ${item.done ? 'text-primary' : 'text-on-surface-variant'}`}>
+                    {item.title}
+                  </h4>
+                  <span className="text-[10px] text-on-surface-variant font-medium">{item.time}</span>
+                </div>
+                <p className="text-[11px] text-on-surface-variant mt-0.5">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Chemical Safety & CSDS Action */}
+        <section className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-secondary-container/20 text-secondary flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[22px]">health_and_safety</span>
+            </div>
+            <div>
+              <h4 className="font-headline font-bold text-xs text-primary">Chemical Safety Data Sheet (CSDS)</h4>
+              <p className="text-[11px] text-on-surface-variant">Deltamethrin 2.5% EC • 100% Odorless & Safe</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setShowCsdsModal(true)}
+            className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-bold text-xs transition-colors cursor-pointer"
+          >
+            View CSDS
+          </button>
+        </section>
+
+        {/* Need Help or Cancel */}
+        <div className="flex items-center justify-between text-xs px-2 pt-2 text-on-surface-variant">
+          <button 
+            onClick={() => setShowCancelModal(true)}
+            className="text-error hover:underline font-semibold cursor-pointer"
+          >
+            Cancel / Reschedule Visit
+          </button>
+          <a href="tel:1800PESTFAST" className="hover:underline font-semibold text-primary">
+            Call Agency Support (1800-PEST-FAST)
+          </a>
         </div>
-</div>
-{/* Service Start OTP Banner (Tactile Security Token) */}
-<div className="p-3.5 rounded-xl bg-primary-fixed/30 flex items-center justify-between">
-<div className="flex flex-col">
-<span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">Service Start OTP</span>
-<span className="font-body-sm text-body-sm text-on-surface-variant">Share with Rajesh upon doorstep arrival</span>
-</div>
-<div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-on-primary font-data-metric text-data-metric font-bold tracking-widest">
-<span>8</span><span>4</span><span>9</span><span>1</span>
-</div>
-</div>
-</div>
-{/* Live Step Timeline Tracker */}
-<div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
-<div className="flex items-center justify-between mb-1">
-<span className="font-headline-sm text-headline-sm text-on-surface font-bold">Dispatch Progress</span>
-<span className="font-label-sm text-label-sm text-primary bg-primary-fixed/50 px-2 py-0.5 rounded-full font-bold">Step 4 of 5</span>
-</div>
-{/* Timeline Step List */}
-<div className="relative flex flex-col gap-space-md pl-2 pt-1">
-{/* Connecting Line Background */}
-<div className="absolute left-5 top-3 bottom-3 w-0.5 bg-surface-variant pointer-events-none"></div>
-<div className="absolute left-5 top-3 h-[72%] w-0.5 bg-primary pointer-events-none transition-all"></div>
-{/* Step 1: Completed */}
-<div className="relative flex items-center gap-space-sm z-10">
-<div className="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
-<span className="material-symbols-outlined text-[14px] font-bold">check</span>
-</div>
-<div className="flex-1 flex items-center justify-between">
-<span className="font-body-md text-body-md text-on-surface font-medium">Booking Confirmed</span>
-<span className="font-body-sm text-body-sm text-on-surface-variant">09:30 AM</span>
-</div>
-</div>
-{/* Step 2: Completed */}
-<div className="relative flex items-center gap-space-sm z-10">
-<div className="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
-<span className="material-symbols-outlined text-[14px] font-bold">check</span>
-</div>
-<div className="flex-1 flex items-center justify-between">
-<span className="font-body-md text-body-md text-on-surface font-medium">Approved &amp; Assigned</span>
-<span className="font-body-sm text-body-sm text-on-surface-variant">09:55 AM</span>
-</div>
-</div>
-{/* Step 3: Completed */}
-<div className="relative flex items-center gap-space-sm z-10">
-<div className="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
-<span className="material-symbols-outlined text-[14px] font-bold">check</span>
-</div>
-<div className="flex-1 flex items-center justify-between">
-<span className="font-body-md text-body-md text-on-surface font-medium">Contact Released</span>
-<span className="font-body-sm text-body-sm text-on-surface-variant">10:15 AM</span>
-</div>
-</div>
-{/* Step 4: Active Pulse */}
-<div className="relative flex items-center gap-space-sm z-10">
-<div className="relative flex items-center justify-center shrink-0">
-<span className="animate-ping absolute w-6 h-6 rounded-full bg-secondary-container opacity-75"></span>
-<div className="w-6 h-6 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
-<span className="material-symbols-outlined text-[14px] font-bold">near_me</span>
-</div>
-</div>
-<div className="flex-1 flex items-center justify-between">
-<div className="flex flex-col">
-<span className="font-body-md text-body-md text-secondary font-bold">Worker En Route</span>
-<span className="font-body-sm text-body-sm text-on-surface-variant">Outer Ring Road • 42m away</span>
-</div>
-<span className="font-label-sm text-label-sm text-secondary uppercase font-bold">Live</span>
-</div>
-</div>
-{/* Step 5: Upcoming */}
-<div className="relative flex items-center gap-space-sm z-10 opacity-60">
-<div className="w-6 h-6 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center shrink-0">
-<span className="material-symbols-outlined text-[14px]">shield</span>
-</div>
-<div className="flex-1 flex items-center justify-between">
-<div className="flex flex-col">
-<span className="font-body-md text-body-md text-on-surface font-medium">Treatment &amp; Digital Warranty</span>
-<span className="font-body-sm text-body-sm text-on-surface-variant">Requires 8491 OTP</span>
-</div>
-<span className="font-body-sm text-body-sm text-on-surface-variant">Pending</span>
-</div>
-</div>
-</div>
-</div>
-{/* Service Details & Warranty Card */}
-<div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
-<div className="flex items-center gap-space-sm">
-<div className="w-9 h-9 rounded-lg bg-primary-fixed/40 text-primary flex items-center justify-center shrink-0">
-<span className="material-symbols-outlined text-[20px]">pest_control</span>
-</div>
-<div className="flex flex-col min-w-0">
-<span className="font-label-sm text-label-sm text-primary uppercase font-bold">Treatment Package</span>
-<span className="font-headline-sm text-headline-sm text-on-surface font-bold truncate">Termite Drill &amp; Inject + Cockroach Gel</span>
-</div>
-</div>
-{/* Warranty Guarantee Box */}
-<div className="p-3 rounded-lg bg-surface-container-low flex items-start gap-space-xs">
-<span className="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
-<div className="flex flex-col">
-<span className="font-label-md text-label-md font-bold text-on-surface">1-Year Eco-Guarantee Activated</span>
-<span className="font-body-sm text-body-sm text-on-surface-variant">Free re-treatment visits if pests reoccur within 365 days of service sign-off.</span>
-</div>
-</div>
-{/* Pre-treatment Safety Checklist */}
-<div className="flex flex-col gap-2 pt-1">
-<span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-bold">Required Pre-Treatment Prep</span>
-<div className="flex flex-col gap-1.5">
-<div className="flex items-center gap-2">
-<span className="material-symbols-outlined text-primary text-[16px]">pets</span>
-<span className="font-body-sm text-body-sm text-on-surface">Keep household pets in an isolated separate room.</span>
-</div>
-<div className="flex items-center gap-2">
-<span className="material-symbols-outlined text-primary text-[16px]">chair</span>
-<span className="font-body-sm text-body-sm text-on-surface">Clear kitchen furniture 2ft away from skirting borders.</span>
-</div>
-<div className="flex items-center gap-2">
-<span className="material-symbols-outlined text-primary text-[16px]">sanitizer</span>
-<span className="font-body-sm text-body-sm text-on-surface">Keep drinking water and food items covered or chilled.</span>
-</div>
-</div>
-</div>
-</div>
-{/* Quick Help & Emergency Dispatch Bar */}
-<div className="p-space-md rounded-xl bg-surface-container flex items-center justify-between">
-<div className="flex items-center gap-space-xs">
-<span className="material-symbols-outlined text-secondary text-[22px]">contact_support</span>
-<div className="flex flex-col">
-<span className="font-label-md text-label-md font-bold text-on-surface">Need to delay or reschedule?</span>
-<span className="font-body-sm text-body-sm text-on-surface-variant">Live operations team active 24/7</span>
-</div>
-</div>
-<button className="px-3 py-1.5 rounded-lg bg-surface-container-highest text-primary font-label-md text-label-md font-semibold hover:bg-surface-variant transition-colors">
-        Manage
-      </button>
-</div>
-</div>
-{/* Interactive Toast Overlay (Micro-interaction placeholder) */}
-<div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-full bg-primary text-on-primary font-label-sm text-label-sm opacity-0 pointer-events-none transition-opacity duration-300 shadow-xl flex items-center gap-1.5" id="recenterToast">
-<span className="material-symbols-outlined text-[16px]">gps_fixed</span>
-<span>Map recentered to Rajesh's Eco-Van</span>
-</div>
-</div>
-</main><nav className="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-bold"><div className="flex items-center justify-around h-16 px-1"><a className="flex flex-col items-center justify-center min-w-[64px] h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="services" href="#"><span className="material-symbols-outlined text-[22px]">eco</span><span className="font-label-sm text-label-sm tracking-tight mt-0.5">Services</span></a><a className="flex flex-col items-center justify-center min-w-[64px] h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="my-bookings" href="#"><span className="material-symbols-outlined text-[22px]">calendar_month</span><span className="font-label-sm text-label-sm tracking-tight mt-0.5">Bookings</span></a><a aria-current="page" className="flex flex-col items-center justify-center min-w-[64px] h-12 transition-colors text-primary font-bold" data-path="live-track" href="#"><span className="material-symbols-outlined text-[22px]">near_me</span><span className="font-label-sm text-label-sm tracking-tight mt-0.5">Live Track</span></a><a className="flex flex-col items-center justify-center min-w-[64px] h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="warranty-&amp;-ledger" href="#"><span className="material-symbols-outlined text-[22px]">verified_user</span><span className="font-label-sm text-label-sm tracking-tight mt-0.5">Ledger</span></a><a className="flex flex-col items-center justify-center min-w-[64px] h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="account" href="#"><span className="material-symbols-outlined text-[22px]">manage_accounts</span><span className="font-label-sm text-label-sm tracking-tight mt-0.5">Account</span></a></div></nav>
+      </main>
+
+      {/* Masked Call Virtual Proxy Simulation Modal */}
+      {callInitiated && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-primary/20 text-center">
+            <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center mx-auto mb-3 animate-pulse">
+              <span className="material-symbols-outlined text-[24px]">phone_in_talk</span>
+            </div>
+            <h3 className="font-headline font-bold text-base text-primary mb-1">Connecting Virtual Proxy</h3>
+            <p className="text-xs text-on-surface-variant mb-4">
+              Dialing technician Vikram Rathore via private bridge number <strong>+91 80 4912 3456</strong>...
+            </p>
+            <button 
+              onClick={() => setCallInitiated(false)}
+              className="w-full py-2 bg-error text-on-error rounded-xl font-bold text-xs cursor-pointer"
+            >
+              End Call
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CSDS Modal */}
+      {showCsdsModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface rounded-2xl max-w-md w-full p-5 shadow-2xl border border-primary/20 space-y-3">
+            <div className="flex items-center justify-between border-b border-surface-container-high pb-2">
+              <h3 className="font-headline font-bold text-sm text-primary flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[18px]">verified</span>
+                Toxicological Safety Certificate
+              </h3>
+              <button onClick={() => setShowCsdsModal(false)} className="text-on-surface-variant hover:text-on-surface cursor-pointer">
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            <div className="space-y-2 text-xs text-on-surface-variant leading-relaxed">
+              <p><strong>Formulation:</strong> Micro-Encapsulated Deltamethrin 2.5% EC (Suspension Concentrate)</p>
+              <p><strong>CIB&RC Permit:</strong> #CIB-2023-8821 / Environmental Class III</p>
+              <p><strong>Safety Precautions:</strong> Re-entry allowed after 90 minutes. Kitchen utensils and food prep surfaces require zero evacuation when targeted gel matrix is applied.</p>
+              <p><strong>Antidote:</strong> Symptomatic relief / Antihistamines. Atropine not required.</p>
+            </div>
+            <button 
+              onClick={() => setShowCsdsModal(false)}
+              className="w-full py-2 bg-primary text-on-primary rounded-xl font-bold text-xs cursor-pointer"
+            >
+              Close Safety Sheet
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-error text-center">
+            <h3 className="font-headline font-bold text-base text-error mb-2">Cancel Service Visit?</h3>
+            <p className="text-xs text-on-surface-variant mb-4">
+              Technician is currently en-route (14 mins away). You can reschedule for a later slot today at zero penalty.
+            </p>
+            <div className="space-y-2">
+              <button 
+                onClick={() => {
+                  alert('Visit rescheduled to 05:00 PM slot today.');
+                  setShowCancelModal(false);
+                }}
+                className="w-full py-2 bg-secondary text-on-primary rounded-xl font-bold text-xs cursor-pointer"
+              >
+                Reschedule to Evening Slot (Free)
+              </button>
+              <button 
+                onClick={() => {
+                  alert('Booking cancelled. 100% refund initiated to source.');
+                  setShowCancelModal(false);
+                  navigate('/');
+                }}
+                className="w-full py-2 bg-surface-container text-error rounded-xl font-bold text-xs cursor-pointer"
+              >
+                Confirm Cancellation
+              </button>
+              <button 
+                onClick={() => setShowCancelModal(false)}
+                className="w-full py-1 text-xs text-on-surface-variant font-medium cursor-pointer"
+              >
+                Keep Active Visit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

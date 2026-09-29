@@ -1,185 +1,104 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import { theme, Button } from 'ui-kit';
-import { UsersIcon, BriefcaseIcon, MapPinIcon, XIcon, ActivityIcon, PhoneIcon } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import AgencyDashboard from './pages/Dashboard';
 import WorkerFleet from './pages/WorkerFleet';
 
-const MOCK_WORKERS = [
-  { id: 1, name: 'Rahul Kumar', phone: '+91 9876543210', status: 'Active', location: 'Jubilee Hills - En route to Job', successRate: '98%', todayJobs: 3, weekJobs: 18, earnings: '₹14,500', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop' },
-  { id: 2, name: 'Amit Sharma', phone: '+91 9123456789', status: 'Active', location: 'Banjara Hills - At Location', successRate: '95%', todayJobs: 2, weekJobs: 14, earnings: '₹11,200', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop' },
-  { id: 3, name: 'Suresh Reddy', phone: '+91 9988776655', status: 'Inactive', location: 'Offline', successRate: '92%', todayJobs: 0, weekJobs: 8, earnings: '₹6,400', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop' }
-];
-
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <Router>
-      <div>
+      <div className="bg-surface text-on-surface min-h-screen">
         <Routes>
-          <Route path="/" element={isAuthenticated ? <AgencyDashboard onLogout={() => setIsAuthenticated(false)} /> : <Login onLogin={() => setIsAuthenticated(true)} />} />
-          <Route path="/worker-fleet" element={isAuthenticated ? <WorkerFleet /> : <Login onLogin={() => setIsAuthenticated(true)} />} />
+          <Route path="/" element={<AgencyDashboard onLogout={() => setIsAuthenticated(false)} />} />
+          <Route path="/worker-fleet" element={<WorkerFleet onLogout={() => setIsAuthenticated(false)} />} />
         </Routes>
+
+        {/* Dev Quick View Toggle */}
+        <div className="fixed bottom-3 right-3 z-50 flex items-center gap-1.5 bg-surface-container-lowest/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-surface-container-high text-xs">
+          <Link 
+            to="/" 
+            className="px-2.5 py-1 rounded-full hover:bg-surface-container font-semibold text-primary transition-colors"
+          >
+            🗺️ Ops Map
+          </Link>
+          <span className="text-outline">/</span>
+          <Link 
+            to="/worker-fleet" 
+            className="px-2.5 py-1 rounded-full hover:bg-surface-container font-semibold text-primary transition-colors"
+          >
+            🛵 Fleet Roster
+          </Link>
+          <span className="text-outline">|</span>
+          <button 
+            onClick={() => setIsAuthenticated(false)} 
+            className="px-2.5 py-1 rounded-full text-error hover:bg-error-container/40 font-semibold cursor-pointer"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </Router>
   );
 }
 
 function Login({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('agency@ecopest.com');
+  const [password, setPassword] = useState('password123');
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (email && password) onLogin();
+    onLogin();
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <form onSubmit={handleLogin} style={{ background: theme.cardBg, padding: '40px', borderRadius: '16px', border: `1px solid ${theme.border}`, width: '350px' }}>
-        <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>Agency Portal</h2>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Agency Email</label>
-          <input value={email} onChange={e => setEmail(e.target.value)} type="email" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+    <div className="flex items-center justify-center min-h-screen bg-surface p-4">
+      <form onSubmit={handleLogin} className="bg-surface-container-lowest border border-surface-container-high p-8 rounded-2xl shadow-xl w-full max-w-sm space-y-4">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+            <span className="material-symbols-outlined text-[24px]">nature_people</span>
+          </div>
+          <div>
+            <h2 className="font-headline font-bold text-lg text-primary">Pest Free Agency</h2>
+            <p className="text-[11px] text-on-surface-variant">Operations & Fleet Dispatch Portal</p>
+          </div>
         </div>
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Password</label>
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+
+        <div className="bg-surface-container-low p-2.5 rounded-xl text-xs text-on-surface-variant text-center">
+          EcoPest Solutions (Bangalore & Gurgaon Hub)
         </div>
-        <Button type="submit" style={{ width: '100%' }}>Login</Button>
+
+        <div>
+          <label className="text-xs font-bold text-on-surface-variant block mb-1">Agency Email</label>
+          <input 
+            value={email} 
+            onChange={e => setEmail(e.target.value)} 
+            type="email" 
+            className="w-full px-3 py-2 text-xs rounded-lg border border-surface-container-high bg-surface-container-low focus:outline-none focus:border-primary" 
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-on-surface-variant block mb-1">Password</label>
+          <input 
+            value={password} 
+            onChange={e => setPassword(e.target.value)} 
+            type="password" 
+            className="w-full px-3 py-2 text-xs rounded-lg border border-surface-container-high bg-surface-container-low focus:outline-none focus:border-primary" 
+          />
+        </div>
+
+        <button 
+          type="submit" 
+          className="w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
+        >
+          Sign In to Dispatch Ops
+        </button>
       </form>
-    </div>
-  );
-}
-
-function Dashboard({ onLogout }) {
-  const [selectedWorker, setSelectedWorker] = useState(null);
-
-  const activeWorkers = MOCK_WORKERS.filter(w => w.status === 'Active').length;
-  const inactiveWorkers = MOCK_WORKERS.filter(w => w.status === 'Inactive').length;
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <nav style={{ background: theme.cardBg, padding: '15px 30px', borderBottom: `2px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, fontWeight: '900' }}>Pest_Fast Agency</h2>
-        <Button variant="secondary" onClick={onLogout} style={{ padding: '8px 16px' }}>Logout</Button>
-      </nav>
-
-      <div style={{ padding: '30px', flex: 1, overflowY: 'auto' }}>
-        {/* Operations Metrics */}
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><ActivityIcon /> Operations Overview</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-          <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-            <p style={{ margin: '0 0 10px', fontSize: '14px', opacity: 0.8 }}>Active Jobs Today</p>
-            <h2 style={{ margin: 0, color: theme.buttonBg, fontSize: '32px' }}>12</h2>
-          </div>
-          <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-            <p style={{ margin: '0 0 10px', fontSize: '14px', opacity: 0.8 }}>Running Currently</p>
-            <h2 style={{ margin: 0, color: '#f59e0b', fontSize: '32px' }}>4</h2>
-          </div>
-          <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-            <p style={{ margin: '0 0 10px', fontSize: '14px', opacity: 0.8 }}>Scheduled Next 24h</p>
-            <h2 style={{ margin: 0, color: '#3b82f6', fontSize: '32px' }}>28</h2>
-          </div>
-        </div>
-
-        {/* Worker Statistics */}
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><UsersIcon /> Workforce Stats</h3>
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
-          <div style={{ background: theme.buttonBg, color: '#fff', padding: '15px 30px', borderRadius: '12px', display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{activeWorkers}</div>
-            <div>Active Workers</div>
-          </div>
-          <div style={{ background: '#ef4444', color: '#fff', padding: '15px 30px', borderRadius: '12px', display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{inactiveWorkers}</div>
-            <div>Inactive Workers</div>
-          </div>
-        </div>
-
-        {/* Worker Directory */}
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><BriefcaseIcon /> Worker Directory</h3>
-        <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead style={{ background: theme.bgLight }}>
-              <tr>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Profile</th>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Status</th>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Live Location</th>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Success %</th>
-                <th style={{ padding: '15px 20px', borderBottom: `1px solid ${theme.border}` }}>Jobs (T / W)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_WORKERS.map(w => (
-                <tr key={w.id} onClick={() => setSelectedWorker(w)} style={{ borderBottom: `1px solid ${theme.border}`, cursor: 'pointer', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                  <td style={{ padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <img src={w.avatar} alt={w.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
-                    <div>
-                      <div style={{ fontWeight: 'bold' }}>{w.name}</div>
-                      <div style={{ fontSize: '12px', opacity: 0.7 }}>{w.phone}</div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '15px 20px' }}>
-                    <span style={{ background: w.status === 'Active' ? '#d1fae5' : '#fee2e2', color: w.status === 'Active' ? '#065f46' : '#991b1b', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>
-                      {w.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '15px 20px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <MapPinIcon size={16} opacity={0.6}/> {w.location}
-                  </td>
-                  <td style={{ padding: '15px 20px', fontWeight: 'bold' }}>{w.successRate}</td>
-                  <td style={{ padding: '15px 20px' }}>{w.todayJobs} / {w.weekJobs}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Slide-out Modal */}
-      {selectedWorker && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ width: '400px', background: theme.bgLight, height: '100%', padding: '30px', boxShadow: '-5px 0 20px rgba(0,0,0,0.1)', overflowY: 'auto', position: 'relative' }}>
-            <button onClick={() => setSelectedWorker(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <XIcon size={24} color={theme.textDark} />
-            </button>
-            
-            <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              <img src={selectedWorker.avatar} alt="Profile" style={{ width: '100px', height: '100px', borderRadius: '50%', border: `4px solid ${theme.border}`, marginBottom: '15px' }} />
-              <h2 style={{ margin: 0 }}>{selectedWorker.name}</h2>
-              <p style={{ margin: '5px 0 20px', opacity: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}><PhoneIcon size={16}/> {selectedWorker.phone}</p>
-              
-              <span style={{ background: selectedWorker.status === 'Active' ? '#d1fae5' : '#fee2e2', color: selectedWorker.status === 'Active' ? '#065f46' : '#991b1b', padding: '6px 15px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold' }}>
-                {selectedWorker.status} Worker
-              </span>
-            </div>
-
-            <div style={{ marginTop: '40px', background: theme.cardBg, padding: '20px', borderRadius: '16px', border: `1px solid ${theme.border}` }}>
-              <h4 style={{ margin: '0 0 20px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '10px' }}>Performance Snapshot</h4>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                <span style={{ opacity: 0.8 }}>Overall Success Rate</span>
-                <strong style={{ color: theme.buttonBg }}>{selectedWorker.successRate}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                <span style={{ opacity: 0.8 }}>Jobs Done Today</span>
-                <strong>{selectedWorker.todayJobs}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                <span style={{ opacity: 0.8 }}>Jobs Done This Week</span>
-                <strong>{selectedWorker.weekJobs}</strong>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '20px', background: theme.cardBg, padding: '20px', borderRadius: '16px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-              <p style={{ margin: '0 0 5px', fontSize: '14px', opacity: 0.8 }}>Total Earnings Generated</p>
-              <h1 style={{ margin: 0, color: theme.buttonBg }}>{selectedWorker.earnings}</h1>
-            </div>
-
-            <Button style={{ width: '100%', marginTop: '30px' }}>Message Worker</Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

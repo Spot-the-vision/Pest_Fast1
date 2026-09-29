@@ -7,25 +7,28 @@ import './index.css';
 function App() {
   return (
     <Router>
-      <div style={{ backgroundColor: '#fcf9f4', minHeight: '100vh', color: '#1c1c19' }}>
+      <div className="bg-surface min-h-screen text-on-surface">
         <Routes>
-          <Route path="/" element={
-            <div>
-               <BookingScreen />
-               <Link to="/tracking" style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 1000, background: '#064e3b', color: '#fff', padding: '10px 20px', borderRadius: '20px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                 Dev: Jump to Tracking ➔
-               </Link>
-            </div>
-          } />
-          <Route path="/tracking" element={
-            <div>
-               <TrackingScreen />
-               <Link to="/" style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 1000, background: '#ba1a1a', color: '#fff', padding: '10px 20px', borderRadius: '20px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                 ← Dev: Back to Booking
-               </Link>
-            </div>
-          } />
+          <Route path="/" element={<BookingScreen />} />
+          <Route path="/tracking" element={<TrackingScreen />} />
         </Routes>
+
+        {/* Dev Quick View Navigator */}
+        <div className="fixed bottom-3 right-3 z-50 flex items-center gap-1.5 bg-surface-container-lowest/90 backdrop-blur-md p-1 rounded-full shadow-lg border border-surface-container-high text-xs">
+          <Link 
+            to="/" 
+            className="px-2.5 py-1 rounded-full hover:bg-surface-container font-semibold text-primary transition-colors"
+          >
+            📋 Book
+          </Link>
+          <span className="text-outline">/</span>
+          <Link 
+            to="/tracking" 
+            className="px-2.5 py-1 rounded-full hover:bg-surface-container font-semibold text-primary transition-colors"
+          >
+            📍 Live Track
+          </Link>
+        </div>
       </div>
     </Router>
   );
