@@ -14,6 +14,7 @@ export default function BookingScreen() {
   const [notes, setNotes] = useState('Infestation noticed near kitchen cabinets and wooden door frames.');
   const [promoCode, setPromoCode] = useState('PESTFREE150');
   const [promoApplied, setPromoApplied] = useState(true);
+  const [dispatchPreference, setDispatchPreference] = useState('inspection'); // 'inspection' | 'direct'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSosModal, setShowSosModal] = useState(false);
   const [showWarrantyModal, setShowWarrantyModal] = useState(false);
@@ -332,7 +333,84 @@ export default function BookingScreen() {
           </div>
         </section>
 
-        {/* Step 5: Transparent Billing Breakdown Card */}
+                {/* Step 5: Inspection Preference & Dispatch Type */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-headline font-bold text-sm text-primary flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-primary text-on-primary text-[11px] font-bold flex items-center justify-center">5</span>
+              Do you need an Inspection First, or Direct Treatment?
+            </h2>
+            <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded">
+              {dispatchPreference === 'inspection' ? 'Free In-Home Inspection' : 'Direct Treatment'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Option A: Inspection First */}
+            <div 
+              onClick={() => setDispatchPreference('inspection')}
+              className={`p-4 rounded-xl border cursor-pointer transition-all relative ${
+                dispatchPreference === 'inspection' 
+                  ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary' 
+                  : 'border-surface-container-high bg-surface-container-lowest hover:border-primary/40'
+              }`}
+            >
+              <span className="absolute -top-2.5 right-3 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
+                Recommended
+              </span>
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  dispatchPreference === 'inspection' ? 'bg-primary text-on-primary' : 'bg-surface-container text-primary'
+                }`}>
+                  <span className="material-symbols-outlined text-[22px]">search_insights</span>
+                </div>
+                <div>
+                  <h3 className="font-headline font-bold text-xs text-primary">In-Home Inspection First</h3>
+                  <p className="text-[11px] text-on-surface-variant mt-1 leading-relaxed">
+                    Certified exterminator audits crevices, evaluates colony depth, and confirms exact chemical plan before spraying.
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="material-symbols-outlined text-emerald-600 text-[15px]">check_circle</span>
+                    <span className="text-xs font-bold text-emerald-700">100% Free Inspection</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Option B: Direct Immediate Treatment */}
+            <div 
+              onClick={() => setDispatchPreference('direct')}
+              className={`p-4 rounded-xl border cursor-pointer transition-all relative ${
+                dispatchPreference === 'direct' 
+                  ? 'border-secondary bg-secondary/5 shadow-md ring-1 ring-secondary' 
+                  : 'border-surface-container-high bg-surface-container-lowest hover:border-secondary/40'
+              }`}
+            >
+              <span className="absolute -top-2.5 right-3 bg-secondary text-on-primary text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
+                Fastest Eradication
+              </span>
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  dispatchPreference === 'direct' ? 'bg-secondary text-on-primary' : 'bg-surface-container text-secondary'
+                }`}>
+                  <span className="material-symbols-outlined text-[22px]">bolt</span>
+                </div>
+                <div>
+                  <h3 className="font-headline font-bold text-xs text-primary">Direct Treatment on Arrival</h3>
+                  <p className="text-[11px] text-on-surface-variant mt-1 leading-relaxed">
+                    Technician arrives fully loaded with bio-pesticides and cold foggers to begin immediate eradication in one go.
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="material-symbols-outlined text-secondary text-[15px]">verified</span>
+                    <span className="text-xs font-bold text-secondary">Immediate Eradication (₹{totalAmount})</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Step 6: Transparent Billing Breakdown Card */}
         <section className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-surface-container-high pb-2">
             <h3 className="font-headline font-bold text-sm text-primary">Transparent Fee Breakdown</h3>
@@ -376,8 +454,15 @@ export default function BookingScreen() {
       <footer className="fixed bottom-0 inset-x-0 bg-surface-container-lowest/95 backdrop-blur-md border-t border-surface-container-high p-3 z-40">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
           <div>
-            <div className="text-[10px] uppercase font-bold text-on-surface-variant">Estimated Total</div>
-            <div className="font-headline font-extrabold text-lg text-primary">₹{totalAmount}</div>
+            <div className="text-[10px] uppercase font-bold text-on-surface-variant">
+              {dispatchPreference === 'inspection' ? 'Inspection: Free (Quote on Site)' : 'Direct Treatment Total'}
+            </div>
+            <div className="font-headline font-extrabold text-lg text-primary">
+              {dispatchPreference === 'inspection' ? '₹0 Advance' : `₹${totalAmount}`}
+              <span className="text-[10px] font-normal text-on-surface-variant ml-1">
+                {dispatchPreference === 'inspection' ? `(Est: ₹${totalAmount})` : '(Incl. GST)'}
+              </span>
+            </div>
           </div>
           <button
             onClick={handleBookingSubmit}
@@ -391,8 +476,14 @@ export default function BookingScreen() {
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined text-[18px]">send</span>
-                <span>Confirm & Dispatch Tech</span>
+                <span className="material-symbols-outlined text-[18px]">
+                  {dispatchPreference === 'inspection' ? 'search_insights' : 'send'}
+                </span>
+                <span>
+                  {dispatchPreference === 'inspection' 
+                    ? 'Confirm & Dispatch for Inspection' 
+                    : 'Confirm & Dispatch for Direct Treatment'}
+                </span>
               </>
             )}
           </button>

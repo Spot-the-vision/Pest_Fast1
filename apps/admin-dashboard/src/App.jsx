@@ -6,6 +6,8 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [activeTab, setActiveTab] = useState('telemetry'); // telemetry, kyc, disputes, financials
   const [toastMessage, setToastMessage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDossier, setSelectedDossier] = useState(null);
 
   // Interactive state for KYC approvals
   const [pendingAgencies, setPendingAgencies] = useState([
@@ -196,7 +198,7 @@ export default function App() {
 
                     <div className="flex items-center gap-2 shrink-0">
                       <button 
-                        onClick={() => showToast(`Audit Report for ${agency.name} generated.`)}
+                        onClick={() => setSelectedDossier(agency)}
                         className="px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-bold text-xs cursor-pointer"
                       >
                         Inspect Dossier
@@ -313,6 +315,79 @@ export default function App() {
             </div>
           </div>
         )}
+            {/* Agency KYC Audit Dossier Modal */}
+      {selectedDossier && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface rounded-2xl max-w-md w-full p-5 shadow-2xl border border-primary/20 space-y-4">
+            <div className="flex items-center justify-between border-b border-surface-container-high pb-2">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[22px]">policy</span>
+                <h3 className="font-headline font-bold text-sm text-primary">Agency KYC & Compliance Dossier</h3>
+              </div>
+              <button onClick={() => setSelectedDossier(null)} className="text-on-surface-variant hover:text-on-surface cursor-pointer">
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs text-on-surface-variant leading-relaxed">
+              <div className="bg-surface-container-low p-3 rounded-xl space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="font-medium text-on-surface-variant">Agency Name:</span>
+                  <strong className="text-primary">{selectedDossier.name}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-on-surface-variant">Registration Code:</span>
+                  <code className="bg-surface-container px-1 py-0.5 rounded font-bold text-primary">{selectedDossier.id}</code>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-on-surface-variant">Operating City:</span>
+                  <span className="font-semibold text-on-surface">{selectedDossier.city}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-on-surface-variant">Managing Owner:</span>
+                  <span className="font-semibold text-on-surface">{selectedDossier.owner}</span>
+                </div>
+              </div>
+
+              <div className="bg-surface-container-low p-3 rounded-xl space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Insecticide Act 1968 License:</span>
+                  <span className="text-emerald-700 font-bold">✓ Verified Active</span>
+                </div>
+                <p className="text-[11px] font-mono text-primary bg-surface-container px-1.5 py-0.5 rounded">{selectedDossier.license}</p>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="font-medium">GSTIN Tax Registration:</span>
+                  <span className="font-mono text-primary">{selectedDossier.gstin}</span>
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="font-medium">Owner Identity Audit:</span>
+                  <span className="text-emerald-700 font-bold">e-KYC Token Confirmed (Raw PII Masked)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button 
+                onClick={() => {
+                  handleApproveAgency(selectedDossier.id, selectedDossier.name);
+                  setSelectedDossier(null);
+                }}
+                className="flex-1 py-2.5 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-bold text-xs flex items-center justify-center gap-1 shadow-sm cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                Approve & Issue Certificate
+              </button>
+              <button 
+                onClick={() => setSelectedDossier(null)}
+                className="px-3 py-2.5 bg-surface-container text-on-surface-variant rounded-xl font-bold text-xs hover:bg-surface-container-high cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </main>
     </div>
   );

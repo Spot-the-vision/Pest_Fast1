@@ -15,6 +15,8 @@ export default function App() {
     signOff: false
   });
   const [showSosModal, setShowSosModal] = useState(false);
+  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+  const [whatsappSent, setWhatsappSent] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (msg) => {
@@ -103,30 +105,72 @@ export default function App() {
       <main className="p-4 flex-1 overflow-y-auto space-y-4">
         {activeTab === 'job' && (
           <>
-            {/* Domain Security Banner: Masked vs Unmasked Contact Notice */}
-            <div className="bg-surface-container-low border border-primary/20 rounded-2xl p-3.5 shadow-sm">
+            {/* Agency Confirmation & WhatsApp Ping Banner */}
+            <div className={`rounded-2xl p-3.5 border transition-all ${
+              agencyUnlocked 
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-900' 
+                : 'bg-amber-50 border-amber-300 text-amber-900'
+            }`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px] text-primary">security</span>
-                  <span className="font-headline font-bold text-xs uppercase tracking-wide text-primary">
-                    AGENTS.md Privacy Protocol
+                  <span className="material-symbols-outlined text-[20px]">
+                    {agencyUnlocked ? 'lock_open' : 'lock_clock'}
                   </span>
+                  <div>
+                    <h3 className="font-headline font-bold text-xs uppercase tracking-wide">
+                      {agencyUnlocked ? 'Agency Confirmed — Navigation & Contact Unlocked' : 'Waiting for Agency Owner Confirmation'}
+                    </h3>
+                    <p className="text-[11px] opacity-85 mt-0.5 leading-tight">
+                      {agencyUnlocked 
+                        ? 'Agency confirmed dispatch. Direct mobile calling, exact house coordinates and Google Maps navigation are active.' 
+                        : 'Exact address, Google Maps GPS, and direct customer phone are locked until agency owner confirms dispatch.'}
+                    </p>
+                  </div>
                 </div>
-                <button 
-                  onClick={() => {
-                    setAgencyUnlocked(!agencyUnlocked);
-                    showToast(agencyUnlocked ? 'Contact reverted to Masked VoIP Proxy' : 'Agency 2nd Approval Granted: Exact Address & Direct Mobile Unlocked!');
-                  }}
-                  className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors cursor-pointer"
-                >
-                  {agencyUnlocked ? 'Lock Contact' : 'Simulate 2nd Approval'}
-                </button>
               </div>
-              <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
-                {agencyUnlocked 
-                  ? '✅ Agency owner granted Stage-2 Dispatch Approval. Direct customer phone and destination coordinates are active.'
-                  : '🔒 Stage-1 Active: Contact is masked via VoIP proxy and exact address is locked until agency grants en-route approval.'}
-              </p>
+
+              {/* Action Buttons for Agency WhatsApp Confirmation */}
+              <div className="mt-3 pt-2.5 border-t border-current/15 flex flex-wrap items-center gap-2">
+                {!agencyUnlocked ? (
+                  <>
+                    <button 
+                      onClick={() => setShowWhatsappModal(true)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">chat</span>
+                      <span>{whatsappSent ? 'Resend WhatsApp Alert' : 'Ping Agency Owner on WhatsApp'}</span>
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        setAgencyUnlocked(true);
+                        showToast('✅ Agency Owner Approved via WhatsApp! Exact Address, Mobile & GPS Navigation Unlocked.');
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                      <span>Owner Approved: Unlock All</span>
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[11px] font-semibold text-emerald-800 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">verified</span>
+                      All Coordinates & Contacts Active
+                    </span>
+                    <button 
+                      onClick={() => {
+                        setAgencyUnlocked(false);
+                        setWhatsappSent(false);
+                        showToast('Re-locked: Waiting for Agency Confirmation.');
+                      }}
+                      className="text-[11px] font-bold text-emerald-900 underline hover:no-underline cursor-pointer"
+                    >
+                      Re-Lock Job
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Current Active Assignment Card */}
@@ -149,7 +193,7 @@ export default function App() {
               </p>
 
               {/* Customer & Location Card */}
-              <div className="bg-surface-container-low rounded-xl p-3 space-y-2.5 mb-4 text-xs">
+              <div className="bg-surface-container-low rounded-xl p-3.5 space-y-3 mb-4 text-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px] text-primary">person</span>
@@ -157,57 +201,89 @@ export default function App() {
                       {agencyUnlocked ? 'Johnathan Doe' : 'John D. (Masked Profile)'}
                     </span>
                   </div>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">
-                    {agencyUnlocked ? 'Direct Client' : 'Protected ID'}
+                  <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
+                    agencyUnlocked ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {agencyUnlocked ? 'Unlocked' : 'Locked 🔒'}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between">
+                {/* Mobile Phone (Locked vs Unlocked) */}
+                <div className="flex items-center justify-between pt-1 border-t border-surface-container-high/60">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px] text-primary">call</span>
-                    <span>
-                      {agencyUnlocked ? '+91 98765 43210' : '+91 80 4912 3456 (Ext 81)'}
-                    </span>
+                    <div>
+                      {agencyUnlocked ? (
+                        <span className="font-bold text-primary">+91 98765 43210</span>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-on-surface-variant font-medium">
+                          <span>+91 ••••• •••••</span>
+                          <span className="text-[10px] text-error font-semibold">(Agency Approval Needed)</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <a 
-                    href={agencyUnlocked ? 'tel:+919876543210' : 'tel:+918049123456'} 
-                    className="px-2.5 py-1 rounded-lg bg-primary text-on-primary font-semibold text-[11px] flex items-center gap-1 shadow-sm"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">call</span>
-                    Call
-                  </a>
+                  {agencyUnlocked ? (
+                    <a 
+                      href="tel:+919876543210" 
+                      className="px-2.5 py-1 rounded-lg bg-primary text-on-primary font-semibold text-[11px] flex items-center gap-1 shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">call</span>
+                      Direct Call
+                    </a>
+                  ) : (
+                    <button 
+                      onClick={() => setShowWhatsappModal(true)}
+                      className="px-2 py-1 rounded-lg bg-surface-container text-on-surface-variant font-semibold text-[10px] flex items-center gap-1 cursor-pointer hover:bg-surface-container-high"
+                      title="Request Agency Approval to unlock direct phone"
+                    >
+                      <span className="material-symbols-outlined text-[13px]">lock</span>
+                      Locked
+                    </button>
+                  )}
                 </div>
 
+                {/* Address & Navigation (Locked vs Unlocked) */}
                 <div className="flex items-start justify-between pt-1 border-t border-surface-container-high/60">
                   <div className="flex items-start gap-2 flex-1 pr-2">
                     <span className="material-symbols-outlined text-[18px] text-primary shrink-0 mt-0.5">location_on</span>
                     <div>
                       <p className="font-medium">
                         {agencyUnlocked 
-                          ? 'Villa #14, Orchid Petals, Sector 48, Gurgaon' 
-                          : 'Sector 48, Gurgaon (Approximate Zone)'}
+                          ? 'Villa #14, Orchid Petals, Sector 48, Gurgaon (Gate Code: #4812)' 
+                          : 'Sector 48, Gurgaon (Approximate Zone Only)'}
                       </p>
                       {!agencyUnlocked && (
-                        <p className="text-[10px] text-error font-medium mt-0.5">
-                          Exact gate code & unit locked by agency security gate.
+                        <p className="text-[10px] text-error font-semibold mt-0.5 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px]">lock</span>
+                          Exact unit, street & gate code locked by agency
                         </p>
                       )}
                     </div>
                   </div>
-                  <button 
-                    onClick={() => {
-                      if (!agencyUnlocked) {
-                        showToast('Exact coordinates locked. Simulating 2nd approval...');
-                        setAgencyUnlocked(true);
-                      } else {
-                        showToast('Opening turn-by-turn navigation in GPS...');
-                      }
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-secondary text-on-primary font-semibold text-[11px] flex items-center gap-1 shadow-sm shrink-0 cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">navigation</span>
-                    {agencyUnlocked ? 'Navigate' : 'Request Unlock'}
-                  </button>
+
+                  {agencyUnlocked ? (
+                    <a 
+                      href="https://maps.google.com/?q=Sector+48+Gurgaon" 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm shrink-0 hover:bg-emerald-800 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">navigation</span>
+                      Open GPS Maps
+                    </a>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        showToast('Navigation is locked. Please send WhatsApp message to Agency Owner.');
+                        setShowWhatsappModal(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-surface-container text-on-surface-variant font-bold text-[11px] flex items-center gap-1 shadow-xs shrink-0 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">lock</span>
+                      GPS Locked
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -424,6 +500,48 @@ export default function App() {
           </div>
         )}
       </main>
+
+            {/* WhatsApp Message Modal */}
+      {showWhatsappModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-emerald-500">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+              <span className="material-symbols-outlined text-[28px]">chat</span>
+            </div>
+            <h3 className="font-headline font-bold text-center text-base text-primary mb-1">
+              Ping Agency Owner on WhatsApp
+            </h3>
+            <p className="text-center text-xs text-on-surface-variant mb-4 leading-relaxed">
+              If the agency owner has not unlocked the coordinates, send a direct WhatsApp alert requesting Stage-2 Approval for Job <strong>#JOB-7491</strong>.
+            </p>
+
+            <div className="bg-surface-container-low p-3 rounded-xl text-xs space-y-1 mb-4 text-on-surface-variant">
+              <p className="font-bold text-primary">Pre-Filled Message Preview:</p>
+              <p className="italic">"Hello EcoPest Owner, Technician Vikram Rathore is ready for Job #JOB-7491. Please accept & grant Stage-2 Approval to unlock destination coordinates and client phone."</p>
+            </div>
+
+            <div className="space-y-2">
+              <button 
+                onClick={() => {
+                  setWhatsappSent(true);
+                  setShowWhatsappModal(false);
+                  showToast('📲 WhatsApp Request Sent to Agency Owner! Awaiting Confirmation.');
+                }}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">send</span>
+                Send WhatsApp Alert to Agency Owner
+              </button>
+              <button 
+                onClick={() => setShowWhatsappModal(false)}
+                className="w-full py-2 text-xs font-semibold text-on-surface-variant hover:text-on-surface cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Emergency SOS Modal */}
       {showSosModal && (

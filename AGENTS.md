@@ -136,6 +136,27 @@ confirm it doesn't conflict with something on their side.
   - [ ] Person B
   - [ ] Person C
 
+### [2026-09-29] Add Agency WhatsApp Approval Lock & Customer Inspection Dispatch Choice — changed by agent
+
+- **Required change**:
+  1. In Worker Dashboard, enforce strict lock on customer mobile phone, Google Maps GPS navigation, and exact residential address until agency confirmation is received. Add WhatsApp alert ping to agency owner and confirmation unlock flow.
+  2. In Customer App, explicitly prompt the client at the end of the booking flow whether they need an "In-Home Inspection First" or "Direct Immediate Treatment Dispatch" before confirming.
+  3. In Admin Dashboard, enhance clarity with interactive Agency KYC Audit Dossier modal for inspecting permits and trade licenses.
+- **What actually changed**:
+  - `apps/worker-app/src/App.jsx`: Masked customer phone, locked GPS navigation button, and masked residential address behind `agencyApproved` state. Added WhatsApp ping alert modal with pre-filled dispatch request to agency owner, and instant unlock upon confirmation.
+  - `apps/customer-app/src/pages/BookingScreen.jsx`: Added Step 5 prompt with two interactive cards ("In-Home Inspection First - 100% Free" vs "Direct Immediate Treatment on Arrival"). Dynamic footer CTA reflects selection ("Confirm & Dispatch for Inspection" vs "Confirm & Dispatch for Direct Treatment").
+  - `apps/admin-dashboard/src/App.jsx`: Integrated interactive Agency KYC Compliance Dossier modal for inspecting licenses, GSTIN, and issuing one-click agency approval.
+- **Files touched**:
+  - `apps/worker-app/src/App.jsx`
+  - `apps/customer-app/src/pages/BookingScreen.jsx`
+  - `apps/admin-dashboard/src/App.jsx`
+  - `AGENTS.md`
+- **Still missing / not yet added**: none — complete, verified with Vite build (0 errors) and live servers.
+- **Reviewed by**:
+  - [ ] Person A
+  - [ ] Person B
+  - [ ] Person C
+
 ### [2026-09-29] Make 4 Dashboards Fully Professional, Interactive & User-Centric — changed by agent
 
 - **Required change**: Polish and unify all 4 dashboards (Customer App, Worker App, Agency Dashboard, Admin Dashboard) from everyone's point of view to be completely professional, responsive, interactive, and strictly aligned with domain rules in AGENTS.md.
