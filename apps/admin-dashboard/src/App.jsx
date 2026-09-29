@@ -62,73 +62,18 @@ function Login({ onLogin }) {
   );
 }
 
+import PlatformOverview from './pages/PlatformOverview';
+
 function AdminGlobalDashboard({ onLogout }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <nav style={{ background: theme.bgDark, color: theme.textLight, padding: '15px 30px', borderBottom: `2px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, fontWeight: '900', display: 'flex', alignItems: 'center', gap: '10px' }}><GlobeIcon /> Pest_Fast Global Admin</h2>
-        <Button onClick={onLogout} style={{ padding: '8px 16px', background: '#dc2626', color: '#fff', border: 'none' }}>Logout</Button>
-      </nav>
-
-      <div style={{ padding: '30px', flex: 1, overflowY: 'auto' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><TrendingUpIcon /> System Wide Accomplishments</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-          <div style={{ background: theme.cardBg, padding: '25px', borderRadius: '12px', border: `1px solid ${theme.border}`, borderLeft: `5px solid ${theme.buttonBg}` }}>
-            <p style={{ margin: '0 0 5px', opacity: 0.8 }}>Total Agency Jobs Accomplished</p>
-            <h1 style={{ margin: 0, color: theme.buttonBg, fontSize: '42px' }}>14,208</h1>
-          </div>
-          <div style={{ background: theme.cardBg, padding: '25px', borderRadius: '12px', border: `1px solid ${theme.border}`, borderLeft: `5px solid #10b981` }}>
-            <p style={{ margin: '0 0 5px', opacity: 0.8 }}>Global Success Rate</p>
-            <h1 style={{ margin: 0, color: '#10b981', fontSize: '42px' }}>96.8%</h1>
-          </div>
-        </div>
-
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><ActivityIcon /> Velocity Metrics (Jobs Completed)</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '40px' }}>
-          <div style={{ background: theme.bgLight, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-            <span style={{ fontWeight: 'bold' }}>Today</span>
-            <h2 style={{ margin: '10px 0 0', color: theme.buttonBg }}>482</h2>
-          </div>
-          <div style={{ background: theme.bgLight, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-            <span style={{ fontWeight: 'bold' }}>This Week</span>
-            <h2 style={{ margin: '10px 0 0', color: theme.buttonBg }}>3,150</h2>
-          </div>
-          <div style={{ background: theme.bgLight, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-            <span style={{ fontWeight: 'bold' }}>This Month</span>
-            <h2 style={{ margin: '10px 0 0', color: theme.buttonBg }}>12,890</h2>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-          <div>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><UsersIcon /> Workforce Pool Across Agencies</h3>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <div style={{ flex: 1, background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981' }}>842</div>
-                <div style={{ fontSize: '14px', opacity: 0.8 }}>Active Workers</div>
-              </div>
-              <div style={{ flex: 1, background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ef4444' }}>125</div>
-                <div style={{ fontSize: '14px', opacity: 0.8 }}>Inactive / On Leave</div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><BriefcaseIcon /> Client Demand</h3>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <div style={{ flex: 1, background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#3b82f6' }}>89%</div>
-                <div style={{ fontSize: '14px', opacity: 0.8 }}>New Client Logins</div>
-              </div>
-              <div style={{ flex: 1, background: theme.cardBg, padding: '20px', borderRadius: '12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8b5cf6' }}>11%</div>
-                <div style={{ fontSize: '14px', opacity: 0.8 }}>Existing Client Requests</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+      <PlatformOverview />
+      <Button 
+        onClick={onLogout} 
+        style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 9999, background: '#ba1a1a', color: '#fff' }}
+      >
+        Logout Admin
+      </Button>
     </div>
   );
 }

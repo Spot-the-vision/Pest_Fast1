@@ -92,6 +92,61 @@ confirm it doesn't conflict with something on their side.
   - [x] Person C
 ```
 
+### [2026-09-28] Convert HTML to React Dashboard — changed by agent
+
+- **Required change**: Convert static HTML dashboard mockup into a React component.
+- **What actually changed**: `// Added Dashboard.jsx, keeping UI exact while replacing vanilla JS DOM manipulation with React useState hooks.`
+- **Files touched**: apps/agency-dashboard/src/pages/Dashboard.jsx
+- **Still missing / not yet added**: none — complete
+- **Reviewed by**:
+  - [ ] Person A
+  - [ ] Person B
+  - [ ] Person C
+
+### [2026-09-28] Wire up React Dashboard UI and Tailwind config — changed by agent
+
+- **Required change**: Integrate the newly converted Dashboard UI into the main application layout and inject its required Tailwind CSS config.
+- **What actually changed**: `// Updated App.jsx to import and render AgencyDashboard instead of the old mock; injected Tailwind script/fonts from code.html into index.html.`
+- **Files touched**: apps/agency-dashboard/src/App.jsx, apps/agency-dashboard/index.html
+- **Still missing / not yet added**: none — complete
+- **Reviewed by**:
+  - [ ] Person A
+  - [ ] Person B
+  - [ ] Person C
+
+### [2026-09-28] Add Worker Fleet React UI — changed by agent
+
+- **Required change**: Convert the new worker fleet HTML into a React component and wire it up in the app routing.
+- **What actually changed**: `// Added WorkerFleet.jsx and registered it under the /worker-fleet route in App.jsx.`
+- **Files touched**: apps/agency-dashboard/src/pages/WorkerFleet.jsx, apps/agency-dashboard/src/App.jsx
+- **Still missing / not yet added**: none — complete
+- **Reviewed by**:
+  - [ ] Person A
+  - [ ] Person B
+  - [ ] Person C
+
+### [2026-09-29] Add Customer App React UI Screens — changed by agent
+
+- **Required change**: Convert HTML design folders (2 & 3) into React components for the Customer App and wire them into App.jsx.
+- **What actually changed**: `// Added BookingScreen.jsx and TrackingScreen.jsx; injected Tailwind config to customer-app/index.html; wired routing in App.jsx with dev nav links.`
+- **Files touched**: apps/customer-app/index.html, apps/customer-app/src/App.jsx, apps/customer-app/src/pages/BookingScreen.jsx, apps/customer-app/src/pages/TrackingScreen.jsx
+- **Still missing / not yet added**: none — complete
+- **Reviewed by**:
+  - [ ] Person A
+  - [ ] Person B
+  - [ ] Person C
+
+### [2026-09-29] Add Admin Dashboard React UI — changed by agent
+
+- **Required change**: Convert the newly pasted `code.html` into a React component for the Admin Dashboard and wire it into App.jsx.
+- **What actually changed**: `// Added PlatformOverview.jsx, injected Tailwind config to admin-dashboard/index.html, wired routing in App.jsx to replace the mock AdminGlobalDashboard.`
+- **Files touched**: apps/admin-dashboard/index.html, apps/admin-dashboard/src/App.jsx, apps/admin-dashboard/src/pages/PlatformOverview.jsx
+- **Still missing / not yet added**: none — complete
+- **Reviewed by**:
+  - [ ] Person A
+  - [ ] Person B
+  - [ ] Person C
+
 ---
 
 ## 🗄️ Migration History (frozen — setup phase, Sep 2026)

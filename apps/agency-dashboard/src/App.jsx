@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { theme, Button } from 'ui-kit';
 import { UsersIcon, BriefcaseIcon, MapPinIcon, XIcon, ActivityIcon, PhoneIcon } from 'lucide-react';
+import AgencyDashboard from './pages/Dashboard';
+import WorkerFleet from './pages/WorkerFleet';
 
 const MOCK_WORKERS = [
   { id: 1, name: 'Rahul Kumar', phone: '+91 9876543210', status: 'Active', location: 'Jubilee Hills - En route to Job', successRate: '98%', todayJobs: 3, weekJobs: 18, earnings: '₹14,500', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop' },
@@ -14,9 +16,10 @@ export default function App() {
 
   return (
     <Router>
-      <div style={{ fontFamily: 'sans-serif', backgroundColor: theme.bgLight, minHeight: '100vh', color: theme.textDark }}>
+      <div>
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Dashboard onLogout={() => setIsAuthenticated(false)} /> : <Login onLogin={() => setIsAuthenticated(true)} />} />
+          <Route path="/" element={isAuthenticated ? <AgencyDashboard onLogout={() => setIsAuthenticated(false)} /> : <Login onLogin={() => setIsAuthenticated(true)} />} />
+          <Route path="/worker-fleet" element={isAuthenticated ? <WorkerFleet /> : <Login onLogin={() => setIsAuthenticated(true)} />} />
         </Routes>
       </div>
     </Router>
