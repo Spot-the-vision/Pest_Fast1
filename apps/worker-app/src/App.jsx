@@ -724,7 +724,7 @@ function ActiveJobSection({ toast, onNavigate }) {
               </View>
 
               {/* RIGHT COLUMN: Start OTP, Completion PIN, Agency Info, and Payment QR */}
-              <View style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <View className="sticky-summary" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* 1. Doorstep Treatment Start OTP */}
                 <View className="web-card">
                   <View className="card-header-row">
@@ -1353,7 +1353,7 @@ function ActiveJobSection({ toast, onNavigate }) {
               </View>
 
               {/* Right Column: Agency One-Time Approval & Accept/Navigate Action */}
-              <View className="web-card">
+              <View className="web-card sticky-summary" style={{ borderTop: '4px solid var(--primary)' }}>
                 {!contactUnlocked ? (
                   <View>
                     <Text className="badge badge-amber" style={{ marginBottom: 12 }}>
@@ -2163,7 +2163,7 @@ export default function App() {
           </View>
         </View>
 
-        <ScrollView className="web-page">
+        <View className="web-page">
           {activeSection === 'job' && (
             <ActiveJobSection toast={toast} onNavigate={setActiveSection} />
           )}
@@ -2172,7 +2172,7 @@ export default function App() {
           )}
           {activeSection === 'earnings' && <EarningsSection toast={toast} />}
           {activeSection === 'safety' && <SafetySection toast={toast} />}
-        </ScrollView>
+        </View>
       </View>
     </View>
   );

@@ -2006,7 +2006,7 @@ export default function App() {
           </View>
         </View>
 
-        <ScrollView className="web-page">
+        <View className="web-page">
           {activeSection === 'book' && (
             <BookSection toast={toast} onNavigate={setActiveSection} />
           )}
@@ -2017,7 +2017,7 @@ export default function App() {
             <HistorySection toast={toast} onNavigate={setActiveSection} />
           )}
           {activeSection === 'safety' && <SafetyGuideSection />}
-        </ScrollView>
+        </View>
       </View>
     </View>
   );
