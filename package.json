@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "framer-motion": "^13.4.6",
+    "react-native-web": "^0.21.3",
     "zod": "^4.6.5",
     "zustand": "^5.0.15"
   }

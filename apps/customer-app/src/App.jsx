@@ -1,3 +1,4 @@
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Image, StyleSheet, Platform } from './lib/rn.jsx';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -55,7 +56,7 @@ function useToast() {
 
 function ToastStack({ toasts }) {
   return (
-    <div className="toast-stack" aria-live="polite">
+    <View className="toast-stack" aria-live="polite">
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.div
@@ -66,18 +67,18 @@ function ToastStack({ toasts }) {
             className={`toast-item ${t.type}`}
           >
             <CheckCircle2 size={16} />
-            <span>{t.msg}</span>
+            <Text style={{ color: 'inherit' }}>{t.msg}</Text>
           </motion.div>
         ))}
       </AnimatePresence>
-    </div>
+    </View>
   );
 }
 
 function ModalDialog({ open, onClose, title, icon: Icon, children }) {
   if (!open) return null;
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <View className="modal-backdrop" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -87,10 +88,10 @@ function ModalDialog({ open, onClose, title, icon: Icon, children }) {
         role="dialog"
         aria-modal="true"
       >
-        <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <View className="modal-header">
+          <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {Icon && (
-              <div
+              <View
                 style={{
                   width: 36,
                   height: 36,
@@ -103,29 +104,24 @@ function ModalDialog({ open, onClose, title, icon: Icon, children }) {
                 }}
               >
                 <Icon size={20} />
-              </div>
+              </View>
             )}
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>{title}</h3>
-          </div>
-          <button className="btn btn-outline btn-sm" onClick={onClose}>
-            <X size={16} /> Close
-          </button>
-        </div>
-        <div className="modal-body">{children}</div>
+            <Text className="modal-title" style={{ fontSize: '1.15rem', fontWeight: 800 }}>{title}</Text>
+          </View>
+          <TouchableOpacity
+            className="btn-icon"
+            onClick={onClose}
+            onPress={onClose}
+            aria-label="Close dialog"
+          >
+            <X size={18} />
+          </TouchableOpacity>
+        </View>
+        <View className="modal-body">{children}</View>
       </motion.div>
-    </div>
+    </View>
   );
 }
-
-const LIFECYCLE_STAGES = [
-  { key: 'BOOKING_PLACED', label: 'Booking Placed' },
-  { key: 'AGENCY_APPROVED', label: 'Agency Approved' },
-  { key: 'TECHNICIAN_ACCEPTED', label: 'Tech Accepted' },
-  { key: 'ON_THE_WAY', label: 'On The Way' },
-  { key: 'ARRIVED', label: 'Arrived (Start OTP)' },
-  { key: 'IN_PROGRESS', label: 'In Progress' },
-  { key: 'COMPLETED', label: 'Completed (PIN & QR)' },
-];
 
 function LifecycleStepper({ currentStatus }) {
   const currentIndex = LIFECYCLE_STAGES.findIndex((s) => s.key === currentStatus);
@@ -133,43 +129,43 @@ function LifecycleStepper({ currentStatus }) {
   const progressPct = Math.round(((activeIdx + 1) / LIFECYCLE_STAGES.length) * 100);
 
   return (
-    <div className="lifecycle-stepper-v2" aria-label="Job Lifecycle Progress">
-      <div className="stepper-header-row">
-        <div className="stepper-live-indicator">
-          <span className="pulse-indicator-dot" />
-          <span>Live Service Progression &bull; Stage {activeIdx + 1} of {LIFECYCLE_STAGES.length}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)' }}>
+    <View className="lifecycle-stepper-v2" aria-label="Job Lifecycle Progress">
+      <View className="stepper-header-row">
+        <View className="stepper-live-indicator">
+          <View className="pulse-indicator-dot" />
+          <Text style={{ fontWeight: 700 }}>Live Service Progression &bull; Stage {activeIdx + 1} of {LIFECYCLE_STAGES.length}</Text>
+        </View>
+        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)' }}>
             Service Status:
-          </span>
-          <span className="badge badge-green" style={{ fontSize: '0.75rem', fontWeight: 800 }}>
+          </Text>
+          <Text className="badge badge-green" style={{ fontSize: '0.75rem', fontWeight: 800 }}>
             {progressPct}% Completed
-          </span>
-        </div>
-      </div>
+          </Text>
+        </View>
+      </View>
 
-      <div className="stepper-progress-bar-wrap">
-        <div
+      <View className="stepper-progress-bar-wrap">
+        <View
           className="stepper-progress-bar-fill"
           style={{ width: `${progressPct}%` }}
         />
-      </div>
+      </View>
 
-      <div className="stepper-grid-v2">
+      <View className="stepper-grid-v2">
         {LIFECYCLE_STAGES.map((st, i) => {
           const isDone = i < activeIdx || currentStatus === 'COMPLETED';
           const isCurrent = i === activeIdx && currentStatus !== 'COMPLETED';
           const isUpcoming = i > activeIdx && currentStatus !== 'COMPLETED';
 
           return (
-            <div
+            <View
               key={st.key}
               className={`step-card-v2 ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isUpcoming ? 'upcoming' : ''}`}
             >
-              <div className="step-card-top-row">
-                <span className="step-num-pill">STEP 0{i + 1}</span>
-                <span
+              <View className="step-card-top-row">
+                <Text className="step-num-pill">STEP 0{i + 1}</Text>
+                <Text
                   className="step-badge-pill"
                   style={{
                     background: isCurrent ? 'rgba(255,255,255,0.22)' : isDone ? 'rgba(16,185,129,0.15)' : 'rgba(0,0,0,0.05)',
@@ -177,22 +173,22 @@ function LifecycleStepper({ currentStatus }) {
                   }}
                 >
                   {isDone ? '✓ Done' : isCurrent ? 'Live Now' : 'Queued'}
-                </span>
-              </div>
+                </Text>
+              </View>
 
-              <div className="step-icon-bubble">
+              <View className="step-icon-bubble">
                 <CheckCircle2 size={20} strokeWidth={isCurrent ? 2.5 : 2} />
-              </div>
+              </View>
 
-              <div>
-                <div className="step-title-v2">{st.label}</div>
-                <div className="step-sub-v2">Stage 0{i + 1} Verified</div>
-              </div>
-            </div>
+              <View>
+                <Text className="step-title-v2">{st.label}</Text>
+                <Text className="step-sub-v2">Stage 0{i + 1} Verified</Text>
+              </View>
+            </View>
           );
         })}
-      </div>
-    </div>
+      </View>
+    </View>
   );
 }
 
@@ -226,7 +222,7 @@ function RealLeafletMap({ customerCoords, workerCoords, isLiveMove, height = '32
       // Customer Home Marker
       const homeIcon = window.L.divIcon({
         className: 'custom-map-icon',
-        html: `<div style="background:#E8A317; color:#1D2B1A; border:2px solid #FFFFFF; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-weight:800; font-size:16px;">🏠</div>`,
+        html: `<View style="background:#E8A317; color:#1D2B1A; border:2px solid #FFFFFF; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-weight:800; font-size:16px;">🏠</View>`,
         iconSize: [34, 34],
         iconAnchor: [17, 17],
       });
@@ -238,10 +234,10 @@ function RealLeafletMap({ customerCoords, workerCoords, isLiveMove, height = '32
       // Worker Moving Marker with Pulse Effect
       const techIcon = window.L.divIcon({
         className: 'custom-map-icon',
-        html: `<div style="position:relative; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
-          <div style="position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(31,91,58,0.35); animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
-          <div style="background:#1F5B3A; color:#FFFFFF; border:2px solid #FFFFFF; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(31,91,58,0.5); font-size:14px;">🛵</div>
-        </div>`,
+        html: `<View style="position:relative; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
+          <View style="position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(31,91,58,0.35); animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></View>
+          <View style="background:#1F5B3A; color:#FFFFFF; border:2px solid #FFFFFF; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(31,91,58,0.5); font-size:14px;">🛵</View>
+        </View>`,
         iconSize: [40, 40],
         iconAnchor: [20, 20],
       });
@@ -270,7 +266,7 @@ function RealLeafletMap({ customerCoords, workerCoords, isLiveMove, height = '32
   }, [cLat, cLng, wLat, wLng]);
 
   return (
-    <div
+    <View
       style={{
         width: '100%',
         height,
@@ -281,13 +277,13 @@ function RealLeafletMap({ customerCoords, workerCoords, isLiveMove, height = '32
         position: 'relative',
       }}
     >
-      <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
+      <View ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
       <style>{`
         @keyframes ping {
           75%, 100% { transform: scale(2); opacity: 0; }
         }
       `}</style>
-    </div>
+    </View>
   );
 }
 const DAY_OPTS = [
@@ -434,42 +430,42 @@ function BookSection({ toast, onNavigate }) {
   };
 
   return (
-    <div>
+    <View>
       {booking && booking.status !== 'CANCELLED' && (
-        <div
+        <View
           className="demo-toolbar"
           style={{ background: 'var(--primary-light)', borderColor: 'var(--primary)' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <View style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Sparkles size={18} color="var(--primary)" />
-            <span style={{ fontWeight: 700 }}>
+            <Text style={{ fontWeight: 700 }}>
               Active Booking #{booking.id} ({booking.pestLabel}) is currently in{' '}
               <u>{booking.status.replace(/_/g, ' ')}</u> state.
-            </span>
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={() => onNavigate('track')}>
+            </Text>
+          </View>
+          <TouchableOpacity className="btn btn-primary btn-sm" onClick={() => onNavigate('track')}>
             Open Live Tracking & OTP <ChevronRight size={15} />
-          </button>
-        </div>
+          </TouchableOpacity>
+        </View>
       )}
 
-      <div className="booking-layout">
+      <View className="booking-layout">
         {/* LEFT COLUMN: Interactive Configurator */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <View style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           {/* STEP 1: Multi-Select Pest Selection */}
-          <div className="web-card">
-            <div className="card-header-row" style={{ flexWrap: 'wrap', gap: 8 }}>
-              <div>
+          <View className="web-card">
+            <View className="card-header-row" style={{ flexWrap: 'wrap', gap: 8 }}>
+              <View>
                 <h2 className="card-title">
                   <Bug size={20} color="var(--primary)" />
-                  <span>1. Select Treatment Services (Multi-Select Supported)</span>
+                  <Text>1. Select Treatment Services (Multi-Select Supported)</Text>
                 </h2>
                 <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                   Need multiple treatments? Select two or more services to receive an automatic <strong>15% combo bundle discount</strong>. (Click any option to select, click again to deselect).
                 </p>
-              </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <button
+              </View>
+              <View style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <TouchableOpacity
                   type="button"
                   className="btn btn-outline btn-sm"
                   onClick={() => {
@@ -478,36 +474,36 @@ function BookSection({ toast, onNavigate }) {
                   }}
                 >
                   <CheckCircle2 size={14} /> Select All (6 Pests)
-                </button>
+                </TouchableOpacity>
                 {form.pestTypes?.length > 1 && (
-                  <button
+                  <TouchableOpacity
                     type="button"
                     className="btn btn-outline btn-sm"
                     onClick={() => setForm((f) => ({ ...f, pestTypes: ['cockroaches'] }))}
                   >
                     Reset to 1
-                  </button>
+                  </TouchableOpacity>
                 )}
-                <span className="badge badge-green">
+                <Text className="badge badge-green">
                   {form.pestTypes?.length || 1} Service{form.pestTypes?.length > 1 ? 's' : ''} Selected
-                </span>
-              </div>
-            </div>
+                </Text>
+              </View>
+            </View>
 
-            <div className="select-grid-3">
+            <View className="select-grid-3">
               {PEST_TYPES.map((p) => {
                 const isSel = (form.pestTypes || []).includes(p.id);
                 return (
-                  <button
+                  <TouchableOpacity
                     key={p.id}
                     type="button"
                     className={`select-card ${isSel ? 'selected' : ''}`}
                     onClick={() => togglePest(p.id)}
                     style={{ position: 'relative' }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div className="select-card-title">{p.name}</div>
-                      <div
+                    <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <View className="select-card-title">{p.name}</View>
+                      <View
                         style={{
                           width: 22,
                           height: 22,
@@ -525,57 +521,57 @@ function BookSection({ toast, onNavigate }) {
                         }}
                       >
                         {isSel ? '✓' : ''}
-                      </div>
-                    </div>
-                    <div className="select-card-desc" style={{ marginTop: 4 }}>
+                      </View>
+                    </View>
+                    <View className="select-card-desc" style={{ marginTop: 4 }}>
                       {p.tagline}
-                    </div>
-                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-                      <div className="select-card-price">Rs. {p.basePrice} base</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                    </View>
+                    <View style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+                      <View className="select-card-price">Rs. {p.basePrice} base</View>
+                      <View style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                         {p.chemicalUsed}
-                      </div>
-                    </div>
-                  </button>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
                 );
               })}
-            </div>
-            {errors.pestTypes && <div className="form-error">{errors.pestTypes}</div>}
-          </div>
+            </View>
+            {errors.pestTypes && <View className="form-error">{errors.pestTypes}</View>}
+          </View>
 
           {/* STEP 2: Property Size & Protection Plan with Prices Displayed */}
-          <div className="web-card">
-            <div className="card-header-row">
+          <View className="web-card">
+            <View className="card-header-row">
               <h2 className="card-title">
                 <Building2 size={20} color="var(--primary)" />
-                <span>2. Property Size & Protection Plan</span>
+                <Text>2. Property Size & Protection Plan</Text>
               </h2>
-            </div>
+            </View>
 
-            <div className="form-label" style={{ marginBottom: 8 }}>
+            <View className="form-label" style={{ marginBottom: 8 }}>
               Choose Property Configuration (Click to select, click again to deselect)
-            </div>
-            <div className="select-grid-5" style={{ marginBottom: 22 }}>
+            </View>
+            <View className="select-grid-5" style={{ marginBottom: 22 }}>
               {PROPERTY_SIZES.map((s) => {
                 const isSel = form.propertySize === s.id;
                 return (
-                  <button
+                  <TouchableOpacity
                     key={s.id}
                     type="button"
                     className={`select-card ${isSel ? 'selected' : ''}`}
                     onClick={() => setForm((f) => ({ ...f, propertySize: f.propertySize === s.id ? '' : s.id }))}
                   >
-                    <div className="select-card-title">{s.label}</div>
-                    <div className="select-card-desc">{s.areaHint}</div>
-                    <div className="select-card-price">x{s.multiplier} Multiplier</div>
-                  </button>
+                    <View className="select-card-title">{s.label}</View>
+                    <View className="select-card-desc">{s.areaHint}</View>
+                    <View className="select-card-price">x{s.multiplier} Multiplier</View>
+                  </TouchableOpacity>
                 );
               })}
-            </div>
-            {errors.propertySize && <div className="form-error" style={{ marginBottom: 16 }}>{errors.propertySize}</div>}
+            </View>
+            {errors.propertySize && <View className="form-error" style={{ marginBottom: 16 }}>{errors.propertySize}</View>}
 
             {/* AI Smart Quote Banner */}
-            <div
+            <View
               className="web-card-surface"
               style={{
                 background: 'var(--primary-light)',
@@ -588,22 +584,22 @@ function BookSection({ toast, onNavigate }) {
                 flexWrap: 'wrap',
               }}
             >
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
+              <View style={{ flex: 1 }}>
+                <View style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
                   <Sparkles size={15} /> AI Smart Quote Recommendation
-                </div>
-                <div style={{ fontWeight: 700, fontSize: '0.96rem', marginTop: 4 }}>
+                </View>
+                <View style={{ fontWeight: 700, fontSize: '0.96rem', marginTop: 4 }}>
                   Recommended Tier:{' '}
-                  <span style={{ color: 'var(--primary-dark)', textDecoration: 'underline' }}>
+                  <Text style={{ color: 'var(--primary-dark)', textDecoration: 'underline' }}>
                     {PLANS.find((pl) => pl.id === aiRecommendation.recommendedPlan)?.name}
-                  </span>
-                </div>
-                <div style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                  </Text>
+                </View>
+                <View style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                   {aiRecommendation.reason}
-                </div>
-              </div>
+                </View>
+              </View>
               {form.plan !== aiRecommendation.recommendedPlan ? (
-                <button
+                <TouchableOpacity
                   type="button"
                   className="btn btn-primary btn-sm"
                   onClick={() => {
@@ -612,71 +608,71 @@ function BookSection({ toast, onNavigate }) {
                   }}
                 >
                   Apply Recommended Plan
-                </button>
+                </TouchableOpacity>
               ) : (
-                <span className="badge badge-green">
+                <Text className="badge badge-green">
                   <CheckCircle2 size={14} /> Active Selection
-                </span>
+                </Text>
               )}
-            </div>
+            </View>
 
-            <div className="form-label" style={{ marginBottom: 8 }}>
+            <View className="form-label" style={{ marginBottom: 8 }}>
               Select Protection Plan (Click to select, click again to deselect) — Estimated Prices Displayed Below
-            </div>
-            <div className="select-grid-3">
+            </View>
+            <View className="select-grid-3">
               {PLANS.map((pl) => {
                 const isSel = form.plan === pl.id;
                 const planEstimatedCost = Math.round(price.basePrice * selectedSize.multiplier * pl.multiplier * 1.18);
                 return (
-                  <button
+                  <TouchableOpacity
                     key={pl.id}
                     type="button"
                     className={`select-card ${isSel ? 'selected' : ''}`}
                     onClick={() => setForm((f) => ({ ...f, plan: f.plan === pl.id ? '' : pl.id }))}
                     
                   >
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                        <span className="select-card-title">{pl.name}</span>
-                        {pl.badge && <span className="badge badge-amber">{pl.badge}</span>}
-                      </div>
-                      <div className="select-card-desc" style={{ marginTop: 6 }}>
+                    <View>
+                      <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                        <Text className="select-card-title">{pl.name}</Text>
+                        {pl.badge && <Text className="badge badge-amber">{pl.badge}</Text>}
+                      </View>
+                      <View className="select-card-desc" style={{ marginTop: 6 }}>
                         {pl.description}
-                      </div>
-                    </div>
-                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span className="badge badge-neutral">{pl.warrantyDays}-Day Warranty</span>
-                        <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', display: 'block' }}>Inc. GST</span>
-                          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>
+                      </View>
+                    </View>
+                    <View style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                      <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <Text className="badge badge-neutral">{pl.warrantyDays}-Day Warranty</Text>
+                        <View style={{ textAlign: 'right' }}>
+                          <Text style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', display: 'block' }}>Inc. GST</Text>
+                          <Text style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>
                             Rs. {planEstimatedCost}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
                 );
               })}
-            </div>
-            {errors.plan && <div className="form-error">{errors.plan}</div>}
-          </div>
+            </View>
+            {errors.plan && <View className="form-error">{errors.plan}</View>}
+          </View>
 
           {/* STEP 3: Schedule & Dispatch Mode */}
-          <div className="web-card">
-            <div className="card-header-row">
+          <View className="web-card">
+            <View className="card-header-row">
               <h2 className="card-title">
                 <Calendar size={20} color="var(--primary)" />
-                <span>3. Schedule & Dispatch Mode (Click to select, click again to deselect)</span>
+                <Text>3. Schedule & Dispatch Mode (Click to select, click again to deselect)</Text>
               </h2>
-            </div>
+            </View>
 
-            <div className="field-grid" style={{ marginBottom: 18 }}>
-              <div>
+            <View className="field-grid" style={{ marginBottom: 18 }}>
+              <View>
                 <label className="form-label">Preferred Day</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <View style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {DAY_OPTS.map((d) => (
-                    <button
+                    <TouchableOpacity
                       key={d.id}
                       type="button"
                       className={`stage-pill-btn ${form.day === d.id ? 'active' : ''}`}
@@ -685,17 +681,17 @@ function BookSection({ toast, onNavigate }) {
                       
                     >
                       {d.label}
-                    </button>
+                    </TouchableOpacity>
                   ))}
-                </div>
-                {errors.day && <div className="form-error" style={{ marginTop: 6 }}>{errors.day}</div>}
-              </div>
+                </View>
+                {errors.day && <View className="form-error" style={{ marginTop: 6 }}>{errors.day}</View>}
+              </View>
 
-              <div>
+              <View>
                 <label className="form-label">2-Hour Arrival Window</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <View style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {TIME_SLOTS.map((sl) => (
-                    <button
+                    <TouchableOpacity
                       key={sl}
                       type="button"
                       className={`stage-pill-btn ${form.slot === sl ? 'active' : ''}`}
@@ -704,58 +700,58 @@ function BookSection({ toast, onNavigate }) {
                       
                     >
                       {sl}
-                    </button>
+                    </TouchableOpacity>
                   ))}
-                </div>
-                {errors.slot && <div className="form-error" style={{ marginTop: 6 }}>{errors.slot}</div>}
-              </div>
-            </div>
+                </View>
+                {errors.slot && <View className="form-error" style={{ marginTop: 6 }}>{errors.slot}</View>}
+              </View>
+            </View>
 
-            <div className="form-label">Dispatch Mode (Click to select, click again to deselect)</div>
-            <div className="field-grid">
-              <button
+            <View className="form-label">Dispatch Mode (Click to select, click again to deselect)</View>
+            <View className="field-grid">
+              <TouchableOpacity
                 type="button"
                 className={`select-card ${form.dispatchMode === 'treat_on_arrival' ? 'selected' : ''}`}
                 onClick={() => setForm((f) => ({ ...f, dispatchMode: f.dispatchMode === 'treat_on_arrival' ? '' : 'treat_on_arrival' }))}
                 
               >
-                <div className="select-card-title">Treat on Arrival (Instant Dispatch)</div>
-                <div className="select-card-desc">
+                <View className="select-card-title">Treat on Arrival (Instant Dispatch)</View>
+                <View className="select-card-desc">
                   Technician arrives fully equipped with calibrated chemical batch and begins treatment immediately after OTP verification.
-                </div>
-              </button>
+                </View>
+              </TouchableOpacity>
 
-              <button
+              <TouchableOpacity
                 type="button"
                 className={`select-card ${form.dispatchMode === 'inspection' ? 'selected' : ''}`}
                 onClick={() => setForm((f) => ({ ...f, dispatchMode: f.dispatchMode === 'inspection' ? '' : 'inspection' }))}
                 
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="select-card-title">Inspection First</span>
-                  <span className="badge badge-green">Rs. 0 Advance Now</span>
-                </div>
-                <div className="select-card-desc">
+                <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text className="select-card-title">Inspection First</Text>
+                  <Text className="badge badge-green">Rs. 0 Advance Now</Text>
+                </View>
+                <View className="select-card-desc">
                   Pay Rs. 0 now. Technician inspects moisture pockets and colony severity first; pay full quote only after approving on-site.
-                </div>
-              </button>
-            </div>
-            {errors.dispatchMode && <div className="form-error" style={{ marginTop: 8 }}>{errors.dispatchMode}</div>}
-          </div>
+                </View>
+              </TouchableOpacity>
+            </View>
+            {errors.dispatchMode && <View className="form-error" style={{ marginTop: 8 }}>{errors.dispatchMode}</View>}
+          </View>
 
           {/* STEP 4: Mandatory Exact Location Pinning & Address */}
-          <div className="web-card">
-            <div className="card-header-row">
-              <div>
+          <View className="web-card">
+            <View className="card-header-row">
+              <View>
                 <h2 className="card-title">
                   <MapPin size={20} color="var(--primary)" />
-                  <span>4. Service Address & Mandatory Exact Live Location</span>
+                  <Text>4. Service Address & Mandatory Exact Live Location</Text>
                 </h2>
                 <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                   Exact coordinates (Latitude & Longitude) are recorded live and pinned for accurate technician routing.
                 </p>
-              </div>
-              <button
+              </View>
+              <TouchableOpacity
                 type="button"
                 className="btn btn-primary btn-sm"
                 onClick={captureLiveGps}
@@ -763,16 +759,16 @@ function BookSection({ toast, onNavigate }) {
               >
                 <Navigation size={14} />
                 {geoLocating ? 'Detecting Live GPS...' : 'Use My Current Live Location'}
-              </button>
-            </div>
+              </TouchableOpacity>
+            </View>
 
             {/* Quick Fill Saved Address Pills */}
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)' }}>
+            <View style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+              <Text style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)' }}>
                 Quick Saved Address:
-              </span>
+              </Text>
               {SAVED_ADDRESSES.map((addr, i) => (
-                <button
+                <TouchableOpacity
                   key={i}
                   type="button"
                   className="stage-pill-btn"
@@ -785,12 +781,12 @@ function BookSection({ toast, onNavigate }) {
                 >
                   <Home size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
                   {addr.label}
-                </button>
+                </TouchableOpacity>
               ))}
-            </div>
+            </View>
 
             {/* Live GPS Coordinates Banner */}
-            <div
+            <View
               className="web-card-surface"
               style={{
                 display: 'flex',
@@ -802,24 +798,24 @@ function BookSection({ toast, onNavigate }) {
                 border: '1.5px solid rgba(31, 91, 58, 0.3)',
               }}
             >
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--primary)' }}>
+              <View>
+                <Text style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--primary)' }}>
                   Active Geo-Coordinates Pinned
-                </span>
-                <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 800, marginTop: 2 }}>
+                </Text>
+                <View style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 800, marginTop: 2 }}>
                   Latitude: {form.coords?.lat || 12.9250} | Longitude: {form.coords?.lng || 77.5938}
-                </div>
-              </div>
-              <span className="badge badge-green">
+                </View>
+              </View>
+              <Text className="badge badge-green">
                 <CheckCircle2 size={13} /> GPS Anchored
-              </span>
-            </div>
+              </Text>
+            </View>
 
-            <div className="form-group">
+            <View className="form-group">
               <label className="form-label" htmlFor="address-input">
                 Mandatory Exact Flat / House No., Building, Street & Locality
               </label>
-              <input
+              <TextInput
                 id="address-input"
                 type="text"
                 className="form-input"
@@ -830,14 +826,14 @@ function BookSection({ toast, onNavigate }) {
                 }}
                 placeholder="e.g. Flat 402, Palm Grove Residency, 11th Main Rd, Jayanagar 4th Block"
               />
-              {errors.address && <div className="form-error">{errors.address}</div>}
-            </div>
+              {errors.address && <View className="form-error">{errors.address}</View>}
+            </View>
 
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <View className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="note-input">
                 Infestation Notes for Technician (Triggers AI Plan Suggestion)
               </label>
-              <textarea
+              <TextInput multiline
                 id="note-input"
                 rows={2}
                 className="form-textarea"
@@ -845,83 +841,83 @@ function BookSection({ toast, onNavigate }) {
                 onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
                 placeholder="Describe where you noticed activity (e.g. heavy termites in wooden wardrobe, kitchen sink, pets at home)..."
               />
-            </div>
-          </div>
-        </div>
+            </View>
+          </View>
+        </View>
 
         {/* RIGHT COLUMN: Sticky Live Quote & Multi-Service Bundle Summary */}
-        <div className="web-card sticky-summary" style={{ borderTop: '4px solid var(--primary)' }}>
-          <div className="card-header-row">
+        <View className="web-card sticky-summary" style={{ borderTop: '4px solid var(--primary)' }}>
+          <View className="card-header-row">
             <h3 className="card-title">Live Treatment Quote</h3>
-            <span className="badge badge-green">{selectedPlan.warrantyDays}-Day Warranty</span>
-          </div>
+            <Text className="badge badge-green">{selectedPlan.warrantyDays}-Day Warranty</Text>
+          </View>
 
-          <div className="web-card-surface" style={{ marginBottom: 18 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--primary)' }}>
+          <View className="web-card-surface" style={{ marginBottom: 18 }}>
+            <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--primary)' }}>
                 Selected Services ({price.pests.length})
-              </span>
+              </Text>
               {price.bundleDiscount > 0 && (
-                <span className="badge badge-green" style={{ fontSize: '0.72rem' }}>
+                <Text className="badge badge-green" style={{ fontSize: '0.72rem' }}>
                   15% Combo Saved
-                </span>
+                </Text>
               )}
-            </div>
+            </View>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <View style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {price.pests.map((p) => (
-                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                  <span style={{ fontWeight: 700 }}>• {p.name}</span>
-                  <span style={{ color: 'var(--ink-muted)' }}>Rs. {p.basePrice}</span>
-                </div>
+                <View key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <Text style={{ fontWeight: 700 }}>• {p.name}</Text>
+                  <Text style={{ color: 'var(--ink-muted)' }}>Rs. {p.basePrice}</Text>
+                </View>
               ))}
-            </div>
+            </View>
 
-            <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
-              <span className="badge badge-neutral">{selectedSize.label}</span>
-              <span className="badge badge-neutral">{selectedPlan.name}</span>
-              <span className="badge badge-amber">{form.slot}</span>
-            </div>
-          </div>
+            <View style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
+              <Text className="badge badge-neutral">{selectedSize.label}</Text>
+              <Text className="badge badge-neutral">{selectedPlan.name}</Text>
+              <Text className="badge badge-amber">{form.slot}</Text>
+            </View>
+          </View>
 
           {/* Transparent Breakdown */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.92rem', marginBottom: 18 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--ink-muted)' }}>Base Services Total</span>
-              <span style={{ fontWeight: 700 }}>
+          <View style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.92rem', marginBottom: 18 }}>
+            <View style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text style={{ color: 'var(--ink-muted)' }}>Base Services Total</Text>
+              <Text style={{ fontWeight: 700 }}>
                 Rs. {price.pests.reduce((a, b) => a + b.basePrice, 0)}
-              </span>
-            </div>
+              </Text>
+            </View>
 
             {price.bundleDiscount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', fontWeight: 700 }}>
-                <span>Multi-Service Combo Discount (15%)</span>
-                <span>-Rs. {price.bundleDiscount}</span>
-              </div>
+              <View style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', fontWeight: 700 }}>
+                <Text>Multi-Service Combo Discount (15%)</Text>
+                <Text>-Rs. {price.bundleDiscount}</Text>
+              </View>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--ink-muted)' }}>
+            <View style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text style={{ color: 'var(--ink-muted)' }}>
                 Property Size ({selectedSize.label} x{price.sizeMultiplier})
-              </span>
-              <span style={{ fontWeight: 700 }}>
+              </Text>
+              <Text style={{ fontWeight: 700 }}>
                 Rs. {Math.round(price.basePrice * price.sizeMultiplier)}
-              </span>
-            </div>
+              </Text>
+            </View>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--ink-muted)' }}>
+            <View style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text style={{ color: 'var(--ink-muted)' }}>
                 Plan Tier ({selectedPlan.name} x{price.planMultiplier})
-              </span>
-              <span style={{ fontWeight: 700 }}>Rs. {price.subtotal}</span>
-            </div>
+              </Text>
+              <Text style={{ fontWeight: 700 }}>Rs. {price.subtotal}</Text>
+            </View>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--ink-muted)' }}>GST (18% Govt Tax)</span>
-              <span style={{ fontWeight: 700 }}>Rs. {price.gst}</span>
-            </div>
+            <View style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text style={{ color: 'var(--ink-muted)' }}>GST (18% Govt Tax)</Text>
+              <Text style={{ fontWeight: 700 }}>Rs. {price.gst}</Text>
+            </View>
 
-            <div
+            <View
               style={{
                 borderTop: '2px solid var(--border)',
                 paddingTop: 12,
@@ -931,13 +927,13 @@ function BookSection({ toast, onNavigate }) {
                 alignItems: 'baseline',
               }}
             >
-              <span style={{ fontWeight: 800, fontSize: '1rem' }}>Total Estimate</span>
-              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800 }}>
+              <Text style={{ fontWeight: 800, fontSize: '1rem' }}>Total Estimate</Text>
+              <Text style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800 }}>
                 Rs. {price.total}
-              </span>
-            </div>
+              </Text>
+            </View>
 
-            <div
+            <View
               style={{
                 background: form.dispatchMode === 'inspection' ? 'var(--success-light)' : 'var(--accent-light)',
                 padding: '10px 14px',
@@ -948,14 +944,14 @@ function BookSection({ toast, onNavigate }) {
                 fontWeight: 800,
               }}
             >
-              <span>Payable Now ({form.dispatchMode === 'inspection' ? 'Inspection Mode' : 'Full Booking'})</span>
-              <span style={{ fontSize: '1.2rem', color: 'var(--primary-dark)' }}>
+              <Text>Payable Now ({form.dispatchMode === 'inspection' ? 'Inspection Mode' : 'Full Booking'})</Text>
+              <Text style={{ fontSize: '1.2rem', color: 'var(--primary-dark)' }}>
                 Rs. {price.payableNow}
-              </span>
-            </div>
-          </div>
+              </Text>
+            </View>
+          </View>
 
-          <div
+          <View
             className="field-box"
             style={{ marginBottom: 18, fontSize: '0.8rem', color: 'var(--ink-muted)', lineHeight: 1.45 }}
           >
@@ -964,9 +960,9 @@ function BookSection({ toast, onNavigate }) {
               Agency Homeowner Privacy & Route Security:
             </strong>
             Your personal phone and exact flat coordinates remain locked until the Agency confirms the booking and dispatches a KYC-verified technician.
-          </div>
+          </View>
 
-          <button
+          <TouchableOpacity
             type="button"
             className="btn btn-primary btn-lg btn-block"
             disabled={isLoading}
@@ -978,10 +974,10 @@ function BookSection({ toast, onNavigate }) {
               : form.dispatchMode === 'inspection'
               ? `Confirm Free Inspection for ${price.pests.length} Services (Rs. 0 Now)`
               : `Confirm & Dispatch for ${price.pests.length} Services (Rs. ${price.payableNow})`}
-          </button>
-        </div>
-      </div>
-    </div>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 }
 function TrackSection({ toast, onNavigate }) {
@@ -1023,16 +1019,16 @@ function TrackSection({ toast, onNavigate }) {
       : booking?.price?.total ?? booking?.pricing?.total ?? 1600;
 
   return (
-    <div>
+    <View>
       {/* Interactive Stage Switcher */}
-      <div className="demo-toolbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.84rem', color: 'var(--primary-dark)' }}>
+      <View className="demo-toolbar">
+        <View style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.84rem', color: 'var(--primary-dark)' }}>
           <Sparkles size={16} />
-          <span>Interactive Tracking State Simulator:</span>
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <Text>Interactive Tracking State Simulator:</Text>
+        </View>
+        <View style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {LIFECYCLE_STAGES.map((st) => (
-            <button
+            <TouchableOpacity
               key={st.key}
               type="button"
               className={`stage-pill-btn ${booking?.status === st.key ? 'active' : ''}`}
@@ -1042,14 +1038,14 @@ function TrackSection({ toast, onNavigate }) {
               }}
             >
               {st.label}
-            </button>
+            </TouchableOpacity>
           ))}
-        </div>
-      </div>
+        </View>
+      </View>
 
       {(!booking || booking.status === 'CANCELLED') && (
-        <div className="web-card" style={{ textAlign: 'center', padding: '56px 32px' }}>
-          <div
+        <View className="web-card" style={{ textAlign: 'center', padding: '56px 32px' }}>
+          <View
             style={{
               width: 68,
               height: 68,
@@ -1063,16 +1059,16 @@ function TrackSection({ toast, onNavigate }) {
             }}
           >
             <Navigation size={32} />
-          </div>
+          </View>
           <h2 style={{ fontSize: '1.5rem', marginBottom: 8 }}>No Active Treatment in Progress</h2>
           <p style={{ color: 'var(--ink-muted)', maxWidth: 500, margin: '0 auto 24px', lineHeight: 1.5 }}>
             Place a new booking in the configurator or click any stage in the simulator bar above to preview real OpenStreetMap tracking, live doorstep OTP, and end-of-service PIN handshake.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn btn-primary btn-lg" onClick={() => onNavigate('book')}>
+          <View style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <TouchableOpacity className="btn btn-primary btn-lg" onClick={() => onNavigate('book')}>
               <Bug size={18} /> Book a New Pest Treatment
-            </button>
-            <button
+            </TouchableOpacity>
+            <TouchableOpacity
               className="btn btn-outline btn-lg"
               onClick={() => {
                 simulateCustomerStage('ON_THE_WAY');
@@ -1080,40 +1076,40 @@ function TrackSection({ toast, onNavigate }) {
               }}
             >
               <Sparkles size={18} /> Preview Live Real Map Radar
-            </button>
-          </div>
-        </div>
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
 
       {booking && booking.status !== 'CANCELLED' && (
         <>
           <LifecycleStepper currentStatus={booking.status} />
 
-          <div className="dashboard-grid-2">
+          <View className="dashboard-grid-2">
             {/* LEFT COLUMN: Real OpenStreetMap + Live Safety Feed */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div className="web-card">
-                <div className="card-header-row">
-                  <div>
-                    <span className="badge badge-neutral" style={{ marginBottom: 4 }}>
+            <View style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <View className="web-card">
+                <View className="card-header-row">
+                  <View>
+                    <Text className="badge badge-neutral" style={{ marginBottom: 4 }}>
                       Booking #{booking.id}
-                    </span>
+                    </Text>
                     <h2 className="card-title" style={{ fontSize: '1.3rem' }}>
                       Real Live Technician GPS Radar (OpenStreetMap)
                     </h2>
-                  </div>
+                  </View>
                   {booking.status === 'ON_THE_WAY' && (
-                    <span className="badge badge-green">
+                    <Text className="badge badge-green">
                       <Clock size={14} /> ETA: {etaSeconds}s remaining
-                    </span>
+                    </Text>
                   )}
                   {booking.status === 'ARRIVED' && (
-                    <span className="badge badge-amber">Technician at Doorstep</span>
+                    <Text className="badge badge-amber">Technician at Doorstep</Text>
                   )}
                   {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) && (
-                    <span className="badge badge-green">On-Site Treatment Active</span>
+                    <Text className="badge badge-green">On-Site Treatment Active</Text>
                   )}
-                </div>
+                </View>
 
                 {/* Real OpenStreetMap View */}
                 <RealLeafletMap
@@ -1123,41 +1119,41 @@ function TrackSection({ toast, onNavigate }) {
                   height="340px"
                 />
 
-                <div className="field-grid" style={{ marginTop: 16 }}>
-                  <div className="field-box">
-                    <div className="field-label">Target Treatment & Services</div>
-                    <div className="field-value">{booking.pestLabel}</div>
-                    <div className="field-sub">
+                <View className="field-grid" style={{ marginTop: 16 }}>
+                  <View className="field-box">
+                    <View className="field-label">Target Treatment & Services</View>
+                    <View className="field-value">{booking.pestLabel}</View>
+                    <View className="field-sub">
                       {booking.planLabel} ({booking.sizeLabel})
-                    </div>
-                  </div>
-                  <div className="field-box">
-                    <div className="field-label">Pinned Customer Coordinates</div>
-                    <div className="field-value">
+                    </View>
+                  </View>
+                  <View className="field-box">
+                    <View className="field-label">Pinned Customer Coordinates</View>
+                    <View className="field-value">
                       Lat: {booking.coords?.lat || liveCustomerLocation.lat}, Lng: {booking.coords?.lng || liveCustomerLocation.lng}
-                    </div>
-                    <div className="field-sub">{booking.address}</div>
-                  </div>
-                </div>
-              </div>
+                    </View>
+                    <View className="field-sub">{booking.address}</View>
+                  </View>
+                </View>
+              </View>
 
               {/* Live Safety Protocol Checklist */}
               {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) && (
-                <div className="web-card">
-                  <div className="card-header-row">
+                <View className="web-card">
+                  <View className="card-header-row">
                     <h3 className="card-title">
                       <ShieldCheck size={20} color="var(--success)" />
-                      <span>Live Technician Safety Protocol Feed</span>
+                      <Text>Live Technician Safety Protocol Feed</Text>
                     </h3>
-                    <span className="badge badge-green">
+                    <Text className="badge badge-green">
                       {safetyChecklist.filter(Boolean).length} of 6 Verified
-                    </span>
-                  </div>
-                  <div style={{ display: 'grid', gap: 10 }}>
+                    </Text>
+                  </View>
+                  <View style={{ display: 'grid', gap: 10 }}>
                     {SAFETY_CHECKLIST_STEPS.map((st, idx) => {
                       const done = safetyChecklist[idx] || booking.status === 'COMPLETED';
                       return (
-                        <div
+                        <View
                           key={idx}
                           className="field-box"
                           style={{
@@ -1167,46 +1163,46 @@ function TrackSection({ toast, onNavigate }) {
                             background: done ? 'var(--success-light)' : 'var(--surface)',
                           }}
                         >
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
+                          <View>
+                            <View style={{ fontWeight: 700, fontSize: '0.9rem' }}>
                               {idx + 1}. {st.title}
-                            </div>
-                            <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
+                            </View>
+                            <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
                               {st.description}
-                            </div>
-                          </div>
-                          <span className={`badge ${done ? 'badge-green' : 'badge-neutral'}`}>
+                            </View>
+                          </View>
+                          <Text className={`badge ${done ? 'badge-green' : 'badge-neutral'}`}>
                             {done ? 'Verified' : 'Pending'}
-                          </span>
-                        </div>
+                          </Text>
+                        </View>
                       );
                     })}
-                  </div>
-                </div>
+                  </View>
+                </View>
               )}
-            </div>
+            </View>
 
             {/* RIGHT COLUMN: Doorstep OTP Handshake, End-of-Service Completion PIN, QR Payment & Review */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <View style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {/* 1. Doorstep Start OTP Card */}
-              <div
+              <View
                 className="web-card"
                 style={{
                   borderTop: '4px solid var(--accent)',
                   background: booking.status === 'ARRIVED' ? 'var(--accent-light)' : 'var(--card)',
                 }}
               >
-                <div className="card-header-row">
+                <View className="card-header-row">
                   <h3 className="card-title">
                     <KeyRound size={20} color="var(--primary)" />
-                    <span>Doorstep Treatment Start OTP</span>
+                    <Text>Doorstep Treatment Start OTP</Text>
                   </h3>
-                  <span className="badge badge-amber">Share on Arrival</span>
-                </div>
+                  <Text className="badge badge-amber">Share on Arrival</Text>
+                </View>
                 <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', lineHeight: 1.45, marginBottom: 14 }}>
                   Share this 4-digit code with your technician only when they arrive at your doorstep with their PPE kit.
                 </p>
-                <div
+                <View
                   style={{
                     display: 'flex',
                     gap: 12,
@@ -1220,7 +1216,7 @@ function TrackSection({ toast, onNavigate }) {
                   {String(startOtp || '4829')
                     .split('')
                     .map((d, i) => (
-                      <div
+                      <View
                         key={i}
                         style={{
                           width: 54,
@@ -1238,35 +1234,35 @@ function TrackSection({ toast, onNavigate }) {
                         }}
                       >
                         {d}
-                      </div>
+                      </View>
                     ))}
-                </div>
-              </div>
+                </View>
+              </View>
 
               {/* 2. End-of-Service Completion PIN Card (Mocked until worker finishes work) */}
-              <div
+              <View
                 className="web-card"
                 style={{
                   borderTop: '4px solid var(--primary)',
                   background: workCompletedByWorker || booking.status === 'COMPLETED' ? 'var(--primary-light)' : 'var(--surface)',
                 }}
               >
-                <div className="card-header-row">
+                <View className="card-header-row">
                   <h3 className="card-title">
                     <Award size={20} color="var(--primary)" />
-                    <span>End-of-Service Completion Security PIN</span>
+                    <Text>End-of-Service Completion Security PIN</Text>
                   </h3>
-                  <span className={`badge ${workCompletedByWorker || booking.status === 'COMPLETED' ? 'badge-green' : 'badge-neutral'}`}>
+                  <Text className={`badge ${workCompletedByWorker || booking.status === 'COMPLETED' ? 'badge-green' : 'badge-neutral'}`}>
                     {workCompletedByWorker || booking.status === 'COMPLETED' ? 'Work Finished — PIN Unlocked' : 'Mocked (Locked until technician clicks Complete)'}
-                  </span>
-                </div>
+                  </Text>
+                </View>
 
                 {workCompletedByWorker || booking.status === 'COMPLETED' ? (
-                  <div>
+                  <View>
                     <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', lineHeight: 1.45, marginBottom: 12 }}>
                       The technician has completed all 6 treatment steps and photo proof. Provide this 4-digit Completion PIN so they can close the ticket and generate your payment invoice QR.
                     </p>
-                    <div
+                    <View
                       style={{
                         display: 'flex',
                         gap: 12,
@@ -1280,7 +1276,7 @@ function TrackSection({ toast, onNavigate }) {
                       {String(completionPin || '7391')
                         .split('')
                         .map((d, i) => (
-                          <div
+                          <View
                             key={i}
                             style={{
                               width: 54,
@@ -1297,64 +1293,64 @@ function TrackSection({ toast, onNavigate }) {
                             }}
                           >
                             {d}
-                          </div>
+                          </View>
                         ))}
-                    </div>
-                  </div>
+                    </View>
+                  </View>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '16px', background: '#FFFFFF', borderRadius: 12, border: '1px dashed var(--border-strong)' }}>
+                  <View style={{ textAlign: 'center', padding: '16px', background: '#FFFFFF', borderRadius: 12, border: '1px dashed var(--border-strong)' }}>
                     <Lock size={28} color="var(--ink-muted)" style={{ margin: '0 auto 8px' }} />
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>PIN is Mocked / Hidden</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: 4 }}>
+                    <View style={{ fontWeight: 700, fontSize: '0.95rem' }}>PIN is Mocked / Hidden</View>
+                    <View style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: 4 }}>
                       This PIN will reveal here as soon as the worker ticks all 6 safety steps and clicks "Finish Treatment" on their dashboard.
-                    </div>
-                  </div>
+                    </View>
+                  </View>
                 )}
-              </div>
+              </View>
 
               {/* 3. Assigned Technician & Contact Card */}
-              <div className="web-card">
-                <div className="card-header-row">
+              <View className="web-card">
+                <View className="card-header-row">
                   <h3 className="card-title">
                     <UserCheck size={20} color="var(--primary)" />
-                    <span>Assigned Technician & Agency Verification</span>
+                    <Text>Assigned Technician & Agency Verification</Text>
                   </h3>
-                  <span className="badge badge-green">KYC Verified</span>
-                </div>
+                  <Text className="badge badge-green">KYC Verified</Text>
+                </View>
 
-                <div className="field-grid" style={{ marginBottom: 14 }}>
-                  <div className="field-box">
-                    <div className="field-label">Technician Name</div>
-                    <div className="field-value">{assignedWorker?.name || 'Arjun Sharma'}</div>
-                    <div className="field-sub">
+                <View className="field-grid" style={{ marginBottom: 14 }}>
+                  <View className="field-box">
+                    <View className="field-label">Technician Name</View>
+                    <View className="field-value">{assignedWorker?.name || 'Arjun Sharma'}</View>
+                    <View className="field-sub">
                       Rating: {assignedWorker?.rating || 4.92} Stars (428 jobs)
-                    </div>
-                  </div>
-                  <div className="field-box">
-                    <div className="field-label">Government License</div>
-                    <div className="field-value">{assignedWorker?.licenseCode || 'CHL-2024-889'}</div>
-                    <div className="field-sub">CIB&RC Registered Applicator</div>
-                  </div>
-                </div>
+                    </View>
+                  </View>
+                  <View className="field-box">
+                    <View className="field-label">Government License</View>
+                    <View className="field-value">{assignedWorker?.licenseCode || 'CHL-2024-889'}</View>
+                    <View className="field-sub">CIB&RC Registered Applicator</View>
+                  </View>
+                </View>
 
-                <div className="field-box" style={{ marginBottom: 16 }}>
-                  <div className="field-label">
+                <View className="field-box" style={{ marginBottom: 16 }}>
+                  <View className="field-label">
                     {contactUnlocked ? <Unlock size={13} /> : <Lock size={13} />}
-                    <span>Agency Communication Line</span>
-                  </div>
-                  <div className="field-value">
+                    <Text>Agency Communication Line</Text>
+                  </View>
+                  <View className="field-value">
                     {contactUnlocked
                       ? assignedWorker?.phone || '+91 98765 43210 (Direct Unlocked)'
                       : assignedWorker?.proxyPhone || '+91 80 4912 3456 (Masked Agency Proxy)'}
-                  </div>
-                  <div className="field-sub">
+                  </View>
+                  <View className="field-sub">
                     {contactUnlocked
                       ? 'Agency approved - Direct communication active'
                       : 'Personal phone is protected through agency bridge'}
-                  </div>
-                </div>
+                  </View>
+                </View>
 
-                <div style={{ display: 'flex', gap: 10 }}>
+                <View style={{ display: 'flex', gap: 10 }}>
                   <a
                     href="tel:+919876543210"
                     className="btn btn-outline btn-sm"
@@ -1363,7 +1359,7 @@ function TrackSection({ toast, onNavigate }) {
                     <Phone size={15} /> Call Technician
                   </a>
                   {canCancel() ? (
-                    <button
+                    <TouchableOpacity
                       type="button"
                       className="btn btn-danger btn-sm"
                       onClick={async () => {
@@ -1372,50 +1368,50 @@ function TrackSection({ toast, onNavigate }) {
                       }}
                     >
                       <X size={15} /> Cancel Booking
-                    </button>
+                    </TouchableOpacity>
                   ) : (
-                    <span className="badge badge-neutral" style={{ marginLeft: 'auto' }}>
+                    <Text className="badge badge-neutral" style={{ marginLeft: 'auto' }}>
                       Cancellation locked once technician is en route
-                    </span>
+                    </Text>
                   )}
-                </div>
-              </div>
+                </View>
+              </View>
 
               {/* 4. Review & Payment QR Trigger (Mandatory Review before Payment) */}
               {(booking.status === 'COMPLETED' || pinVerifiedByWorker || paymentQrGenerated) && (
-                <div className="web-card" style={{ borderTop: '4px solid var(--primary)', background: 'var(--surface)' }}>
-                  <div className="card-header-row">
+                <View className="web-card" style={{ borderTop: '4px solid var(--primary)', background: 'var(--surface)' }}>
+                  <View className="card-header-row">
                     <h3 className="card-title">
                       <Award size={22} color="var(--primary)" />
-                      <span>{paymentQrGenerated ? 'Service Review Submitted' : 'Step 4: Rate Service to Unlock Payment QR'}</span>
+                      <Text>{paymentQrGenerated ? 'Service Review Submitted' : 'Step 4: Rate Service to Unlock Payment QR'}</Text>
                     </h3>
-                    <span className={`badge ${paymentQrGenerated ? 'badge-green' : 'badge-amber'}`}>
+                    <Text className={`badge ${paymentQrGenerated ? 'badge-green' : 'badge-amber'}`}>
                       {paymentQrGenerated ? 'Review Given &bull; Payment Unlocked' : 'Review Required Before Payment'}
-                    </span>
-                  </div>
+                    </Text>
+                  </View>
 
                   {!customerReview ? (
-                    <div>
+                    <View>
                       <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.5 }}>
                         The technician verified your Completion PIN! <b>Submitting your rating & review is required to unlock your official UPI payment invoice</b> for Rs. {rawTotal}.
                       </p>
 
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                      <View style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                         {[1, 2, 3, 4, 5].map((n) => (
-                          <button
+                          <TouchableOpacity
                             key={n}
                             type="button"
                             className={`btn ${stars >= n ? 'btn-accent' : 'btn-outline'} btn-sm`}
                             onClick={() => setStars(n)}
                           >
                             <Star size={16} fill={stars >= n ? 'currentColor' : 'none'} /> {n} Star{n > 1 ? 's' : ''}
-                          </button>
+                          </TouchableOpacity>
                         ))}
-                      </div>
+                      </View>
 
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                      <View style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
                         {['Punctual & Polite', 'Thorough 6-Step Safety', '100% Eco-Safe', 'Spotless Cleanup'].map((tag) => (
-                          <button
+                          <TouchableOpacity
                             key={tag}
                             type="button"
                             className="badge badge-neutral"
@@ -1423,11 +1419,11 @@ function TrackSection({ toast, onNavigate }) {
                             onClick={() => setComment((prev) => prev ? `${prev}, ${tag}` : tag)}
                           >
                             + {tag}
-                          </button>
+                          </TouchableOpacity>
                         ))}
-                      </div>
+                      </View>
 
-                      <input
+                      <TextInput
                         type="text"
                         className="form-input"
                         style={{ marginBottom: 14 }}
@@ -1436,7 +1432,7 @@ function TrackSection({ toast, onNavigate }) {
                         onChange={(e) => setComment(e.target.value)}
                       />
 
-                      <button
+                      <TouchableOpacity
                         type="button"
                         className="btn btn-primary btn-block btn-lg"
                         onClick={async () => {
@@ -1446,32 +1442,32 @@ function TrackSection({ toast, onNavigate }) {
                         }}
                       >
                         <QrCode size={18} /> Submit Review & Unlock Payment QR (Rs. {rawTotal})
-                      </button>
-                    </div>
+                      </TouchableOpacity>
+                    </View>
                   ) : (
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <View>
+                      <View style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                         <CheckCircle2 size={18} color="var(--success)" />
-                        <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>
+                        <Text style={{ fontWeight: 700, fontSize: '0.92rem' }}>
                           Your {customerReview.rating}★ Review is Recorded
-                        </span>
-                      </div>
+                        </Text>
+                      </View>
                       <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', fontStyle: 'italic', marginBottom: 14 }}>
                         "{customerReview.comment || 'Punctual, eco-safe, and very thorough treatment!'}"
                       </p>
-                      <button
+                      <TouchableOpacity
                         type="button"
                         className="btn btn-success btn-block"
                         onClick={() => setQrModal(true)}
                       >
                         <QrCode size={18} /> Open UPI Payment QR Code (Rs. {rawTotal})
-                      </button>
-                    </div>
+                      </TouchableOpacity>
+                    </View>
                   )}
-                </div>
+                </View>
               )}
-            </div>
-          </div>
+            </View>
+          </View>
 {/* Interactive Payment QR & Warranty Modal */}
           <ModalDialog
             open={qrModal}
@@ -1479,8 +1475,8 @@ function TrackSection({ toast, onNavigate }) {
             title={`Scan UPI QR & Complete Payment (Rs. ${rawTotal})`}
             icon={QrCode}
           >
-            <div style={{ textAlign: 'center', padding: '10px 0' }}>
-              <div
+            <View style={{ textAlign: 'center', padding: '10px 0' }}>
+              <View
                 style={{
                   width: 200,
                   height: 200,
@@ -1494,21 +1490,21 @@ function TrackSection({ toast, onNavigate }) {
                   boxShadow: 'var(--shadow-md)',
                 }}
               >
-                <img
+                <Image
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=pestfree@okaxis&pn=PestFree&am=${rawTotal}&cu=INR`}
                   alt="UPI Payment QR Code"
                   style={{ width: 170, height: 170 }}
                 />
-              </div>
+              </View>
 
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary-dark)', marginBottom: 4 }}>
+              <View style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary-dark)', marginBottom: 4 }}>
                 Rs. {rawTotal} Total Payable
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: 18 }}>
+              </View>
+              <View style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: 18 }}>
                 Scan using Google Pay, PhonePe, Paytm, or BHIM UPI
-              </div>
+              </View>
 
-              <button
+              <TouchableOpacity
                 type="button"
                 className="btn btn-success btn-lg btn-block"
                 onClick={async () => {
@@ -1519,12 +1515,12 @@ function TrackSection({ toast, onNavigate }) {
                 }}
               >
                 <CheckCircle2 size={18} /> Confirm Payment & Save Warranty Certificate
-              </button>
-            </div>
+              </TouchableOpacity>
+            </View>
           </ModalDialog>
         </>
       )}
-    </div>
+    </View>
   );
 }
 function HistorySection({ toast, onNavigate }) {
@@ -1532,47 +1528,47 @@ function HistorySection({ toast, onNavigate }) {
   const [certModalItem, setCertModalItem] = useState(null);
 
   return (
-    <div>
-      <div className="dashboard-grid-3" style={{ marginBottom: 24 }}>
-        <div className="web-card">
-          <div className="field-label">Total Treatments</div>
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, marginTop: 6 }}>
+    <View>
+      <View className="dashboard-grid-3" style={{ marginBottom: 24 }}>
+        <View className="web-card">
+          <View className="field-label">Total Treatments</View>
+          <View style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, marginTop: 6 }}>
             {history.length} Bookings
-          </div>
-          <div className="field-sub">100% CIB&RC Eco-Safe Formulations</div>
-        </div>
+          </View>
+          <View className="field-sub">100% CIB&RC Eco-Safe Formulations</View>
+        </View>
 
-        <div className="web-card">
-          <div className="field-label">Active Warranty Cover</div>
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, color: 'var(--success)', marginTop: 6 }}>
+        <View className="web-card">
+          <View className="field-label">Active Warranty Cover</View>
+          <View style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, color: 'var(--success)', marginTop: 6 }}>
             Protected
-          </div>
-          <div className="field-sub">Free emergency re-service included</div>
-        </div>
+          </View>
+          <View className="field-sub">Free emergency re-service included</View>
+        </View>
 
-        <div className="web-card">
-          <div className="field-label">Homeowner Loyalty Tier</div>
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, color: 'var(--primary)', marginTop: 6 }}>
+        <View className="web-card">
+          <View className="field-label">Homeowner Loyalty Tier</View>
+          <View style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, color: 'var(--primary)', marginTop: 6 }}>
             Shield Member
-          </div>
-          <div className="field-sub">Priority dispatch in under 60 mins</div>
-        </div>
-      </div>
+          </View>
+          <View className="field-sub">Priority dispatch in under 60 mins</View>
+        </View>
+      </View>
 
-      <div className="web-card">
-        <div className="card-header-row">
-          <div>
+      <View className="web-card">
+        <View className="card-header-row">
+          <View>
             <h2 className="card-title">Past Bookings, Warranty Certificates & 1-Click Rebook</h2>
             <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
               Inspect your chemical warranty certificates or pre-fill a repeat treatment in 1 click.
             </p>
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={() => onNavigate('book')}>
+          </View>
+          <TouchableOpacity className="btn btn-primary btn-sm" onClick={() => onNavigate('book')}>
             <Bug size={15} /> Book New Service
-          </button>
-        </div>
+          </TouchableOpacity>
+        </View>
 
-        <div className="web-table-wrap">
+        <View className="web-table-wrap">
           <table className="web-table">
             <thead>
               <tr>
@@ -1597,47 +1593,47 @@ function HistorySection({ toast, onNavigate }) {
                       #{item.id}
                     </td>
                     <td>
-                      <div style={{ fontWeight: 700 }}>{item.pestLabel}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
+                      <View style={{ fontWeight: 700 }}>{item.pestLabel}</View>
+                      <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
                         {item.planLabel} • {item.sizeLabel}
-                      </div>
+                      </View>
                     </td>
                     <td style={{ maxWidth: 260 }}>
-                      <div style={{ fontSize: '0.84rem' }}>{item.address}</div>
+                      <View style={{ fontSize: '0.84rem' }}>{item.address}</View>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{item.technicianName || 'Arjun Sharma'}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
+                      <View style={{ fontWeight: 600 }}>{item.technicianName || 'Arjun Sharma'}</View>
+                      <View style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
                         {item.licenseCode || 'CHL-2024-889'}
-                      </div>
+                      </View>
                     </td>
                     <td style={{ fontWeight: 800, color: 'var(--primary)' }}>Rs. {amt}</td>
                     <td>
-                      <span
+                      <Text
                         className={`badge ${
                           item.status === 'COMPLETED' ? 'badge-green' : 'badge-red'
                         }`}
                       >
                         {item.status}
-                      </span>
+                      </Text>
                       {item.rating && (
-                        <div style={{ fontSize: '0.78rem', color: '#8A5A00', fontWeight: 700, marginTop: 4 }}>
+                        <View style={{ fontSize: '0.78rem', color: '#8A5A00', fontWeight: 700, marginTop: 4 }}>
                           ★ {item.rating}/5 Rated
-                        </div>
+                        </View>
                       )}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: 8 }}>
+                      <View style={{ display: 'inline-flex', gap: 8 }}>
                         {item.status === 'COMPLETED' && (
-                          <button
+                          <TouchableOpacity
                             type="button"
                             className="btn btn-outline btn-sm"
                             onClick={() => setCertModalItem(item)}
                           >
                             <Award size={14} /> Warranty Certificate
-                          </button>
+                          </TouchableOpacity>
                         )}
-                        <button
+                        <TouchableOpacity
                           type="button"
                           className="btn btn-primary btn-sm"
                           onClick={() => {
@@ -1647,16 +1643,16 @@ function HistorySection({ toast, onNavigate }) {
                           }}
                         >
                           <RefreshCw size={14} /> Rebook
-                        </button>
-                      </div>
+                        </TouchableOpacity>
+                      </View>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </div>
-      </div>
+        </View>
+      </View>
 
       {/* Warranty Certificate Modal */}
       <ModalDialog
@@ -1666,54 +1662,54 @@ function HistorySection({ toast, onNavigate }) {
         icon={Award}
       >
         {certModalItem && (
-          <div style={{ display: 'grid', gap: 14 }}>
-            <div
+          <View style={{ display: 'grid', gap: 14 }}>
+            <View
               className="web-card-surface"
               style={{
                 border: '2px solid var(--primary)',
                 background: 'var(--primary-light)',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--primary)' }}>
+              <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <View style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--primary)' }}>
                     Official Warranty Coverage
-                  </div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: 2 }}>
+                  </View>
+                  <View style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: 2 }}>
                     {certModalItem.warrantyDays || 90}-Day Free Re-Service Guarantee
-                  </div>
-                </div>
-                <span className="badge badge-green">Active Cover</span>
-              </div>
-            </div>
+                  </View>
+                </View>
+                <Text className="badge badge-green">Active Cover</Text>
+              </View>
+            </View>
 
-            <div className="field-grid">
-              <div className="field-box">
-                <div className="field-label">Treatment Performed</div>
-                <div className="field-value">{certModalItem.pestLabel}</div>
-                <div className="field-sub">{certModalItem.planLabel}</div>
-              </div>
-              <div className="field-box">
-                <div className="field-label">Certified Technician</div>
-                <div className="field-value">{certModalItem.technicianName || 'Arjun Sharma'}</div>
-                <div className="field-sub">Govt License: {certModalItem.licenseCode || 'CHL-2024-889'}</div>
-              </div>
-            </div>
+            <View className="field-grid">
+              <View className="field-box">
+                <View className="field-label">Treatment Performed</View>
+                <View className="field-value">{certModalItem.pestLabel}</View>
+                <View className="field-sub">{certModalItem.planLabel}</View>
+              </View>
+              <View className="field-box">
+                <View className="field-label">Certified Technician</View>
+                <View className="field-value">{certModalItem.technicianName || 'Arjun Sharma'}</View>
+                <View className="field-sub">Govt License: {certModalItem.licenseCode || 'CHL-2024-889'}</View>
+              </View>
+            </View>
 
-            <div className="field-box">
-              <div className="field-label">Approved Chemical Formulation Used</div>
-              <div className="field-value">
+            <View className="field-box">
+              <View className="field-label">Approved Chemical Formulation Used</View>
+              <View className="field-value">
                 {certModalItem.chemicalUsed || 'Fipronil 0.05% Odorless Gel & Deltamethrin 2.5% EC'}
-              </div>
-            </div>
+              </View>
+            </View>
 
-            <div className="field-box">
-              <div className="field-label">Protected Property Address</div>
-              <div className="field-value">{certModalItem.address}</div>
-            </div>
+            <View className="field-box">
+              <View className="field-label">Protected Property Address</View>
+              <View className="field-value">{certModalItem.address}</View>
+            </View>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-              <button
+            <View style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+              <TouchableOpacity
                 type="button"
                 className="btn btn-primary"
                 onClick={() => {
@@ -1724,12 +1720,12 @@ function HistorySection({ toast, onNavigate }) {
                 }}
               >
                 <RefreshCw size={16} /> Book Free Warranty Re-Visit
-              </button>
-            </div>
-          </div>
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
       </ModalDialog>
-    </div>
+    </View>
   );
 }
 
@@ -1737,98 +1733,98 @@ function SafetyGuideSection() {
   const [selectedSheet, setSelectedSheet] = useState(BUNDLED_CHEMICAL_SHEETS[0]);
 
   return (
-    <div>
-      <div className="dashboard-grid-2">
-        <div className="web-card">
-          <div className="card-header-row">
-            <div>
+    <View>
+      <View className="dashboard-grid-2">
+        <View className="web-card">
+          <View className="card-header-row">
+            <View>
               <h2 className="card-title">
                 <ShieldCheck size={20} color="var(--primary)" />
-                <span>Homeowner Chemical Transparency & CIB&RC Guide</span>
+                <Text>Homeowner Chemical Transparency & CIB&RC Guide</Text>
               </h2>
               <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                 Every chemical used in your home is Government of India CIB&RC registered. Inspect child, pet, and re-entry safety notes below.
               </p>
-            </div>
-          </div>
+            </View>
+          </View>
 
-          <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+          <View style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
             {BUNDLED_CHEMICAL_SHEETS.map((s) => (
-              <button
+              <TouchableOpacity
                 key={s.id}
                 type="button"
                 className={`stage-pill-btn ${selectedSheet.id === s.id ? 'active' : ''}`}
                 onClick={() => setSelectedSheet(s)}
               >
                 {s.name}
-              </button>
+              </TouchableOpacity>
             ))}
-          </div>
+          </View>
 
           {selectedSheet && (
-            <div className="web-card-surface">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div>
+            <View className="web-card-surface">
+              <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <View>
                   <h3 style={{ fontSize: '1.15rem', color: 'var(--primary-dark)' }}>
                     {selectedSheet.name}
                   </h3>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
+                  <View style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
                     CIB&RC Reg: <strong>{selectedSheet.cibrcReg}</strong>
-                  </div>
-                </div>
-                <span className="badge badge-green">
+                  </View>
+                </View>
+                <Text className="badge badge-green">
                   Safe Re-Entry:{' '}
                   {selectedSheet.reEntryMinutes === 0
                     ? 'Immediate (0 mins)'
                     : `${selectedSheet.reEntryMinutes} mins`}
-                </span>
-              </div>
+                </Text>
+              </View>
 
-              <div className="field-grid" style={{ marginBottom: 12 }}>
-                <div className="field-box" style={{ background: '#FFFFFF' }}>
-                  <div className="field-label">Active Ingredient</div>
-                  <div className="field-value" style={{ fontSize: '0.9rem' }}>
+              <View className="field-grid" style={{ marginBottom: 12 }}>
+                <View className="field-box" style={{ background: '#FFFFFF' }}>
+                  <View className="field-label">Active Ingredient</View>
+                  <View className="field-value" style={{ fontSize: '0.9rem' }}>
                     {selectedSheet.activeIngredient}
-                  </div>
-                </div>
-                <div className="field-box" style={{ background: '#FFFFFF' }}>
-                  <div className="field-label">Target Pests Controlled</div>
-                  <div className="field-value" style={{ fontSize: '0.9rem' }}>
+                  </View>
+                </View>
+                <View className="field-box" style={{ background: '#FFFFFF' }}>
+                  <View className="field-label">Target Pests Controlled</View>
+                  <View className="field-value" style={{ fontSize: '0.9rem' }}>
                     {selectedSheet.targetPests}
-                  </div>
-                </div>
-              </div>
+                  </View>
+                </View>
+              </View>
 
-              <div className="field-box" style={{ background: '#FFFFFF' }}>
-                <div className="field-label">Homeowner First-Aid & Precaution Note</div>
-                <div style={{ fontSize: '0.86rem', lineHeight: 1.5, marginTop: 4 }}>
+              <View className="field-box" style={{ background: '#FFFFFF' }}>
+                <View className="field-label">Homeowner First-Aid & Precaution Note</View>
+                <View style={{ fontSize: '0.86rem', lineHeight: 1.5, marginTop: 4 }}>
                   {selectedSheet.firstAidSkinEye}
-                </div>
-              </div>
-            </div>
+                </View>
+              </View>
+            </View>
           )}
-        </div>
+        </View>
 
-        <div className="web-card">
+        <View className="web-card">
           <h2 className="card-title" style={{ marginBottom: 14 }}>
             <CheckCircle2 size={20} color="var(--success)" />
-            <span>6-Step Homeowner Preparation & Post-Care Checklist</span>
+            <Text>6-Step Homeowner Preparation & Post-Care Checklist</Text>
           </h2>
-          <div style={{ display: 'grid', gap: 10 }}>
+          <View style={{ display: 'grid', gap: 10 }}>
             {SAFETY_CHECKLIST_STEPS.map((step, i) => (
-              <div key={i} className="field-box">
-                <div style={{ fontWeight: 800, color: 'var(--primary-dark)' }}>
+              <View key={i} className="field-box">
+                <View style={{ fontWeight: 800, color: 'var(--primary-dark)' }}>
                   Step {i + 1}: {step.title}
-                </div>
-                <div style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 3 }}>
+                </View>
+                <View style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 3 }}>
                   {step.description}
-                </div>
-              </div>
+                </View>
+              </View>
             ))}
-          </div>
-        </div>
-      </div>
-    </div>
+          </View>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -1891,7 +1887,7 @@ export default function App() {
   };
 
   return (
-    <div className="web-layout">
+    <View className="web-layout">
       <ToastStack toasts={toasts} />
 
       <ModalDialog
@@ -1903,13 +1899,13 @@ export default function App() {
         <p style={{ color: 'var(--ink-muted)', marginBottom: 16, lineHeight: 1.5 }}>
           Need assistance with an active booking, technician arrival, or warranty claim? Our Bengaluru dispatch desk is available 24x7.
         </p>
-        <div style={{ display: 'grid', gap: 12 }}>
+        <View style={{ display: 'grid', gap: 12 }}>
           <a
             href="tel:18001239999"
             className="btn btn-primary btn-lg btn-block"
             onClick={() => toast('Calling Pest Free 24x7 Concierge Desk...', 'info')}
           >
-            <Phone size={18} /> Call Customer Care (1800-123-9999)
+            <Phone size={18} /> Call Customer Support (1800-123-9999)
           </a>
           <a
             href="tel:1800112233"
@@ -1918,96 +1914,99 @@ export default function App() {
           >
             <ShieldCheck size={18} /> CIB&RC Chemical Safety Helpline (1800-11-2233)
           </a>
-        </div>
+        </View>
       </ModalDialog>
 
-      {/* Left Sidebar Navigation */}
-      <aside className="web-sidebar" aria-label="Customer Website Navigation">
-        <div className="sidebar-brand">
-          <div className="brand-logo-box">
+      {/* Left Sidebar Navigation (React Native Primitives) */}
+      <View className="web-sidebar" accessibilityRole="navigation" aria-label="Customer Website Navigation">
+        <View className="sidebar-brand">
+          <View className="brand-logo-box">
             <ShieldCheck size={24} />
-          </div>
-          <div>
-            <div className="brand-title">Pest Free</div>
-            <div className="brand-subtitle">Customer Web Portal</div>
-          </div>
-        </div>
+          </View>
+          <View>
+            <Text className="brand-title">Pest Free</Text>
+            <Text className="brand-subtitle">Customer Web Portal</Text>
+          </View>
+        </View>
 
-        <div className="sidebar-customer-card">
-          <div className="customer-avatar-row">
-            <div className="customer-avatar">AK</div>
-            <div>
-              <div className="customer-name">Aarav Sharma</div>
-              <div className="customer-meta">Jayanagar 4th Block, BLR</div>
-            </div>
-          </div>
-          <div className="customer-badges">
-            <span className="sidebar-badge">
+        <View className="sidebar-customer-card">
+          <View className="customer-avatar-row">
+            <View className="customer-avatar">AK</View>
+            <View>
+              <Text className="customer-name">Aarav Sharma</Text>
+              <Text className="customer-meta">Jayanagar 4th Block, BLR</Text>
+            </View>
+          </View>
+          <View className="customer-badges">
+            <Text className="sidebar-badge">
               <Lock size={11} /> Agency Verified
-            </span>
-            <span className="sidebar-badge">
+            </Text>
+            <Text className="sidebar-badge">
               <Award size={11} /> 90d Warranty
-            </span>
-          </div>
-        </div>
+            </Text>
+          </View>
+        </View>
 
-        <nav className="sidebar-nav">
-          <div className="nav-section-label">Customer Portal</div>
+        <View className="sidebar-nav">
+          <Text className="nav-section-label">Customer Portal</Text>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
             return (
-              <button
+              <TouchableOpacity
                 key={item.id}
-                type="button"
                 className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
+                onPress={() => setActiveSection(item.id)}
                 onClick={() => setActiveSection(item.id)}
+                accessibilityRole="button"
               >
                 <Icon size={19} />
-                <span>{item.label}</span>
-                <span className="nav-pill-count">{item.badge}</span>
-              </button>
+                <Text style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.label}</Text>
+                <Text className="nav-pill-count">{item.badge}</Text>
+              </TouchableOpacity>
             );
           })}
-        </nav>
+        </View>
 
-        <div className="sidebar-footer">
-          <button
-            type="button"
+        <View className="sidebar-footer">
+          <TouchableOpacity
             className="btn btn-accent btn-block"
+            onPress={() => setHelpOpen(true)}
             onClick={() => setHelpOpen(true)}
+            accessibilityRole="button"
           >
-            <Phone size={16} /> 24x7 Customer Helpline
-          </button>
-        </div>
-      </aside>
+            <Phone size={16} /> <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>24x7 Customer Helpline</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-      {/* Main Content */}
-      <div className="web-main">
-        <header className="web-topbar">
-          <div>
-            <h1 className="topbar-title">{headers[activeSection].title}</h1>
-            <div className="topbar-subtitle">{headers[activeSection].subtitle}</div>
-          </div>
+      {/* Main Content (React Native Primitives) */}
+      <View className="web-main">
+        <View className="web-topbar">
+          <View>
+            <Text className="topbar-title" style={{ fontSize: '1.45rem', fontWeight: 800 }}>{headers[activeSection].title}</Text>
+            <Text className="topbar-subtitle">{headers[activeSection].subtitle}</Text>
+          </View>
 
-          <div className="topbar-right">
+          <View className="topbar-right">
             {booking && booking.status !== 'CANCELLED' ? (
-              <button
-                type="button"
+              <TouchableOpacity
                 className="btn btn-primary btn-sm"
+                onPress={() => setActiveSection('track')}
                 onClick={() => setActiveSection('track')}
+                accessibilityRole="button"
               >
-                <Navigation size={14} /> Active Booking #{booking.id} • {booking.status.replace(/_/g, ' ')}
-              </button>
+                <Navigation size={14} /> <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Active Booking #{booking.id} &bull; {booking.status.replace(/_/g, ' ')}</Text>
+              </TouchableOpacity>
             ) : (
-              <span className="badge badge-green">
+              <Text className="badge badge-green">
                 <ShieldCheck size={14} /> 100% CIB&RC Certified Technicians
-              </span>
+              </Text>
             )}
-          </div>
-        </header>
+          </View>
+        </View>
 
-        <main className="web-page">
+        <ScrollView className="web-page">
           {activeSection === 'book' && (
             <BookSection toast={toast} onNavigate={setActiveSection} />
           )}
@@ -2018,8 +2017,8 @@ export default function App() {
             <HistorySection toast={toast} onNavigate={setActiveSection} />
           )}
           {activeSection === 'safety' && <SafetyGuideSection />}
-        </main>
-      </div>
-    </div>
+        </ScrollView>
+      </View>
+    </View>
   );
 }

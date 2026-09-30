@@ -1,3 +1,4 @@
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Image, StyleSheet, Platform } from './lib/rn.jsx';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -6,6 +7,7 @@ import {
   MapPin,
   Wallet,
   AlertTriangle,
+  AlertCircle,
   Phone,
   Lock,
   Unlock,
@@ -55,7 +57,7 @@ function useToast() {
 
 function ToastStack({ toasts }) {
   return (
-    <div className="toast-stack" aria-live="polite">
+    <View className="toast-stack" aria-live="polite">
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.div
@@ -66,100 +68,59 @@ function ToastStack({ toasts }) {
             className={`toast-item ${t.type}`}
           >
             <CheckCircle2 size={16} />
-            <span>{t.msg}</span>
+            <Text style={{ color: 'inherit' }}>{t.msg}</Text>
           </motion.div>
         ))}
       </AnimatePresence>
-    </div>
+    </View>
   );
 }
 
-function ModalDialog({ open, onClose, title, icon: Icon, danger, children }) {
+function ModalDialog({ open, onClose, title, icon: Icon, children }) {
   if (!open) return null;
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <View className="modal-backdrop" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 10 }}
-        className="modal-card"
+        className="modal-dialog"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
-        <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <View className="modal-header">
+          <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {Icon && (
-              <div
+              <View
                 style={{
                   width: 36,
                   height: 36,
                   borderRadius: 10,
-                  background: danger ? 'var(--danger-light)' : 'var(--primary-light)',
-                  color: danger ? 'var(--danger)' : 'var(--primary)',
+                  background: 'var(--primary-light)',
+                  color: 'var(--primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
                 <Icon size={20} />
-              </div>
+              </View>
             )}
-            <h2 className="modal-title">{title}</h2>
-          </div>
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close dialog">
+            <Text className="modal-title" style={{ fontSize: '1.15rem', fontWeight: 800 }}>{title}</Text>
+          </View>
+          <TouchableOpacity
+            className="btn-icon"
+            onClick={onClose}
+            onPress={onClose}
+            aria-label="Close dialog"
+          >
             <X size={18} />
-          </button>
-        </div>
-        <div className="modal-body">{children}</div>
+          </TouchableOpacity>
+        </View>
+        <View className="modal-body">{children}</View>
       </motion.div>
-    </div>
-  );
-}
-
-function SosModal({ open, onClose, toast }) {
-  const [called, setCalled] = useState(false);
-  const handleCall = (title, num) => {
-    setCalled(true);
-    toast(`Initiating emergency contact with ${title} (${num})...`, 'error');
-  };
-
-  return (
-    <ModalDialog open={open} onClose={onClose} title="Emergency Assistance & Safety Hotline" icon={AlertTriangle} danger>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <p style={{ color: 'var(--ink-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-          If an acute chemical spill, adverse skin contact, pet exposure, or customer escalation occurs, use the one-touch hotline below immediately.
-        </p>
-
-        <div className="web-card-surface" style={{ borderLeft: '4px solid var(--danger)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontWeight: 700, color: 'var(--ink)' }}>National Poison Information Centre (AIIMS)</div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>24x7 Toxicology Guidance Toll-Free</div>
-            </div>
-            <button className="btn btn-danger btn-sm" onClick={() => handleCall('AIIMS Toxicology', '1800-116-117')}>
-              <Phone size={14} /> 1800-116-117
-            </button>
-          </div>
-        </div>
-
-        <div className="web-card-surface" style={{ borderLeft: '4px solid var(--accent)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontWeight: 700, color: 'var(--ink)' }}>Agency Operations Dispatch Desk</div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>Immediate route supervisor override</div>
-            </div>
-            <button className="btn btn-accent btn-sm" onClick={() => handleCall('Agency Ops', '+91 80 4912 3450')}>
-              <Phone size={14} /> Call Ops Desk
-            </button>
-          </div>
-        </div>
-
-        <button className="btn btn-outline btn-block" style={{ marginTop: 6 }} onClick={onClose}>
-          Dismiss / Back to Safety Hub
-        </button>
-      </div>
-    </ModalDialog>
+    </View>
   );
 }
 
@@ -228,73 +189,67 @@ function LifecycleStepper({ currentStatus }) {
   const progressPct = Math.round(((activeIdx + 1) / LIFECYCLE_STAGES.length) * 100);
 
   return (
-    <div className="lifecycle-stepper-v2" aria-label="Job Lifecycle Progress">
-      {/* Top Header Row with Motion Graphics Meta */}
-      <div className="stepper-header-row">
-        <div className="stepper-live-indicator">
-          <span className="pulse-indicator-dot" />
-          <span>Live Operations Progression &bull; Stage {activeIdx + 1} of {LIFECYCLE_STAGES.length}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)' }}>
+    <View className="lifecycle-stepper-v2" aria-label="Job Lifecycle Progress">
+      <View className="stepper-header-row">
+        <View className="stepper-live-indicator">
+          <View className="pulse-indicator-dot" />
+          <Text style={{ fontWeight: 700 }}>Live Operations Progression &bull; Stage {activeIdx + 1} of {LIFECYCLE_STAGES.length}</Text>
+        </View>
+        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)' }}>
             Mission Execution:
-          </span>
-          <span className="badge badge-green" style={{ fontSize: '0.75rem', fontWeight: 800 }}>
+          </Text>
+          <Text className="badge badge-green" style={{ fontSize: '0.75rem', fontWeight: 800 }}>
             {progressPct}% Completed
-          </span>
-        </div>
-      </div>
+          </Text>
+        </View>
+      </View>
 
-      {/* Glowing Liquid Progress Bar */}
-      <div className="stepper-progress-bar-wrap">
-        <div
+      <View className="stepper-progress-bar-wrap">
+        <View
           className="stepper-progress-bar-fill"
           style={{ width: `${progressPct}%` }}
         />
-      </div>
+      </View>
 
-      {/* 7 Motion Graphic Stage Cards */}
-      <div className="stepper-grid-v2">
+      <View className="stepper-grid-v2">
         {LIFECYCLE_STAGES.map((st, i) => {
-          const isDone = i < activeIdx;
-          const isCurrent = i === activeIdx;
-          const isUpcoming = i > activeIdx;
-          const Icon = st.icon;
+          const isDone = i < activeIdx || currentStatus === 'COMPLETED';
+          const isCurrent = i === activeIdx && currentStatus !== 'COMPLETED';
+          const isUpcoming = i > activeIdx && currentStatus !== 'COMPLETED';
+          const Icon = st.icon || CheckCircle2;
 
           return (
-            <div
+            <View
               key={st.key}
               className={`step-card-v2 ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isUpcoming ? 'upcoming' : ''}`}
             >
-              {/* Top Row: Step # and Status Badge */}
-              <div className="step-card-top-row">
-                <span className="step-num-pill">STEP {st.step}</span>
-                <span
+              <View className="step-card-top-row">
+                <Text className="step-num-pill">STEP 0{i + 1}</Text>
+                <Text
                   className="step-badge-pill"
                   style={{
                     background: isCurrent ? 'rgba(255,255,255,0.22)' : isDone ? 'rgba(16,185,129,0.15)' : 'rgba(0,0,0,0.05)',
                     color: isCurrent ? '#FFFFFF' : isDone ? '#065F46' : 'var(--ink-muted)',
                   }}
                 >
-                  {isDone ? '✓ Done' : isCurrent ? 'Live Now' : st.badge}
-                </span>
-              </div>
+                  {isDone ? '✓ Done' : isCurrent ? 'Live Now' : 'Queued'}
+                </Text>
+              </View>
 
-              {/* Center Motion Icon Bubble */}
-              <div className="step-icon-bubble">
+              <View className="step-icon-bubble">
                 <Icon size={20} strokeWidth={isCurrent ? 2.5 : 2} />
-              </div>
+              </View>
 
-              {/* Stage Title and Micro Content */}
-              <div>
-                <div className="step-title-v2">{st.label}</div>
-                <div className="step-sub-v2">{st.sub}</div>
-              </div>
-            </div>
+              <View>
+                <Text className="step-title-v2">{st.label}</Text>
+                <Text className="step-sub-v2">{st.sub}</Text>
+              </View>
+            </View>
           );
         })}
-      </div>
-    </div>
+      </View>
+    </View>
   );
 }
 
@@ -326,7 +281,7 @@ function WorkerMiniMap({ customerCoords, workerCoords, height = '220px' }) {
       // Customer Destination Pin
       const custIcon = window.L.divIcon({
         className: 'custom-pin-icon',
-        html: `<div style="background:#E8A317; color:#1D2B1A; border:2px solid #FFFFFF; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); font-weight:800; font-size:15px;">🏠</div>`,
+        html: `<View style="background:#E8A317; color:#1D2B1A; border:2px solid #FFFFFF; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); font-weight:800; font-size:15px;">🏠</View>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16],
       });
@@ -337,10 +292,10 @@ function WorkerMiniMap({ customerCoords, workerCoords, height = '220px' }) {
       // Worker Live Scooter Pin
       const techIcon = window.L.divIcon({
         className: 'custom-pin-icon',
-        html: `<div style="position:relative; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
-          <div style="position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(31,91,58,0.35); animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
-          <div style="background:#1F5B3A; color:#FFFFFF; border:2px solid #FFFFFF; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); font-size:13px;">🛵</div>
-        </div>`,
+        html: `<View style="position:relative; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+          <View style="position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(31,91,58,0.35); animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></View>
+          <View style="background:#1F5B3A; color:#FFFFFF; border:2px solid #FFFFFF; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); font-size:13px;">🛵</View>
+        </View>`,
         iconSize: [36, 36],
         iconAnchor: [18, 18],
       });
@@ -360,7 +315,7 @@ function WorkerMiniMap({ customerCoords, workerCoords, height = '220px' }) {
   }, [cLat, cLng, wLat, wLng]);
 
   return (
-    <div
+    <View
       style={{
         width: '100%',
         height,
@@ -371,13 +326,13 @@ function WorkerMiniMap({ customerCoords, workerCoords, height = '220px' }) {
         position: 'relative',
       }}
     >
-      <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
+      <View ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
       <style>{`
         @keyframes ping {
           75%, 100% { transform: scale(2); opacity: 0; }
         }
       `}</style>
-    </div>
+    </View>
   );
 }
 
@@ -503,9 +458,9 @@ function ActiveJobSection({ toast, onNavigate }) {
   const lng = booking?.coords?.lng || liveCustomerLocation?.lng || 77.5938;
 
   return (
-    <div>
+    <View>
       {/* High-Tech Dispatch Simulator Console */}
-      <div
+      <View
         className="demo-toolbar"
         style={{
           background: 'linear-gradient(135deg, rgba(31,91,58,0.06), rgba(232,163,23,0.06))',
@@ -515,13 +470,13 @@ function ActiveJobSection({ toast, onNavigate }) {
           marginBottom: 20,
         }}
       >
-        <div className="demo-toolbar-label" style={{ color: 'var(--primary-dark)', fontSize: '0.86rem' }}>
+        <View className="demo-toolbar-label" style={{ color: 'var(--primary-dark)', fontSize: '0.86rem' }}>
           <Sparkles size={18} color="#E8A317" style={{ filter: 'drop-shadow(0 0 6px #E8A317)' }} />
-          <span>Interactive Dispatch State Simulator:</span>
-        </div>
-        <div className="demo-stage-pills">
+          <Text>Interactive Dispatch State Simulator:</Text>
+        </View>
+        <View className="demo-stage-pills">
           {LIFECYCLE_STAGES.map((st) => (
-            <button
+            <TouchableOpacity
               key={st.key}
               className={`stage-pill-btn ${booking?.status === st.key ? 'active' : ''}`}
               style={
@@ -539,15 +494,15 @@ function ActiveJobSection({ toast, onNavigate }) {
                 toast(`Loaded job in ${st.label} state`, 'info');
               }}
             >
-              <span>{st.step}. {st.label}</span>
-            </button>
+              <Text>{st.step}. {st.label}</Text>
+            </TouchableOpacity>
           ))}
-        </div>
-      </div>
+        </View>
+      </View>
 
       {(!booking || booking.status === 'CANCELLED') && (
-        <div className="web-card" style={{ textAlign: 'center', padding: '56px 32px' }}>
-          <div
+        <View className="web-card" style={{ textAlign: 'center', padding: '56px 32px' }}>
+          <View
             style={{
               width: 68,
               height: 68,
@@ -561,15 +516,15 @@ function ActiveJobSection({ toast, onNavigate }) {
             }}
           >
             <Briefcase size={32} />
-          </div>
+          </View>
           <h2 style={{ fontSize: '1.5rem', marginBottom: 8 }}>
             No Active Dispatch Assigned Right Now
           </h2>
           <p style={{ color: 'var(--ink-muted)', maxWidth: 520, margin: '0 auto 24px', lineHeight: 1.5 }}>
             You are currently online. Place a booking from the Customer App (port 3000) or simulate an incoming booking below.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
+          <View style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <TouchableOpacity
               className="btn btn-primary btn-lg"
               onClick={() => {
                 simulateIncomingJob('BOOKING_PLACED');
@@ -577,15 +532,15 @@ function ActiveJobSection({ toast, onNavigate }) {
               }}
             >
               <Play size={18} /> Load New Incoming Booking (Awaiting Agency)
-            </button>
-            <button
+            </TouchableOpacity>
+            <TouchableOpacity
               className="btn btn-outline btn-lg"
               onClick={() => onNavigate('route')}
             >
               <MapPin size={18} /> View Today's Route Schedule
-            </button>
-          </div>
-        </div>
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
 
       {booking && booking.status !== 'CANCELLED' && (
@@ -594,32 +549,32 @@ function ActiveJobSection({ toast, onNavigate }) {
 
           {/* DEDICATED LIVE NAVIGATION & EXECUTION DASHBOARD (Opens upon Accept & Navigate) */}
           {inExecutionView && ['ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? (
-            <div className="dashboard-grid-2">
+            <View className="dashboard-grid-2">
               {/* LEFT COLUMN: Map Radar & Safety Checklist */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <View style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* 1. Map Radar Card */}
-                <div className="web-card">
-                  <div className="card-header-row">
-                    <div>
-                      <span className="badge badge-neutral" style={{ marginBottom: 4 }}>
+                <View className="web-card">
+                  <View className="card-header-row">
+                    <View>
+                      <Text className="badge badge-neutral" style={{ marginBottom: 4 }}>
                         Booking #{booking.id}
-                      </span>
+                      </Text>
                       <h2 className="card-title" style={{ fontSize: '1.25rem' }}>
                         Real Live Technician GPS Radar (OpenStreetMap)
                       </h2>
-                    </div>
+                    </View>
                     {booking.status === 'ON_THE_WAY' && (
-                      <span className="badge badge-green">
+                      <Text className="badge badge-green">
                         <Clock size={14} /> ETA: {etaSeconds}s remaining
-                      </span>
+                      </Text>
                     )}
                     {booking.status === 'ARRIVED' && (
-                      <span className="badge badge-amber">Technician at Doorstep</span>
+                      <Text className="badge badge-amber">Technician at Doorstep</Text>
                     )}
                     {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) && (
-                      <span className="badge badge-green">On-Site Treatment Active</span>
+                      <Text className="badge badge-green">On-Site Treatment Active</Text>
                     )}
-                  </div>
+                  </View>
 
                   {/* Leaflet Map (Height 340px) */}
                   <WorkerMiniMap
@@ -629,34 +584,34 @@ function ActiveJobSection({ toast, onNavigate }) {
                   />
 
                   {/* 2 sub-boxes below map */}
-                  <div className="field-grid" style={{ marginTop: 16 }}>
-                    <div className="field-box">
-                      <div className="field-label">TARGET TREATMENT & SERVICES</div>
-                      <div className="field-value">{booking.pestLabel}</div>
-                      <div className="field-sub">
+                  <View className="field-grid" style={{ marginTop: 16 }}>
+                    <View className="field-box">
+                      <View className="field-label">TARGET TREATMENT & SERVICES</View>
+                      <View className="field-value">{booking.pestLabel}</View>
+                      <View className="field-sub">
                         {booking.planLabel} ({booking.sizeLabel})
-                      </div>
-                    </div>
-                    <div className="field-box">
-                      <div className="field-label">PINNED CUSTOMER COORDINATES</div>
-                      <div className="field-value">
+                      </View>
+                    </View>
+                    <View className="field-box">
+                      <View className="field-label">PINNED CUSTOMER COORDINATES</View>
+                      <View className="field-value">
                         Lat: {Number(lat).toFixed(4)}, Lng: {Number(lng).toFixed(4)}
-                      </div>
-                      <div className="field-sub">{booking.address}</div>
-                    </div>
-                  </div>
-                </div>
+                      </View>
+                      <View className="field-sub">{booking.address}</View>
+                    </View>
+                  </View>
+                </View>
 
                 {/* 2. Travel Action Bar (When ON_THE_WAY) */}
                 {booking.status === 'ON_THE_WAY' && (
-                  <div className="web-card">
-                    <div className="card-header-row">
+                  <View className="web-card">
+                    <View className="card-header-row">
                       <h3 className="card-title">
                         <Navigation size={18} color="var(--primary)" />
-                        <span>En Route to Customer Doorstep</span>
+                        <Text>En Route to Customer Doorstep</Text>
                       </h3>
                       {etaSeconds > 0 && (
-                        <button
+                        <TouchableOpacity
                           className="btn btn-outline btn-sm"
                           onClick={() => {
                             fastForwardEta();
@@ -664,13 +619,13 @@ function ActiveJobSection({ toast, onNavigate }) {
                           }}
                         >
                           <FastForward size={14} /> Skip Timer
-                        </button>
+                        </TouchableOpacity>
                       )}
-                    </div>
+                    </View>
                     <p style={{ color: 'var(--ink-muted)', fontSize: '0.85rem', marginBottom: 14 }}>
                       Travel in progress to {booking.address}. Once parked at gate, click below to mark arrival.
                     </p>
-                    <button
+                    <TouchableOpacity
                       className="btn btn-primary btn-lg btn-block"
                       disabled={!canWorkerMarkArrived()}
                       onClick={async () => {
@@ -682,20 +637,20 @@ function ActiveJobSection({ toast, onNavigate }) {
                       {etaSeconds > 0
                         ? `Wait ${etaSeconds}s (or click Skip Timer) to Mark Arrived`
                         : 'Mark Arrived at Customer Doorstep'}
-                    </button>
-                  </div>
+                    </TouchableOpacity>
+                  </View>
                 )}
 
                 {/* 3. Safety Protocol Checklist (When ARRIVED, IN_PROGRESS, or COMPLETED) */}
                 {['ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(booking.status) && (
-                  <div className="web-card">
-                    <div className="card-header-row">
+                  <View className="web-card">
+                    <View className="card-header-row">
                       <h3 className="card-title">
                         <ShieldCheck size={20} color="var(--success)" />
-                        <span>Mandatory Safety Checklist & Protocol</span>
+                        <Text>Mandatory Safety Checklist & Protocol</Text>
                       </h3>
                       {booking.status === 'IN_PROGRESS' && (
-                        <button
+                        <TouchableOpacity
                           className="btn btn-outline btn-sm"
                           onClick={() => {
                             checkAllSafetySteps();
@@ -703,55 +658,55 @@ function ActiveJobSection({ toast, onNavigate }) {
                           }}
                         >
                           <Check size={14} /> Check All 6 Steps
-                        </button>
+                        </TouchableOpacity>
                       )}
-                    </div>
+                    </View>
 
-                    <div className="checklist-stack" style={{ marginTop: 10 }}>
+                    <View className="checklist-stack" style={{ marginTop: 10 }}>
                       {SAFETY_CHECKLIST_STEPS.map((step, i) => {
                         const isChecked = safetyChecklist[i];
                         return (
-                          <div
+                          <View
                             key={i}
                             className={`checklist-row ${isChecked ? 'checked' : ''}`}
                             onClick={() => {
                               if (booking.status === 'IN_PROGRESS') toggleSafetyStep(i);
                             }}
                           >
-                            <div className="custom-checkbox">
+                            <View className="custom-checkbox">
                               {isChecked && <Check size={15} strokeWidth={3} />}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 700, fontSize: '0.90rem' }}>
+                            </View>
+                            <View>
+                              <View style={{ fontWeight: 700, fontSize: '0.90rem' }}>
                                 {i + 1}. {step.title}
-                              </div>
-                              <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                              </View>
+                              <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                                 {step.description}
-                              </div>
-                            </div>
-                          </div>
+                              </View>
+                            </View>
+                          </View>
                         );
                       })}
-                    </div>
+                    </View>
 
-                    <div className="web-card-surface" style={{ marginTop: 14 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '0.90rem' }}>
+                    <View className="web-card-surface" style={{ marginTop: 14 }}>
+                      <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <View>
+                          <View style={{ fontWeight: 700, fontSize: '0.90rem' }}>
                             Post-Treatment Barrier Photo Proof
-                          </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
+                          </View>
+                          <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
                             {afterPhotoTaken
                               ? 'Timestamped photo attached & verified.'
                               : 'Required before unlocking completion PIN.'}
-                          </div>
-                        </div>
+                          </View>
+                        </View>
                         {afterPhotoTaken ? (
-                          <span className="badge badge-green">
+                          <Text className="badge badge-green">
                             <CheckCircle2 size={14} /> Photo Attached
-                          </span>
+                          </Text>
                         ) : (
-                          <button
+                          <TouchableOpacity
                             className="btn btn-outline btn-sm"
                             disabled={booking.status !== 'IN_PROGRESS'}
                             onClick={() => {
@@ -760,27 +715,27 @@ function ActiveJobSection({ toast, onNavigate }) {
                             }}
                           >
                             <Camera size={15} /> Capture Photo
-                          </button>
+                          </TouchableOpacity>
                         )}
-                      </div>
-                    </div>
-                  </div>
+                      </View>
+                    </View>
+                  </View>
                 )}
-              </div>
+              </View>
 
               {/* RIGHT COLUMN: Start OTP, Completion PIN, Agency Info, and Payment QR */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <View style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* 1. Doorstep Treatment Start OTP */}
-                <div className="web-card">
-                  <div className="card-header-row">
+                <View className="web-card">
+                  <View className="card-header-row">
                     <h3 className="card-title">
                       <KeyRound size={20} color="var(--primary)" />
-                      <span>Doorstep Treatment Start OTP</span>
+                      <Text>Doorstep Treatment Start OTP</Text>
                     </h3>
-                    <span className={`badge ${['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'badge-green' : 'badge-amber'}`}>
+                    <Text className={`badge ${['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'badge-green' : 'badge-amber'}`}>
                       {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'Verified & Started' : 'Enter on Arrival'}
-                    </span>
-                  </div>
+                    </Text>
+                  </View>
                   <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.45 }}>
                     {['IN_PROGRESS', 'COMPLETED'].includes(booking.status)
                       ? 'Customer Doorstep OTP was verified successfully. Chemical seals unlatched.'
@@ -788,7 +743,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                   </p>
 
                   {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? (
-                    <div
+                    <View
                       style={{
                         display: 'flex',
                         gap: 12,
@@ -802,7 +757,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                       {String(startOtp || booking.startOtp || '4829')
                         .split('')
                         .map((d, i) => (
-                          <div
+                          <View
                             key={i}
                             style={{
                               width: 48,
@@ -819,19 +774,19 @@ function ActiveJobSection({ toast, onNavigate }) {
                             }}
                           >
                             {d}
-                          </div>
+                          </View>
                         ))}
-                    </div>
+                    </View>
                   ) : booking.status === 'ARRIVED' ? (
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                        <button className="btn btn-outline btn-sm" onClick={fillDemoOtp}>
+                    <View>
+                      <View style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                        <TouchableOpacity className="btn btn-outline btn-sm" onClick={fillDemoOtp}>
                           Demo Quick Fill ({startOtp || booking?.startOtp || '4829'})
-                        </button>
-                      </div>
-                      <div className="otp-row" style={{ marginBottom: 12 }}>
+                        </TouchableOpacity>
+                      </View>
+                      <View className="otp-row" style={{ marginBottom: 12 }}>
                         {otpDigits.map((digit, i) => (
-                          <input
+                          <TextInput
                             key={i}
                             ref={otpRefs[i]}
                             type="text"
@@ -848,22 +803,22 @@ function ActiveJobSection({ toast, onNavigate }) {
                             }}
                           />
                         ))}
-                      </div>
+                      </View>
                       {otpError && (
-                        <div style={{ background: 'var(--danger-light)', color: 'var(--danger)', padding: '8px 12px', borderRadius: 8, fontSize: '0.82rem', marginBottom: 10, textAlign: 'center' }}>
+                        <View style={{ background: 'var(--danger-light)', color: 'var(--danger)', padding: '8px 12px', borderRadius: 8, fontSize: '0.82rem', marginBottom: 10, textAlign: 'center' }}>
                           {otpError}
-                        </div>
+                        </View>
                       )}
-                      <button
+                      <TouchableOpacity
                         className="btn btn-primary btn-block btn-lg"
                         disabled={otpDigits.join('').length < 4}
                         onClick={handleVerifyOtp}
                       >
                         <CheckCircle2 size={18} /> Verify Start OTP & Begin Treatment
-                      </button>
-                    </div>
+                      </TouchableOpacity>
+                    </View>
                   ) : (
-                    <div
+                    <View
                       style={{
                         display: 'flex',
                         gap: 12,
@@ -875,7 +830,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                       }}
                     >
                       {['4', '8', '2', '9'].map((d, i) => (
-                        <div
+                        <View
                           key={i}
                           style={{
                             width: 48,
@@ -892,23 +847,23 @@ function ActiveJobSection({ toast, onNavigate }) {
                           }}
                         >
                           {d}
-                        </div>
+                        </View>
                       ))}
-                    </div>
+                    </View>
                   )}
-                </div>
+                </View>
 
                 {/* 2. End-of-Service Completion Security PIN */}
-                <div className="web-card">
-                  <div className="card-header-row">
+                <View className="web-card">
+                  <View className="card-header-row">
                     <h3 className="card-title">
                       <Award size={20} color="var(--success)" />
-                      <span>End-of-Service Completion Security PIN</span>
+                      <Text>End-of-Service Completion Security PIN</Text>
                     </h3>
-                    <span className={`badge ${booking.status === 'COMPLETED' ? 'badge-green' : workCompletedByWorker ? 'badge-green' : 'badge-amber'}`}>
+                    <Text className={`badge ${booking.status === 'COMPLETED' ? 'badge-green' : workCompletedByWorker ? 'badge-green' : 'badge-amber'}`}>
                       {booking.status === 'COMPLETED' ? 'PIN Verified & Closed' : workCompletedByWorker ? 'Work Finished — PIN Unlocked' : 'Work in Progress'}
-                    </span>
-                  </div>
+                    </Text>
+                  </View>
                   <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.45 }}>
                     {booking.status === 'COMPLETED'
                       ? 'Customer 4-digit Completion PIN verified. Treatment ticket is closed.'
@@ -918,7 +873,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                   </p>
 
                   {booking.status === 'COMPLETED' ? (
-                    <div
+                    <View
                       style={{
                         display: 'flex',
                         gap: 12,
@@ -932,7 +887,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                       {String(completionPin || '7391')
                         .split('')
                         .map((d, i) => (
-                          <div
+                          <View
                             key={i}
                             style={{
                               width: 48,
@@ -949,19 +904,19 @@ function ActiveJobSection({ toast, onNavigate }) {
                             }}
                           >
                             {d}
-                          </div>
+                          </View>
                         ))}
-                    </div>
+                    </View>
                   ) : workCompletedByWorker ? (
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                        <button className="btn btn-outline btn-sm" onClick={fillDemoCompPin}>
+                    <View>
+                      <View style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                        <TouchableOpacity className="btn btn-outline btn-sm" onClick={fillDemoCompPin}>
                           Demo Fill ({completionPin || '7391'})
-                        </button>
-                      </div>
-                      <div className="otp-row" style={{ marginBottom: 12 }}>
+                        </TouchableOpacity>
+                      </View>
+                      <View className="otp-row" style={{ marginBottom: 12 }}>
                         {compPinDigits.map((digit, i) => (
-                          <input
+                          <TextInput
                             key={i}
                             ref={compPinRefs[i]}
                             type="text"
@@ -978,23 +933,23 @@ function ActiveJobSection({ toast, onNavigate }) {
                             }}
                           />
                         ))}
-                      </div>
+                      </View>
                       {compPinError && (
-                        <div style={{ background: 'var(--danger-light)', color: 'var(--danger)', padding: '8px 12px', borderRadius: 8, fontSize: '0.82rem', marginBottom: 10, textAlign: 'center' }}>
+                        <View style={{ background: 'var(--danger-light)', color: 'var(--danger)', padding: '8px 12px', borderRadius: 8, fontSize: '0.82rem', marginBottom: 10, textAlign: 'center' }}>
                           {compPinError}
-                        </div>
+                        </View>
                       )}
-                      <button
+                      <TouchableOpacity
                         className="btn btn-primary btn-block btn-lg"
                         disabled={compPinDigits.join('').length < 4}
                         onClick={handleVerifyCompPin}
                       >
                         <Award size={18} /> Verify Completion PIN (Proceed to Review & Payout)
-                      </button>
-                    </div>
+                      </TouchableOpacity>
+                    </View>
                   ) : booking.status === 'IN_PROGRESS' ? (
-                    <div>
-                      <div
+                    <View>
+                      <View
                         style={{
                           display: 'flex',
                           gap: 12,
@@ -1007,7 +962,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                         }}
                       >
                         {['7', '3', '9', '1'].map((d, i) => (
-                          <div
+                          <View
                             key={i}
                             style={{
                               width: 48,
@@ -1024,10 +979,10 @@ function ActiveJobSection({ toast, onNavigate }) {
                             }}
                           >
                             {d}
-                          </div>
+                          </View>
                         ))}
-                      </div>
-                      <button
+                      </View>
+                      <TouchableOpacity
                         className="btn btn-success btn-lg btn-block"
                         disabled={!canMarkWorkFinished}
                         onClick={async () => {
@@ -1043,10 +998,10 @@ function ActiveJobSection({ toast, onNavigate }) {
                         {canMarkWorkFinished
                           ? 'Complete My Work (Reveal Customer PIN)'
                           : `Complete (${safetyChecklist.filter(Boolean).length}/6 steps, ${afterPhotoTaken ? '1/1' : '0/1'} photo)`}
-                      </button>
-                    </div>
+                      </TouchableOpacity>
+                    </View>
                   ) : (
-                    <div
+                    <View
                       style={{
                         display: 'flex',
                         gap: 12,
@@ -1058,7 +1013,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                       }}
                     >
                       {['7', '3', '9', '1'].map((d, i) => (
-                        <div
+                        <View
                           key={i}
                           style={{
                             width: 48,
@@ -1075,45 +1030,45 @@ function ActiveJobSection({ toast, onNavigate }) {
                           }}
                         >
                           {d}
-                        </div>
+                        </View>
                       ))}
-                    </div>
+                    </View>
                   )}
-                </div>
+                </View>
 
                 {/* 3. Assigned Technician & Agency Verification */}
-                <div className="web-card">
-                  <div className="card-header-row">
+                <View className="web-card">
+                  <View className="card-header-row">
                     <h3 className="card-title">
                       <UserCheck size={20} color="var(--primary)" />
-                      <span>Assigned Technician & Agency Verification</span>
+                      <Text>Assigned Technician & Agency Verification</Text>
                     </h3>
-                    <span className="badge badge-green">KYC Verified</span>
-                  </div>
+                    <Text className="badge badge-green">KYC Verified</Text>
+                  </View>
 
-                  <div className="field-grid" style={{ marginBottom: 14 }}>
-                    <div className="field-box">
-                      <div className="field-label">TECHNICIAN NAME</div>
-                      <div className="field-value">Arjun Sharma</div>
-                      <div className="field-sub">Rating: 4.92 Stars (428 jobs)</div>
-                    </div>
-                    <div className="field-box">
-                      <div className="field-label">GOVERNMENT LICENSE</div>
-                      <div className="field-value">CHL-2024-889</div>
-                      <div className="field-sub">CIB&RC Registered Applicator</div>
-                    </div>
-                  </div>
+                  <View className="field-grid" style={{ marginBottom: 14 }}>
+                    <View className="field-box">
+                      <View className="field-label">TECHNICIAN NAME</View>
+                      <View className="field-value">Arjun Sharma</View>
+                      <View className="field-sub">Rating: 4.92 Stars (428 jobs)</View>
+                    </View>
+                    <View className="field-box">
+                      <View className="field-label">GOVERNMENT LICENSE</View>
+                      <View className="field-value">CHL-2024-889</View>
+                      <View className="field-sub">CIB&RC Registered Applicator</View>
+                    </View>
+                  </View>
 
-                  <div className="field-box" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
+                  <View className="field-box" style={{ marginBottom: 14 }}>
+                    <View className="field-label">
                       <Lock size={12} style={{ display: 'inline', marginRight: 4 }} />
                       AGENCY COMMUNICATION LINE
-                    </div>
-                    <div className="field-value">{booking.customerRealPhone || '+91 98450 67890'}</div>
-                    <div className="field-sub">Agency approved &bull; Direct communication active</div>
-                  </div>
+                    </View>
+                    <View className="field-value">{booking.customerRealPhone || '+91 98450 67890'}</View>
+                    <View className="field-sub">Agency approved &bull; Direct communication active</View>
+                  </View>
 
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <View style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <a
                       href={`tel:${booking.customerRealPhone || '+919845067890'}`}
                       className="btn btn-outline btn-sm"
@@ -1121,57 +1076,57 @@ function ActiveJobSection({ toast, onNavigate }) {
                     >
                       <Phone size={14} /> Call Customer
                     </a>
-                    <button
+                    <TouchableOpacity
                       className="btn btn-outline btn-sm"
                       style={{ flex: 1, justifyContent: 'center' }}
                       onClick={() => setInExecutionView(false)}
                     >
                       Minimize to Overview
-                    </button>
-                  </div>
-                </div>
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
                 {/* 4. Service Review & Automatic Payment QR (When COMPLETED) */}
                 {booking.status === 'COMPLETED' && (
-                  <div className="web-card" style={{ borderTop: '4px solid var(--primary)' }}>
-                    <div className="card-header-row">
+                  <View className="web-card" style={{ borderTop: '4px solid var(--primary)' }}>
+                    <View className="card-header-row">
                       <h3 className="card-title">
                         <Award size={20} color="var(--primary)" />
-                        <span>Service Review & Payout</span>
+                        <Text>Service Review & Payout</Text>
                       </h3>
-                      <span className={`badge ${customerReview ? 'badge-green' : 'badge-amber'}`}>
+                      <Text className={`badge ${customerReview ? 'badge-green' : 'badge-amber'}`}>
                         {customerReview ? 'Review Given &bull; Payment Unlocked' : 'Awaiting Customer Review'}
-                      </span>
-                    </div>
+                      </Text>
+                    </View>
 
                     {customerReview ? (
-                      <div>
-                        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                      <View>
+                        <View style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
                           {[1, 2, 3, 4, 5].map((n) => (
-                            <span
+                            <Text
                               key={n}
                               className="badge btn-accent"
                               style={{ padding: '4px 8px', fontSize: '0.78rem' }}
                             >
                               ★ {n} Star{n > 1 ? 's' : ''}
-                            </span>
+                            </Text>
                           ))}
-                        </div>
+                        </View>
 
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                        <View style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
                           {['Punctual & Polite', 'Thorough 6-Step Safety', '100% Eco-Safe'].map((tag) => (
-                            <span key={tag} className="badge badge-neutral" style={{ fontSize: '0.74rem' }}>
+                            <Text key={tag} className="badge badge-neutral" style={{ fontSize: '0.74rem' }}>
                               + {tag}
-                            </span>
+                            </Text>
                           ))}
-                        </div>
+                        </View>
 
                         <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', fontStyle: 'italic', marginBottom: 16 }}>
                           "{customerReview.comment || 'Punctual, eco-safe, and very thorough treatment!'}"
                         </p>
 
                         {/* UPI Payment QR Code */}
-                        <div
+                        <View
                           className="web-card-surface"
                           style={{
                             border: '2px solid var(--primary)',
@@ -1181,15 +1136,15 @@ function ActiveJobSection({ toast, onNavigate }) {
                             marginBottom: 14,
                           }}
                         >
-                          <div style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--primary)', marginBottom: 2 }}>
+                          <View style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--primary)', marginBottom: 2 }}>
                             <QrCode size={18} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                             UPI Payment QR Generated Automatically
-                          </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: 12 }}>
+                          </View>
+                          <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: 12 }}>
                             Customer verified! Scan with any UPI app for payment of Rs. {rawPrice}
-                          </div>
+                          </View>
 
-                          <div
+                          <View
                             style={{
                               display: 'inline-block',
                               padding: 10,
@@ -1199,23 +1154,23 @@ function ActiveJobSection({ toast, onNavigate }) {
                               marginBottom: 10,
                             }}
                           >
-                            <img
+                            <Image
                               src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
                                 `upi://pay?pa=pestfast.billing@icici&pn=PestFast&am=${rawPrice}&cu=INR&tn=Booking-${booking.id}`
                               )}`}
                               alt="UPI Payment QR Code"
                               style={{ width: 160, height: 160, display: 'block', margin: '0 auto' }}
                             />
-                            <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--primary)', marginTop: 6 }}>
+                            <View style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--primary)', marginTop: 6 }}>
                               Rs. {rawPrice}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
+                            </View>
+                            <View style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
                               UPI: pestfast.billing@icici
-                            </div>
-                          </div>
+                            </View>
+                          </View>
 
                           {!customerPaid ? (
-                            <button
+                            <TouchableOpacity
                               className="btn btn-success btn-lg btn-block"
                               onClick={async () => {
                                 await workerConfirmPaymentReceived();
@@ -1223,20 +1178,20 @@ function ActiveJobSection({ toast, onNavigate }) {
                               }}
                             >
                               <CheckCircle2 size={18} /> Confirm Payment Received (Rs. {rawPrice})
-                            </button>
+                            </TouchableOpacity>
                           ) : (
-                            <div className="badge badge-green" style={{ width: '100%', padding: '10px', fontSize: '0.88rem' }}>
+                            <View className="badge badge-green" style={{ width: '100%', padding: '10px', fontSize: '0.88rem' }}>
                               <CheckCircle2 size={16} /> Payment Confirmed & Settled (Rs. {rawPrice})
-                            </div>
+                            </View>
                           )}
-                        </div>
-                      </div>
+                        </View>
+                      </View>
                     ) : (
-                      <div>
+                      <View>
                         <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', lineHeight: 1.5, marginBottom: 14 }}>
                           The technician verified the Completion PIN! Submitting rating & review in customer UI is required to generate the official payment QR for Rs. {rawPrice}.
                         </p>
-                        <button
+                        <TouchableOpacity
                           className="btn btn-outline btn-sm btn-block"
                           onClick={async () => {
                             await workerSimulateCustomerReview(5, 'Punctual, eco-safe, and very thorough treatment!');
@@ -1244,142 +1199,142 @@ function ActiveJobSection({ toast, onNavigate }) {
                           }}
                         >
                           <Sparkles size={14} /> Quick Demo: Submit Customer Review (5★)
-                        </button>
-                      </div>
+                        </TouchableOpacity>
+                      </View>
                     )}
-                  </div>
+                  </View>
                 )}
-              </div>
-            </div>
+              </View>
+            </View>
           ) : (
             /* MAIN OPERATIONS OVERVIEW (Before Clicking Accept & Navigate) */
-            <div className="dashboard-grid-2">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div className="web-card">
-                  <div className="card-header-row">
-                    <div>
-                      <span className="badge badge-neutral" style={{ marginBottom: 6 }}>
+            <View className="dashboard-grid-2">
+              <View style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <View className="web-card">
+                  <View className="card-header-row">
+                    <View>
+                      <Text className="badge badge-neutral" style={{ marginBottom: 6 }}>
                         Booking ID #{booking.id}
-                      </span>
+                      </Text>
                       <h2 className="card-title" style={{ fontSize: '1.35rem' }}>
                         {booking.pestLabel || 'Termites & Woodborers'} Treatment
                       </h2>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    </View>
+                    <View style={{ textAlign: 'right' }}>
+                      <View style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
                         Technician Payout
-                      </div>
-                      <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.65rem', fontWeight: 800, color: 'var(--primary)' }}>
+                      </View>
+                      <View style={{ fontFamily: 'var(--font-heading)', fontSize: '1.65rem', fontWeight: 800, color: 'var(--primary)' }}>
                         Rs. {workerPayout}
-                      </div>
-                    </div>
-                  </div>
+                      </View>
+                    </View>
+                  </View>
 
-                  <div className="field-grid">
-                    <div className="field-box">
-                      <div className="field-label">
+                  <View className="field-grid">
+                    <View className="field-box">
+                      <View className="field-label">
                         <SprayCan size={14} /> Treatment Plan
-                      </div>
-                      <div className="field-value">{booking.planLabel || 'Dual-layer Barrier'}</div>
-                      <div className="field-sub">CIB&RC certified formulation</div>
-                    </div>
+                      </View>
+                      <View className="field-value">{booking.planLabel || 'Dual-layer Barrier'}</View>
+                      <View className="field-sub">CIB&RC certified formulation</View>
+                    </View>
 
-                    <div className="field-box">
-                      <div className="field-label">
+                    <View className="field-box">
+                      <View className="field-label">
                         <Building2 size={14} /> Property Size
-                      </div>
-                      <div className="field-value">{booking.sizeLabel || '3 BHK Apartment'}</div>
-                      <div className="field-sub">Mode: {booking.dispatchMode === 'inspection' ? 'Inspection First' : 'Treat on Arrival'}</div>
-                    </div>
+                      </View>
+                      <View className="field-value">{booking.sizeLabel || '3 BHK Apartment'}</View>
+                      <View className="field-sub">Mode: {booking.dispatchMode === 'inspection' ? 'Inspection First' : 'Treat on Arrival'}</View>
+                    </View>
 
-                    <div className="field-box">
-                      <div className="field-label">
+                    <View className="field-box">
+                      <View className="field-label">
                         <Calendar size={14} /> Scheduled Time Slot
-                      </div>
-                      <div className="field-value">{booking.slot || '01:00 - 03:00 PM'}</div>
-                      <div className="field-sub">Priority Same-Day Dispatch</div>
-                    </div>
+                      </View>
+                      <View className="field-value">{booking.slot || '01:00 - 03:00 PM'}</View>
+                      <View className="field-sub">Priority Same-Day Dispatch</View>
+                    </View>
 
-                    <div className="field-box">
-                      <div className="field-label">
+                    <View className="field-box">
+                      <View className="field-label">
                         <MapPin size={14} /> Locality / Zone
-                      </div>
-                      <div className="field-value">{incomingJob?.area || booking.areaOnly || 'Jayanagar 4th Block'}</div>
-                      <div className="field-sub">3.2 km from current base</div>
-                    </div>
-                  </div>
+                      </View>
+                      <View className="field-value">{incomingJob?.area || booking.areaOnly || 'Jayanagar 4th Block'}</View>
+                      <View className="field-sub">3.2 km from current base</View>
+                    </View>
+                  </View>
 
                   {booking.note && (
-                    <div className="field-box" style={{ marginTop: 14 }}>
-                      <div className="field-label">Customer Site Notes</div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.45 }}>
+                    <View className="field-box" style={{ marginTop: 14 }}>
+                      <View className="field-label">Customer Site Notes</View>
+                      <View style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.45 }}>
                         "{booking.note}"
-                      </div>
-                    </div>
+                      </View>
+                    </View>
                   )}
-                </div>
+                </View>
 
                 {/* Customer Contact & Address Card */}
-                <div className="web-card">
-                  <div className="card-header-row">
+                <View className="web-card">
+                  <View className="card-header-row">
                     <h3 className="card-title">
                       {contactUnlocked ? (
                         <Unlock size={20} color="var(--success)" />
                       ) : (
                         <Lock size={20} color="var(--accent)" />
                       )}
-                      <span>Customer Contact & Address Gate</span>
+                      <Text>Customer Contact & Address Gate</Text>
                     </h3>
-                    <span className={`badge ${contactUnlocked ? 'badge-green' : 'badge-amber'}`}>
+                    <Text className={`badge ${contactUnlocked ? 'badge-green' : 'badge-amber'}`}>
                       {contactUnlocked ? 'Agency Confirmed — Actual Details Unlocked' : 'Masked (Waiting for Agency to Permit)'}
-                    </span>
-                  </div>
+                    </Text>
+                  </View>
 
-                  <div className="field-grid">
-                    <div className="field-box">
-                      <div className="field-label">Customer Name</div>
-                      <div className="field-value">
+                  <View className="field-grid">
+                    <View className="field-box">
+                      <View className="field-label">Customer Name</View>
+                      <View className="field-value">
                         {contactUnlocked
                           ? booking.customerFullName || 'Aarav Sharma'
                           : incomingJob?.maskedName || booking.customerMaskedName || 'Aarav S.'}
-                      </div>
-                      <div className="field-sub">
+                      </View>
+                      <View className="field-sub">
                         {contactUnlocked ? 'Actual Verified Name' : 'Masked until Agency approves'}
-                      </div>
-                    </div>
+                      </View>
+                    </View>
 
-                    <div className="field-box">
-                      <div className="field-label">Phone Number</div>
-                      <div className="field-value">
+                    <View className="field-box">
+                      <View className="field-label">Phone Number</View>
+                      <View className="field-value">
                         {contactUnlocked
                           ? booking.customerRealPhone || '+91 98450 67890'
                           : incomingJob?.maskedPhone || '+91-984-XXX-7890 (Proxy)'}
-                      </div>
-                      <div className="field-sub">
+                      </View>
+                      <View className="field-sub">
                         {contactUnlocked ? 'Actual Direct Phone' : 'Masked proxy bridge'}
-                      </div>
-                    </div>
-                  </div>
+                      </View>
+                    </View>
+                  </View>
 
-                  <div className="field-box" style={{ marginTop: 14 }}>
-                    <div className="field-label">Service Address</div>
-                    <div className="field-value">
+                  <View className="field-box" style={{ marginTop: 14 }}>
+                    <View className="field-label">Service Address</View>
+                    <View className="field-value">
                       {contactUnlocked
                         ? booking.address
                         : `${incomingJob?.area || 'Jayanagar 4th Block'} (Exact address locked until agency approval)`}
-                    </div>
-                  </div>
+                    </View>
+                  </View>
 
                   {/* GPS LOCATION AS A LINK ONLY (NO MAP ON THIS PAGE) */}
                   {contactUnlocked && (
-                    <div className="field-box" style={{ marginTop: 14, background: 'var(--primary-light)', border: '1.5px solid var(--primary)' }}>
-                      <div className="field-label" style={{ color: 'var(--primary-dark)', fontWeight: 800 }}>
+                    <View className="field-box" style={{ marginTop: 14, background: 'var(--primary-light)', border: '1.5px solid var(--primary)' }}>
+                      <View className="field-label" style={{ color: 'var(--primary-dark)', fontWeight: 800 }}>
                         <MapPin size={15} /> Actual Live GPS Coordinates (Link Only)
-                      </div>
-                      <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 700 }}>
+                      </View>
+                      <View style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                        <View style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 700 }}>
                           Lat: {lat}&deg; N, Lng: {lng}&deg; E
-                        </div>
+                        </View>
                         <a
                           href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
                           target="_blank"
@@ -1388,29 +1343,29 @@ function ActiveJobSection({ toast, onNavigate }) {
                         >
                           <Navigation size={14} /> Open Live GPS Location Link
                         </a>
-                      </div>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--ink-muted)', marginTop: 4 }}>
+                      </View>
+                      <View style={{ fontSize: '0.74rem', color: 'var(--ink-muted)', marginTop: 4 }}>
                         Map will open inside the live navigation console when you accept & navigate.
-                      </div>
-                    </div>
+                      </View>
+                    </View>
                   )}
-                </div>
-              </div>
+                </View>
+              </View>
 
               {/* Right Column: Agency One-Time Approval & Accept/Navigate Action */}
-              <div className="web-card">
+              <View className="web-card">
                 {!contactUnlocked ? (
-                  <div>
-                    <span className="badge badge-amber" style={{ marginBottom: 12 }}>
+                  <View>
+                    <Text className="badge badge-amber" style={{ marginBottom: 12 }}>
                       Awaiting Agency One-Time Approval
-                    </span>
+                    </Text>
                     <h3 style={{ fontSize: '1.3rem', marginBottom: 8 }}>
                       Waiting for Agency Permission
                     </h3>
                     <p style={{ color: 'var(--ink-muted)', lineHeight: 1.5, marginBottom: 20 }}>
                       Client booked this treatment. Waiting for the agency to approve and assign this job to you. All contact numbers and exact GPS coordinates remain masked until agency confirms.
                     </p>
-                    <button
+                    <TouchableOpacity
                       className="btn btn-primary btn-lg btn-block"
                       onClick={async () => {
                         await agencyApproveBooking();
@@ -1418,13 +1373,13 @@ function ActiveJobSection({ toast, onNavigate }) {
                       }}
                     >
                       <CheckCircle2 size={18} /> Agency Approve Job (1-Time Approval)
-                    </button>
-                  </div>
+                    </TouchableOpacity>
+                  </View>
                 ) : (
-                  <div>
-                    <span className="badge badge-green" style={{ marginBottom: 12 }}>
+                  <View>
+                    <Text className="badge badge-green" style={{ marginBottom: 12 }}>
                       Agency Confirmed &bull; Ready for Route
-                    </span>
+                    </Text>
                     <h3 style={{ fontSize: '1.3rem', marginBottom: 8 }}>
                       Agency Permission Granted
                     </h3>
@@ -1432,8 +1387,8 @@ function ActiveJobSection({ toast, onNavigate }) {
                       Actual customer number and GPS link are unlocked above. Click below to accept the dispatch, open the live map navigation console, and proceed to the customer doorstep.
                     </p>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <button
+                    <View style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <TouchableOpacity
                         className="btn btn-primary btn-lg btn-block"
                         onClick={async () => {
                           await workerAcceptAndNavigate();
@@ -1442,8 +1397,8 @@ function ActiveJobSection({ toast, onNavigate }) {
                         }}
                       >
                         <Navigation size={18} /> Accept & Start Navigation (Open Live Map Console)
-                      </button>
-                      <button
+                      </TouchableOpacity>
+                      <TouchableOpacity
                         className="btn btn-outline btn-block"
                         onClick={async () => {
                           await workerDeclineJob();
@@ -1451,16 +1406,16 @@ function ActiveJobSection({ toast, onNavigate }) {
                         }}
                       >
                         <X size={16} /> Pass / Decline Dispatch
-                      </button>
-                    </div>
-                  </div>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 )}
-              </div>
-            </div>
+              </View>
+            </View>
           )}
         </>
       )}
-    </div>
+    </View>
   );
 }
 
@@ -1475,60 +1430,60 @@ function RouteSection({ toast, onNavigate }) {
   const totalRoutePayout = routeStops.reduce((acc, s) => acc + s.payout, 0);
 
   return (
-    <div>
-      <div className="dashboard-grid-3" style={{ marginBottom: 24 }}>
-        <div className="kpi-card">
-          <div className="kpi-top">
-            <span>Assigned Stops Today</span>
+    <View>
+      <View className="dashboard-grid-3" style={{ marginBottom: 24 }}>
+        <View className="kpi-card">
+          <View className="kpi-top">
+            <Text>Assigned Stops Today</Text>
             <MapPin size={18} color="var(--primary)" />
-          </div>
-          <div className="kpi-value">{routeStops.length} Jobs</div>
-          <div className="kpi-foot">Bengaluru South & East Cluster</div>
-        </div>
+          </View>
+          <View className="kpi-value">{routeStops.length} Jobs</View>
+          <View className="kpi-foot">Bengaluru South & East Cluster</View>
+        </View>
 
-        <div className="kpi-card">
-          <div className="kpi-top">
-            <span>Completed Stops</span>
+        <View className="kpi-card">
+          <View className="kpi-top">
+            <Text>Completed Stops</Text>
             <CheckCircle2 size={18} color="var(--success)" />
-          </div>
-          <div className="kpi-value">
+          </View>
+          <View className="kpi-value">
             {routeStops.filter((s) => s.status === 'Completed').length} of {routeStops.length}
-          </div>
-          <div className="kpi-foot">100% on-time arrival SLA</div>
-        </div>
+          </View>
+          <View className="kpi-foot">100% on-time arrival SLA</View>
+        </View>
 
-        <div className="kpi-card">
-          <div className="kpi-top">
-            <span>Estimated Route Value</span>
+        <View className="kpi-card">
+          <View className="kpi-top">
+            <Text>Estimated Route Value</Text>
             <IndianRupee size={18} color="var(--accent)" />
-          </div>
-          <div className="kpi-value">Rs. {totalRoutePayout}</div>
-          <div className="kpi-foot">Includes base share + travel allowance</div>
-        </div>
-      </div>
+          </View>
+          <View className="kpi-value">Rs. {totalRoutePayout}</View>
+          <View className="kpi-foot">Includes base share + travel allowance</View>
+        </View>
+      </View>
 
-      <div className="web-card">
-        <div className="card-header-row" style={{ flexWrap: 'wrap' }}>
-          <div>
+      <View className="web-card">
+        <View className="card-header-row" style={{ flexWrap: 'wrap' }}>
+          <View>
             <h2 className="card-title">Today's Dispatch Manifest & Route Table</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginTop: 2 }}>
               Click "Open in Workspace" on any active or upcoming stop to load it into your Active Job console.
             </p>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          </View>
+          <View style={{ display: 'flex', gap: 8 }}>
             {['All', 'Active', 'Upcoming', 'Completed'].map((tab) => (
-              <button
+              <TouchableOpacity
                 key={tab}
                 className={`stage-pill-btn ${filter === tab ? 'active' : ''}`}
                 onClick={() => setFilter(tab)}
               >
                 {tab}
-              </button>
+              </TouchableOpacity>
             ))}
-          </div>
-        </div>
+          </View>
+        </View>
 
-        <div className="web-table-wrap">
+        <View className="web-table-wrap">
           <table className="web-table">
             <thead>
               <tr>
@@ -1549,22 +1504,22 @@ function RouteSection({ toast, onNavigate }) {
                   </td>
                   <td style={{ fontWeight: 600 }}>{stop.time}</td>
                   <td>
-                    <div style={{ fontWeight: 700 }}>{stop.customer}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
+                    <View style={{ fontWeight: 700 }}>{stop.customer}</View>
+                    <View style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
                       {stop.area}
-                    </div>
+                    </View>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 600 }}>{stop.service}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
+                    <View style={{ fontWeight: 600 }}>{stop.service}</View>
+                    <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
                       {stop.chemical}
-                    </div>
+                    </View>
                   </td>
                   <td style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1rem' }}>
                     Rs. {stop.payout}
                   </td>
                   <td>
-                    <span
+                    <Text
                       className={`badge ${
                         stop.status === 'Completed'
                           ? 'badge-green'
@@ -1574,10 +1529,10 @@ function RouteSection({ toast, onNavigate }) {
                       }`}
                     >
                       {stop.status}
-                    </span>
+                    </Text>
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <button
+                    <TouchableOpacity
                       className="btn btn-outline btn-sm"
                       onClick={() => {
                         const targetState =
@@ -1592,15 +1547,15 @@ function RouteSection({ toast, onNavigate }) {
                       }}
                     >
                       Open in Workspace <ChevronRight size={14} />
-                    </button>
+                    </TouchableOpacity>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-    </div>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -1620,67 +1575,67 @@ function EarningsSection({ toast }) {
   };
 
   return (
-    <div>
-      <div className="dashboard-grid-4" style={{ marginBottom: 24 }}>
-        <div className="kpi-card">
-          <div className="kpi-top">
-            <span>Withdrawable Today</span>
+    <View>
+      <View className="dashboard-grid-4" style={{ marginBottom: 24 }}>
+        <View className="kpi-card">
+          <View className="kpi-top">
+            <Text>Withdrawable Today</Text>
             <Wallet size={18} color="var(--primary)" />
-          </div>
-          <div className="kpi-value" style={{ color: 'var(--primary)' }}>
+          </View>
+          <View className="kpi-value" style={{ color: 'var(--primary)' }}>
             Rs. {earnings.today}
-          </div>
-          <div className="kpi-foot">Available for zero-fee IMPS transfer</div>
-        </div>
+          </View>
+          <View className="kpi-foot">Available for zero-fee IMPS transfer</View>
+        </View>
 
-        <div className="kpi-card">
-          <div className="kpi-top">
-            <span>This Week's Earnings</span>
+        <View className="kpi-card">
+          <View className="kpi-top">
+            <Text>This Week's Earnings</Text>
             <IndianRupee size={18} color="var(--ink)" />
-          </div>
-          <div className="kpi-value">Rs. {earnings.week}</div>
-          <div className="kpi-foot">Across 9 completed treatments</div>
-        </div>
+          </View>
+          <View className="kpi-value">Rs. {earnings.week}</View>
+          <View className="kpi-foot">Across 9 completed treatments</View>
+        </View>
 
-        <div className="kpi-card">
-          <div className="kpi-top">
-            <span>Safety & PPE Bonus</span>
+        <View className="kpi-card">
+          <View className="kpi-top">
+            <Text>Safety & PPE Bonus</Text>
             <ShieldCheck size={18} color="var(--success)" />
-          </div>
-          <div className="kpi-value" style={{ color: 'var(--success)' }}>
+          </View>
+          <View className="kpi-value" style={{ color: 'var(--success)' }}>
             +Rs. {earnings.safetyBonus}
-          </div>
-          <div className="kpi-foot">100% checklist compliance streak</div>
-        </div>
+          </View>
+          <View className="kpi-foot">100% checklist compliance streak</View>
+        </View>
 
-        <div className="kpi-card">
-          <div className="kpi-top">
-            <span>Monthly Gross</span>
+        <View className="kpi-card">
+          <View className="kpi-top">
+            <Text>Monthly Gross</Text>
             <Award size={18} color="var(--accent)" />
-          </div>
-          <div className="kpi-value">Rs. {earnings.month}</div>
-          <div className="kpi-foot">Top 5% technician tier in Bengaluru</div>
-        </div>
-      </div>
+          </View>
+          <View className="kpi-value">Rs. {earnings.month}</View>
+          <View className="kpi-foot">Top 5% technician tier in Bengaluru</View>
+        </View>
+      </View>
 
-      <div className="dashboard-grid-2">
-        <div className="web-card">
-          <div className="card-header-row">
+      <View className="dashboard-grid-2">
+        <View className="web-card">
+          <View className="card-header-row">
             <h2 className="card-title">Instant UPI Settlement</h2>
-            <span className="badge badge-green">Zero Commission Cut on Tips</span>
-          </div>
+            <Text className="badge badge-green">Zero Commission Cut on Tips</Text>
+          </View>
 
-          <div className="web-card-surface" style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div className="field-label">Linked Bank UPI Handle</div>
+          <View className="web-card-surface" style={{ marginBottom: 20 }}>
+            <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View>
+                <View className="field-label">Linked Bank UPI Handle</View>
                 {!editingUpi ? (
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink)' }}>
+                  <View style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink)' }}>
                     {earnings.upiId}
-                  </div>
+                  </View>
                 ) : (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                    <input
+                  <View style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                    <TextInput
                       type="text"
                       value={upiDraft}
                       onChange={(e) => setUpiDraft(e.target.value)}
@@ -1691,17 +1646,17 @@ function EarningsSection({ toast }) {
                         fontWeight: 600,
                       }}
                     />
-                    <button className="btn btn-primary btn-sm" onClick={saveUpi}>
+                    <TouchableOpacity className="btn btn-primary btn-sm" onClick={saveUpi}>
                       Save
-                    </button>
-                    <button className="btn btn-outline btn-sm" onClick={() => setEditingUpi(false)}>
+                    </TouchableOpacity>
+                    <TouchableOpacity className="btn btn-outline btn-sm" onClick={() => setEditingUpi(false)}>
                       Cancel
-                    </button>
-                  </div>
+                    </TouchableOpacity>
+                  </View>
                 )}
-              </div>
+              </View>
               {!editingUpi && (
-                <button
+                <TouchableOpacity
                   className="btn btn-outline btn-sm"
                   onClick={() => {
                     setUpiDraft(earnings.upiId);
@@ -1709,12 +1664,12 @@ function EarningsSection({ toast }) {
                   }}
                 >
                   <Edit3 size={14} /> Change UPI
-                </button>
+                </TouchableOpacity>
               )}
-            </div>
-          </div>
+            </View>
+          </View>
 
-          <button
+          <TouchableOpacity
             className="btn btn-primary btn-lg btn-block"
             disabled={earnings.today === 0 || earnings.pendingPayout}
             onClick={() => {
@@ -1728,14 +1683,14 @@ function EarningsSection({ toast }) {
               : earnings.today === 0
               ? 'All Earnings Settled (Rs. 0 Pending)'
               : `Withdraw Rs. ${earnings.today} Instantly to UPI`}
-          </button>
-        </div>
+          </TouchableOpacity>
+        </View>
 
-        <div className="web-card">
-          <div className="card-header-row">
+        <View className="web-card">
+          <View className="card-header-row">
             <h2 className="card-title">Recent Settlement Ledger</h2>
-          </div>
-          <div className="web-table-wrap">
+          </View>
+          <View className="web-table-wrap">
             <table className="web-table">
               <thead>
                 <tr>
@@ -1750,28 +1705,28 @@ function EarningsSection({ toast }) {
                   <tr key={item.id}>
                     <td style={{ fontWeight: 700 }}>{item.id}</td>
                     <td>
-                      <div>{item.date}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
+                      <View>{item.date}</View>
+                      <View style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
                         {item.upiId}
-                      </div>
+                      </View>
                     </td>
                     <td style={{ fontWeight: 800, color: 'var(--success)' }}>
                       Rs. {item.amount}
                     </td>
                     <td>
-                      <span className="badge badge-green">{item.status}</span>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 3 }}>
+                      <Text className="badge badge-green">{item.status}</Text>
+                      <View style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 3 }}>
                         {item.utr}
-                      </div>
+                      </View>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-    </div>
+          </View>
+        </View>
+      </View>
+    </View>
   );
 }
 function SafetySection({ toast }) {
@@ -1798,127 +1753,127 @@ function SafetySection({ toast }) {
   };
 
   return (
-    <div>
-      <div className="dashboard-grid-2">
-        <div className="web-card">
-          <div className="card-header-row">
-            <div>
+    <View>
+      <View className="dashboard-grid-2">
+        <View className="web-card">
+          <View className="card-header-row">
+            <View>
               <h2 className="card-title">
                 <FileText size={20} color="var(--primary)" />
-                <span>CIB&RC Chemical Safety Data Sheets (CSDS)</span>
+                <Text>CIB&RC Chemical Safety Data Sheets (CSDS)</Text>
               </h2>
               <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                 Select any approved formulation below to inspect dilution, PPE, and antidote rules.
               </p>
-            </div>
-            <button
+            </View>
+            <TouchableOpacity
               className="btn btn-danger btn-sm"
               onClick={() => setProtocolModal(true)}
             >
               <HeartPulse size={15} /> Emergency Exposure Protocol
-            </button>
-          </div>
+            </TouchableOpacity>
+          </View>
 
-          <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+          <View style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
             {BUNDLED_CHEMICAL_SHEETS.map((sheet) => (
-              <button
+              <TouchableOpacity
                 key={sheet.id}
                 className={`stage-pill-btn ${selectedChem.id === sheet.id ? 'active' : ''}`}
                 onClick={() => setSelectedChem(sheet)}
               >
                 {sheet.name}
-              </button>
+              </TouchableOpacity>
             ))}
-          </div>
+          </View>
 
           {selectedChem && (
-            <div className="web-card-surface">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                <div>
+            <View className="web-card-surface">
+              <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                <View>
                   <h3 style={{ fontSize: '1.18rem', color: 'var(--primary-dark)' }}>
                     {selectedChem.name}
                   </h3>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                  <View style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                     Reg No: <strong>{selectedChem.cibrcReg}</strong> - {selectedChem.activeIngredient}
-                  </div>
-                </div>
-                <span className="badge badge-amber">
+                  </View>
+                </View>
+                <Text className="badge badge-amber">
                   Re-entry: {selectedChem.reEntryMinutes} mins
-                </span>
-              </div>
+                </Text>
+              </View>
 
-              <div className="field-grid" style={{ marginBottom: 14 }}>
-                <div className="field-box" style={{ background: '#FFFFFF' }}>
-                  <div className="field-label">Prescribed Dilution Ratio</div>
-                  <div className="field-value" style={{ fontSize: '0.9rem' }}>
+              <View className="field-grid" style={{ marginBottom: 14 }}>
+                <View className="field-box" style={{ background: '#FFFFFF' }}>
+                  <View className="field-label">Prescribed Dilution Ratio</View>
+                  <View className="field-value" style={{ fontSize: '0.9rem' }}>
                     {selectedChem.dilutionRatio}
-                  </div>
-                </div>
-                <div className="field-box" style={{ background: '#FFFFFF' }}>
-                  <div className="field-label">Target Pests</div>
-                  <div className="field-value" style={{ fontSize: '0.9rem' }}>
+                  </View>
+                </View>
+                <View className="field-box" style={{ background: '#FFFFFF' }}>
+                  <View className="field-label">Target Pests</View>
+                  <View className="field-value" style={{ fontSize: '0.9rem' }}>
                     {selectedChem.targetPests}
-                  </div>
-                </div>
-              </div>
+                  </View>
+                </View>
+              </View>
 
-              <div className="field-box" style={{ background: '#FFFFFF', marginBottom: 14 }}>
-                <div className="field-label">Mandatory PPE Gear</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+              <View className="field-box" style={{ background: '#FFFFFF', marginBottom: 14 }}>
+                <View className="field-label">Mandatory PPE Gear</View>
+                <View style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
                   {selectedChem.requiredPpe.map((ppe, idx) => (
-                    <span key={idx} className="badge badge-green">
+                    <Text key={idx} className="badge badge-green">
                       <ShieldCheck size={13} /> {ppe}
-                    </span>
+                    </Text>
                   ))}
-                </div>
-              </div>
+                </View>
+              </View>
 
-              <div className="field-box" style={{ background: '#FFFFFF' }}>
-                <div className="field-label" style={{ color: 'var(--danger)' }}>
+              <View className="field-box" style={{ background: '#FFFFFF' }}>
+                <View className="field-label" style={{ color: 'var(--danger)' }}>
                   First-Aid & Medical Antidote Guidance
-                </div>
-                <div style={{ fontSize: '0.86rem', lineHeight: 1.55, marginTop: 6 }}>
+                </View>
+                <View style={{ fontSize: '0.86rem', lineHeight: 1.55, marginTop: 6 }}>
                   <p><strong>Skin / Eye Contact:</strong> {selectedChem.firstAidSkinEye}</p>
                   <p style={{ marginTop: 4 }}><strong>Inhalation:</strong> {selectedChem.firstAidInhalation}</p>
                   <p style={{ marginTop: 4 }}><strong>Antidote:</strong> {selectedChem.antidote}</p>
-                </div>
-              </div>
-            </div>
+                </View>
+              </View>
+            </View>
           )}
-        </div>
+        </View>
 
-        <div className="web-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <div className="card-header-row">
-            <div>
+        <View className="web-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <View className="card-header-row">
+            <View>
               <h2 className="card-title">
                 <Bot size={22} color="var(--primary)" />
-                <span>AI Chemical Safety Assistant</span>
+                <Text>AI Chemical Safety Assistant</Text>
               </h2>
               <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                 Strictly grounded in CIB&RC sheets - never guesses or hallucinates
               </p>
-            </div>
-            <span className="badge badge-green">Grounded Mode</span>
-          </div>
+            </View>
+            <Text className="badge badge-green">Grounded Mode</Text>
+          </View>
 
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+          <View style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
             {[
               'What is the dilution ratio for Deltamethrin?',
               'What PPE is required for Imidacloprid?',
               'First aid for Fipronil gel eye splash?',
               'Re-entry time for Termite Shield?',
             ].map((q, idx) => (
-              <button
+              <TouchableOpacity
                 key={idx}
                 className="stage-pill-btn"
                 onClick={() => askAi(q)}
               >
                 {q}
-              </button>
+              </TouchableOpacity>
             ))}
-          </div>
+          </View>
 
-          <div
+          <View
             style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
@@ -1933,7 +1888,7 @@ function SafetySection({ toast }) {
             }}
           >
             {chatLog.map((m, i) => (
-              <div
+              <View
                 key={i}
                 style={{
                   alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
@@ -1948,12 +1903,12 @@ function SafetySection({ toast }) {
                 }}
               >
                 {m.text}
-              </div>
+              </View>
             ))}
-          </div>
+          </View>
 
-          <div style={{ display: 'flex', gap: 10 }}>
-            <input
+          <View style={{ display: 'flex', gap: 10 }}>
+            <TextInput
               type="text"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
@@ -1968,12 +1923,12 @@ function SafetySection({ toast }) {
                 fontSize: '0.92rem',
               }}
             />
-            <button className="btn btn-primary" onClick={() => askAi()}>
+            <TouchableOpacity className="btn btn-primary" onClick={() => askAi()}>
               <Send size={16} /> Ask AI
-            </button>
-          </div>
-        </div>
-      </div>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
 
       <ModalDialog
         open={protocolModal}
@@ -1982,7 +1937,7 @@ function SafetySection({ toast }) {
         icon={HeartPulse}
         danger
       >
-        <div style={{ display: 'grid', gap: 12 }}>
+        <View style={{ display: 'grid', gap: 12 }}>
           {[
             { step: '1. Immediate Evacuation', detail: 'Move the technician or resident to fresh air immediately. Open all windows and doors.' },
             { step: '2. Dermal / Skin Exposure', detail: 'Remove contaminated clothing immediately. Wash affected skin with soap and cool running water for 15 minutes.' },
@@ -1991,22 +1946,22 @@ function SafetySection({ toast }) {
             { step: '5. Respiratory Inhalation', detail: 'Keep patient propped up and calm. Loosen tight collar or belt. Call 108 if breathing is irregular.' },
             { step: '6. Poison Control Handover', detail: 'Dial 1800-11-2233 and quote the exact CIB&RC registration number from the CSDS panel.' },
           ].map((item, i) => (
-            <div key={i} className="field-box">
-              <div style={{ fontWeight: 800, color: 'var(--danger)', marginBottom: 4 }}>
+            <View key={i} className="field-box">
+              <View style={{ fontWeight: 800, color: 'var(--danger)', marginBottom: 4 }}>
                 {item.step}
-              </div>
-              <div style={{ fontSize: '0.9rem', color: 'var(--ink)' }}>{item.detail}</div>
-            </div>
+              </View>
+              <View style={{ fontSize: '0.9rem', color: 'var(--ink)' }}>{item.detail}</View>
+            </View>
           ))}
-        </div>
+        </View>
       </ModalDialog>
-    </div>
+    </View>
   );
 }
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('job');
-  const [sosOpen, setSosOpen] = useState(false);
+  const [sosModalOpen, setSosModalOpen] = useState(false);
   const {
     booking,
     dutyStatus,
@@ -2076,112 +2031,139 @@ export default function App() {
   };
 
   return (
-    <div className="web-layout">
+    <View className="web-layout">
       <ToastStack toasts={toasts} />
-      <SosModal open={sosOpen} onClose={() => setSosOpen(false)} toast={toast} />
 
-      <aside className="web-sidebar" aria-label="Technician Portal Navigation">
-        <div className="sidebar-brand">
-          <div className="brand-logo-box">
+      <ModalDialog
+        open={sosModalOpen}
+        onClose={() => setSosModalOpen(false)}
+        title="Emergency Spill, Exposure & SOS Hotline"
+        icon={AlertCircle}
+        danger
+      >
+        <p style={{ color: 'var(--ink-muted)', marginBottom: 16, lineHeight: 1.5 }}>
+          In the event of accidental chemical ingestion, skin contact, or ocular exposure, follow CSDS protocols immediately and contact poison control.
+        </p>
+        <View style={{ display: 'grid', gap: 12 }}>
+          <a
+            href="tel:108"
+            className="btn btn-danger btn-lg btn-block"
+            onClick={() => toast('Dialing 108 Emergency Ambulance...', 'error')}
+          >
+            <Phone size={18} /> Dial 108 Emergency Ambulance
+          </a>
+          <a
+            href="tel:1800112233"
+            className="btn btn-outline btn-lg btn-block"
+            onClick={() => toast('Calling National Poisons Information Centre...', 'info')}
+          >
+            <HeartPulse size={18} /> National Poisons Centre (1800-116-117)
+          </a>
+        </View>
+      </ModalDialog>
+
+      {/* Left Sidebar Navigation (React Native Primitives) */}
+      <View className="web-sidebar" accessibilityRole="navigation" aria-label="Technician Operations Navigation">
+        <View className="sidebar-brand">
+          <View className="brand-logo-box">
             <ShieldCheck size={24} />
-          </div>
-          <div>
-            <div className="brand-title">Pest Free</div>
-            <div className="brand-subtitle">Technician Web Portal</div>
-          </div>
-        </div>
+          </View>
+          <View>
+            <Text className="brand-title">Pest Free</Text>
+            <Text className="brand-subtitle">Technician Web Portal</Text>
+          </View>
+        </View>
 
-        <div className="sidebar-worker-card">
-          <div className="worker-avatar-row">
-            <div className="worker-avatar">AS</div>
-            <div>
-              <div className="worker-name">{assignedWorker?.name || 'Arjun Sharma'}</div>
-              <div className="worker-meta">Lic: {assignedWorker?.licenseCode || 'CHL-2024-889'}</div>
-            </div>
-          </div>
-          <div className="worker-badges">
-            <span className="sidebar-badge">
-              <UserCheck size={12} /> KYC Verified
-            </span>
-            <span className="sidebar-badge">
-              <Star size={12} /> 4.92 Rating
-            </span>
-          </div>
-        </div>
+        <View className="sidebar-customer-card">
+          <View className="customer-avatar-row">
+            <View className="customer-avatar">AS</View>
+            <View>
+              <Text className="customer-name">Arjun Sharma</Text>
+              <Text className="customer-meta">Lic: CHL-2024-889</Text>
+            </View>
+          </View>
+          <View className="customer-badges">
+            <Text className="sidebar-badge">
+              <Lock size={11} /> KYC Verified
+            </Text>
+            <Text className="sidebar-badge">
+              <Star size={11} /> 4.92 Rating
+            </Text>
+          </View>
+        </View>
 
-        <nav className="sidebar-nav">
-          <div className="nav-section-label">Operations Console</div>
+        <View className="sidebar-nav">
+          <Text className="nav-section-label">Operations Console</Text>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
             return (
-              <button
+              <TouchableOpacity
                 key={item.id}
                 className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
+                onPress={() => setActiveSection(item.id)}
                 onClick={() => setActiveSection(item.id)}
+                accessibilityRole="button"
               >
                 <Icon size={19} />
-                <span>{item.label}</span>
-                <span className="nav-pill-count">{item.badge}</span>
-              </button>
+                <Text style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.label}</Text>
+                <Text className="nav-pill-count">{item.badge}</Text>
+              </TouchableOpacity>
             );
           })}
-        </nav>
+        </View>
 
-        <div className="sidebar-footer">
-          <button
-            className="sidebar-sos-btn"
-            onClick={() => setSosOpen(true)}
+        <View className="sidebar-footer">
+          <TouchableOpacity
+            className="btn btn-danger btn-block"
+            onPress={() => setSosModalOpen(true)}
+            onClick={() => setSosModalOpen(true)}
+            accessibilityRole="button"
           >
-            <AlertTriangle size={18} /> Emergency SOS Hotline
-          </button>
-        </div>
-      </aside>
+            <AlertCircle size={16} /> <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Emergency SOS Hotline</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-      <div className="web-main">
-        <header className="web-topbar">
-          <div className="topbar-left">
-            <div>
-              <h1 className="topbar-title">{sectionHeaders[activeSection].title}</h1>
-              <div className="topbar-subtitle">{sectionHeaders[activeSection].subtitle}</div>
-            </div>
-          </div>
+      {/* Main Operations Workdeck (React Native Primitives) */}
+      <View className="web-main">
+        <View className="web-topbar">
+          <View>
+            <Text className="topbar-title" style={{ fontSize: '1.45rem', fontWeight: 800 }}>{sectionHeaders[activeSection].title}</Text>
+            <Text className="topbar-subtitle">{sectionHeaders[activeSection].subtitle}</Text>
+          </View>
 
-          <div className="topbar-right">
-            <div className="duty-switcher" role="group" aria-label="Duty status toggle">
-              <button
-                className={`duty-btn ${effectiveDuty === 'ON_DUTY' ? 'active-on' : ''}`}
-                onClick={() => {
-                  setDutyStatus('ON_DUTY');
-                  toast('Status set to On Duty - Ready for dispatches', 'success');
-                }}
+          <View className="topbar-right">
+            <View className="duty-toggle-group">
+              <TouchableOpacity
+                className={`duty-btn ${dutyStatus === 'ON_DUTY' ? 'active-green' : ''}`}
+                onPress={() => toggleDuty('ON_DUTY')}
+                onClick={() => toggleDuty('ON_DUTY')}
+                accessibilityRole="button"
               >
-                <span className="status-dot" /> On Duty
-              </button>
-              <button
-                className={`duty-btn ${effectiveDuty === 'ON_JOB' ? 'active-job' : ''}`}
-                onClick={() => toast('Currently assigned to an active job', 'info')}
+                <Text style={{ color: 'inherit', fontWeight: '700' }}>&bull; On Duty</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`duty-btn ${dutyStatus === 'ON_JOB' ? 'active-amber' : ''}`}
+                onPress={() => toggleDuty('ON_JOB')}
+                onClick={() => toggleDuty('ON_JOB')}
+                accessibilityRole="button"
               >
-                <span className="status-dot" /> On Job
-              </button>
-              <button
-                className={`duty-btn ${effectiveDuty === 'OFF_DUTY' ? 'active-off' : ''}`}
-                onClick={() => {
-                  if (effectiveDuty === 'ON_JOB') {
-                    toast('Cannot go Off Duty while a treatment is active', 'error');
-                    return;
-                  }
-                  setDutyStatus('OFF_DUTY');
-                  toast('Status set to Off Duty', 'info');
-                }}
+                <Text style={{ color: 'inherit', fontWeight: '700' }}>&bull; On Job</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`duty-btn ${dutyStatus === 'OFF_DUTY' ? 'active-red' : ''}`}
+                onPress={() => toggleDuty('OFF_DUTY')}
+                onClick={() => toggleDuty('OFF_DUTY')}
+                accessibilityRole="button"
               >
-                <span className="status-dot" /> Off Duty
-              </button>
-            </div>
-          </div>
-        </header>
+                <Text style={{ color: 'inherit', fontWeight: '700' }}>&bull; Off Duty</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
-        <main className="web-page">
+        <ScrollView className="web-page">
           {activeSection === 'job' && (
             <ActiveJobSection toast={toast} onNavigate={setActiveSection} />
           )}
@@ -2190,8 +2172,8 @@ export default function App() {
           )}
           {activeSection === 'earnings' && <EarningsSection toast={toast} />}
           {activeSection === 'safety' && <SafetySection toast={toast} />}
-        </main>
-      </div>
-    </div>
+        </ScrollView>
+      </View>
+    </View>
   );
 }

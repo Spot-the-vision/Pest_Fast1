@@ -62,6 +62,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      'react-native': path.resolve(__dirname, 'src/lib/rn.jsx'),
+      'react-native-web': path.resolve(__dirname, 'src/lib/rn.jsx'),
       'ui-kit': path.resolve(__dirname, '../../packages/ui-kit/index.jsx'),
       '@pest-free/ui-kit': path.resolve(__dirname, '../../packages/ui-kit/index.jsx'),
       'shared-types': path.resolve(__dirname, '../../packages/shared-types/index.ts'),
