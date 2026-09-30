@@ -241,6 +241,32 @@ export const useAppStore = create((set, get) => ({
     await syncRemote(get());
   },
 
+  
+  agencyApproveBooking: async () => {
+    const { booking } = get();
+    if (!booking) return;
+    const next = safeTransition(booking, 'AGENCY_APPROVED');
+    set({
+      booking: next,
+      contactUnlocked: true, // One-time agency approval directly unlocks actual phone and address!
+    });
+    await syncRemote(get());
+  },
+
+  workerAcceptAndNavigate: async () => {
+    const { booking } = get();
+    if (!booking) return;
+    const next = safeTransition(booking, 'ON_THE_WAY');
+    set({
+      booking: next,
+      contactUnlocked: true,
+      dutyStatus: 'ON_JOB',
+      etaSeconds: 15,
+    });
+    await syncRemote(get());
+    get()._startEtaCountdown();
+  },
+
   workerAcceptJob: async () => {
     const { booking } = get();
     if (!booking) return;
