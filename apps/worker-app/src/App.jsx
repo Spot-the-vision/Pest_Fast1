@@ -725,6 +725,21 @@ function ActiveJobSection({ toast, onNavigate }) {
 
               {/* RIGHT COLUMN: Start OTP, Completion PIN, Agency Info, and Payment QR */}
               <View className="sticky-summary" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* 0. Top Action Button: Arrive at Doorstep (When En Route) */}
+                {booking.status === 'ON_THE_WAY' && (
+                  <TouchableOpacity
+                    type="button"
+                    className="btn btn-primary btn-block btn-lg"
+                    style={{ background: 'var(--primary)', color: '#FFFFFF', boxShadow: '0 6px 18px rgba(31,91,58,0.35)' }}
+                    onClick={async () => {
+                      await workerMarkArrived();
+                      toast('Technician arrived at doorstep! Ask customer for Start OTP.', 'success');
+                    }}
+                  >
+                    <MapPin size={20} /> I Have Arrived / Reached Doorstep
+                  </TouchableOpacity>
+                )}
+
                 {/* 1. Doorstep Treatment Start OTP */}
                 <View className="web-card">
                   <View className="card-header-row">
@@ -732,16 +747,19 @@ function ActiveJobSection({ toast, onNavigate }) {
                       <KeyRound size={20} color="var(--primary)" />
                       <Text>Doorstep Treatment Start OTP</Text>
                     </h3>
-                    <Text className={`badge ${['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'badge-green' : 'badge-amber'}`}>
-                      {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'Verified & Started' : 'Enter on Arrival'}
+                    <Text className={`badge ${['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'badge-green' : booking.status === 'ARRIVED' ? 'badge-amber' : 'badge-neutral'}`}>
+                      {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? '✓ Verified & Started' : booking.status === 'ARRIVED' ? 'Enter Customer OTP' : 'Awaiting Doorstep Arrival'}
                     </Text>
                   </View>
                   <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.45 }}>
                     {['IN_PROGRESS', 'COMPLETED'].includes(booking.status)
-                      ? 'Customer Doorstep OTP was verified successfully. Chemical seals unlatched.'
-                      : 'Ask homeowner for the 4-digit code shown on their screen upon doorstep arrival.'}
+                      ? 'Customer Doorstep OTP was verified successfully. Chemical treatment active.'
+                      : booking.status === 'ARRIVED'
+                      ? 'Ask homeowner for the 4-digit code shown on their tracking screen, then enter it below:'
+                      : 'Reach customer location and click "I Have Arrived" above to enter customer Start OTP.'}
                   </p>
 
+                  {/* State 1: Verified */}
                   {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? (
                     <View
                       style={{
@@ -754,7 +772,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                         border: '1.5px solid var(--primary)',
                       }}
                     >
-                      {String(startOtp || booking.startOtp || '4829')
+                      {String(startOtp || booking?.startOtp || '4829')
                         .split('')
                         .map((d, i) => (
                           <View
@@ -778,10 +796,11 @@ function ActiveJobSection({ toast, onNavigate }) {
                         ))}
                     </View>
                   ) : booking.status === 'ARRIVED' ? (
+                    /* State 2: At doorstep -> Input fields to enter customer's OTP */
                     <View>
                       <View style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
                         <TouchableOpacity className="btn btn-outline btn-sm" onClick={fillDemoOtp}>
-                          Demo Quick Fill ({startOtp || booking?.startOtp || '4829'})
+                          Auto-Fill Customer OTP ({startOtp || booking?.startOtp || '4829'})
                         </TouchableOpacity>
                       </View>
                       <View className="otp-row" style={{ marginBottom: 12 }}>
@@ -818,37 +837,32 @@ function ActiveJobSection({ toast, onNavigate }) {
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    <View
-                      style={{
-                        display: 'flex',
-                        gap: 12,
-                        justifyContent: 'center',
-                        padding: '12px',
-                        background: '#FFFFFF',
-                        borderRadius: 14,
-                        border: '1.5px dashed var(--border-strong)',
-                      }}
-                    >
-                      {['4', '8', '2', '9'].map((d, i) => (
-                        <View
-                          key={i}
-                          style={{
-                            width: 48,
-                            height: 54,
-                            borderRadius: 10,
-                            background: 'var(--surface)',
-                            color: 'var(--ink-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontFamily: 'var(--font-heading)',
-                            fontSize: '1.6rem',
-                            fontWeight: 800,
-                          }}
-                        >
-                          {d}
-                        </View>
-                      ))}
+                    /* State 3: Not arrived yet -> placeholder boxes */
+                    <View style={{ textAlign: 'center', padding: '16px', background: 'var(--surface)', borderRadius: 12, border: '1px dashed var(--border-strong)' }}>
+                      <Text style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>
+                        Input slots unlock when you click "I Have Arrived / Reached Doorstep" above.
+                      </Text>
+                      <View style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 10 }}>
+                        {['•', '•', '•', '•'].map((dot, i) => (
+                          <View
+                            key={i}
+                            style={{
+                              width: 44,
+                              height: 48,
+                              borderRadius: 8,
+                              background: '#FFFFFF',
+                              border: '1px solid var(--border-strong)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.4rem',
+                              color: 'var(--ink-muted)',
+                            }}
+                          >
+                            {dot}
+                          </View>
+                        ))}
+                      </View>
                     </View>
                   )}
                 </View>
@@ -860,58 +874,74 @@ function ActiveJobSection({ toast, onNavigate }) {
                       <Award size={20} color="var(--success)" />
                       <Text>End-of-Service Completion Security PIN</Text>
                     </h3>
-                    <Text className={`badge ${booking.status === 'COMPLETED' ? 'badge-green' : workCompletedByWorker ? 'badge-green' : 'badge-amber'}`}>
-                      {booking.status === 'COMPLETED' ? 'PIN Verified & Closed' : workCompletedByWorker ? 'Work Finished — PIN Unlocked' : 'Work in Progress'}
+                    <Text className={`badge ${pinVerifiedByWorker || booking.status === 'COMPLETED' ? 'badge-green' : workCompletedByWorker ? 'badge-amber' : 'badge-neutral'}`}>
+                      {pinVerifiedByWorker || booking.status === 'COMPLETED' ? '✓ PIN Verified & Closed' : workCompletedByWorker ? 'Enter Customer PIN' : 'Treatment in Progress'}
                     </Text>
                   </View>
-                  <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.45 }}>
-                    {booking.status === 'COMPLETED'
-                      ? 'Customer 4-digit Completion PIN verified. Treatment ticket is closed.'
-                      : workCompletedByWorker
-                      ? 'Work marked finished! Ask homeowner for the 4-digit PIN now displayed on their phone.'
-                      : 'Complete all 6 treatment steps and photo proof, then click below to reveal PIN on customer screen.'}
-                  </p>
 
-                  {booking.status === 'COMPLETED' ? (
-                    <View
-                      style={{
-                        display: 'flex',
-                        gap: 12,
-                        justifyContent: 'center',
-                        padding: '12px',
-                        background: 'rgba(31,91,58,0.1)',
-                        borderRadius: 14,
-                        border: '1.5px solid var(--primary)',
-                      }}
-                    >
-                      {String(completionPin || '7391')
-                        .split('')
-                        .map((d, i) => (
-                          <View
-                            key={i}
-                            style={{
-                              width: 48,
-                              height: 54,
-                              borderRadius: 10,
-                              background: '#1F5B3A',
-                              color: '#FFFFFF',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontFamily: 'var(--font-heading)',
-                              fontSize: '1.6rem',
-                              fontWeight: 800,
-                            }}
-                          >
-                            {d}
-                          </View>
-                        ))}
+                  {pinVerifiedByWorker || booking.status === 'COMPLETED' ? (
+                    /* State 1: Verified */
+                    <View>
+                      <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 12, lineHeight: 1.45 }}>
+                        Customer Completion PIN verified! Chemical treatment ticket is officially closed.
+                      </p>
+                      <View
+                        style={{
+                          display: 'flex',
+                          gap: 12,
+                          justifyContent: 'center',
+                          padding: '12px',
+                          background: 'var(--primary-light)',
+                          borderRadius: 14,
+                          border: '1.5px solid var(--primary)',
+                        }}
+                      >
+                        {String(completionPin || '7391')
+                          .split('')
+                          .map((d, i) => (
+                            <View
+                              key={i}
+                              style={{
+                                width: 48,
+                                height: 54,
+                                borderRadius: 10,
+                                background: 'var(--primary)',
+                                color: '#FFFFFF',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontFamily: 'var(--font-heading)',
+                                fontSize: '1.6rem',
+                                fontWeight: 800,
+                              }}
+                            >
+                              {d}
+                            </View>
+                          ))}
+                      </View>
                     </View>
                   ) : workCompletedByWorker ? (
+                    /* State 2: Work finished -> Worker inputs customer's completion PIN */
                     <View>
-                      <View style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                      <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 12, lineHeight: 1.45 }}>
+                        {customerReview
+                          ? 'Customer has submitted their review! Ask them for the 4-digit Completion PIN displayed on their screen and enter it below:'
+                          : 'Waiting for customer to submit review in Customer App. Once customer reviews, enter their 4-digit PIN below:'}
+                      </p>
+                      <View style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 6, flexWrap: 'wrap' }}>
+                        {!customerReview && (
+                          <TouchableOpacity
+                            className="btn btn-outline btn-sm"
+                            onClick={async () => {
+                              await workerSimulateCustomerReview();
+                              toast('Simulated customer 5-star review! PIN is now unlocked.', 'success');
+                            }}
+                          >
+                            Simulate Customer Review
+                          </TouchableOpacity>
+                        )}
                         <TouchableOpacity className="btn btn-outline btn-sm" onClick={fillDemoCompPin}>
-                          Demo Fill ({completionPin || '7391'})
+                          Auto-Fill PIN ({completionPin || '7391'})
                         </TouchableOpacity>
                       </View>
                       <View className="otp-row" style={{ marginBottom: 12 }}>
@@ -940,101 +970,104 @@ function ActiveJobSection({ toast, onNavigate }) {
                         </View>
                       )}
                       <TouchableOpacity
-                        className="btn btn-primary btn-block btn-lg"
+                        className="btn btn-success btn-block btn-lg"
                         disabled={compPinDigits.join('').length < 4}
                         onClick={handleVerifyCompPin}
                       >
-                        <Award size={18} /> Verify Completion PIN (Proceed to Review & Payout)
+                        <CheckCircle2 size={18} /> Verify Completion PIN & Generate Payment QR
                       </TouchableOpacity>
                     </View>
                   ) : booking.status === 'IN_PROGRESS' ? (
+                    /* State 3: Treatment in progress -> Worker completes work */
                     <View>
-                      <View
-                        style={{
-                          display: 'flex',
-                          gap: 12,
-                          justifyContent: 'center',
-                          padding: '12px',
-                          background: '#FFFFFF',
-                          borderRadius: 14,
-                          border: '1.5px dashed var(--border-strong)',
-                          marginBottom: 14,
-                        }}
-                      >
-                        {['7', '3', '9', '1'].map((d, i) => (
-                          <View
-                            key={i}
-                            style={{
-                              width: 48,
-                              height: 54,
-                              borderRadius: 10,
-                              background: 'var(--surface)',
-                              color: 'var(--ink-muted)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontFamily: 'var(--font-heading)',
-                              fontSize: '1.6rem',
-                              fontWeight: 800,
-                            }}
-                          >
-                            {d}
-                          </View>
-                        ))}
-                      </View>
+                      <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.45 }}>
+                        Carry out chemical barrier treatment and PPE checks. When finished, click below to notify customer to submit review and reveal their 4-digit PIN:
+                      </p>
                       <TouchableOpacity
-                        className="btn btn-success btn-lg btn-block"
-                        disabled={!canMarkWorkFinished}
+                        type="button"
+                        className="btn btn-primary btn-block btn-lg"
                         onClick={async () => {
-                          const res = await workerMarkWorkFinished();
-                          if (res.ok) {
-                            toast('Work completed! Customer dashboard now reveals the 4-digit Completion PIN.', 'success');
-                          } else {
-                            toast(res.error, 'error');
-                          }
+                          await workerMarkWorkFinished();
+                          toast('Treatment completed! Customer notified to submit review.', 'success');
                         }}
                       >
-                        <CheckCircle2 size={18} />
-                        {canMarkWorkFinished
-                          ? 'Complete My Work (Reveal Customer PIN)'
-                          : `Complete (${safetyChecklist.filter(Boolean).length}/6 steps, ${afterPhotoTaken ? '1/1' : '0/1'} photo)`}
+                        <CheckCircle2 size={18} /> Complete My Work (Request Customer Review)
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    <View
-                      style={{
-                        display: 'flex',
-                        gap: 12,
-                        justifyContent: 'center',
-                        padding: '12px',
-                        background: '#FFFFFF',
-                        borderRadius: 14,
-                        border: '1.5px dashed var(--border-strong)',
-                      }}
-                    >
-                      {['7', '3', '9', '1'].map((d, i) => (
-                        <View
-                          key={i}
-                          style={{
-                            width: 48,
-                            height: 54,
-                            borderRadius: 10,
-                            background: 'var(--surface)',
-                            color: 'var(--ink-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontFamily: 'var(--font-heading)',
-                            fontSize: '1.6rem',
-                            fontWeight: 800,
-                          }}
-                        >
-                          {d}
-                        </View>
-                      ))}
+                    /* State 4: Not yet in progress */
+                    <View style={{ textAlign: 'center', padding: '14px', background: 'var(--surface)', borderRadius: 12, border: '1px dashed var(--border-strong)' }}>
+                      <Text style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>
+                        PIN locked until chemical treatment is active and marked complete.
+                      </Text>
                     </View>
                   )}
                 </View>
+
+                {/* 2B. Official Payment QR Code (Generated in Worker UI after Completion PIN is verified) */}
+                {(pinVerifiedByWorker || paymentQrGenerated || booking.status === 'COMPLETED') && (
+                  <View className="web-card" style={{ borderTop: '4px solid var(--success)', background: '#FFFFFF' }}>
+                    <View className="card-header-row">
+                      <h3 className="card-title">
+                        <QrCode size={20} color="var(--success)" />
+                        <Text>Doorstep Payment Invoice & UPI QR</Text>
+                      </h3>
+                      <Text className={`badge ${customerPaid ? 'badge-green' : 'badge-amber'}`}>
+                        {customerPaid ? 'Paid & Settled' : 'Awaiting Payment'}
+                      </Text>
+                    </View>
+                    <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.45 }}>
+                      Show this official QR code to the customer for instant doorstep settlement via Google Pay, PhonePe, Paytm, or BHIM:
+                    </p>
+
+                    <View style={{ textAlign: 'center', padding: '12px 0' }}>
+                      <View
+                        style={{
+                          width: 190,
+                          height: 190,
+                          margin: '0 auto 12px',
+                          background: '#FFFFFF',
+                          borderRadius: 14,
+                          border: '2px solid var(--border-strong)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: 'var(--shadow-sm)',
+                        }}
+                      >
+                        <Image
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=upi://pay?pa=pestfree.dispatch@icici&pn=PestFree&am=${rawPrice}&cu=INR`}
+                          alt="UPI QR Code"
+                          style={{ width: 165, height: 165 }}
+                        />
+                      </View>
+
+                      <View style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary-dark)', marginBottom: 4 }}>
+                        Rs. {rawPrice} Total Invoice
+                      </View>
+                      <View style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: 14 }}>
+                        UPI ID: pestfree.dispatch@icici &bull; Technician Payout: Rs. {workerPayout}
+                      </View>
+
+                      {!customerPaid ? (
+                        <TouchableOpacity
+                          type="button"
+                          className="btn btn-success btn-block btn-lg"
+                          onClick={async () => {
+                            await workerConfirmPaymentReceived();
+                            toast('Payment confirmed! Job settled and payout credited.', 'success');
+                          }}
+                        >
+                          <CheckCircle2 size={18} /> Confirm Payment Received (UPI / Cash)
+                        </TouchableOpacity>
+                      ) : (
+                        <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--success)', fontWeight: 800 }}>
+                          <CheckCircle2 size={20} /> Payment Confirmed & Settled to Wallet!
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
 
                 {/* 3. Assigned Technician & Agency Verification */}
                 <View className="web-card">
@@ -1972,6 +2005,7 @@ export default function App() {
     syncFromRemote,
   } = useAppStore();
   const { toasts, show: toast } = useToast();
+  const toggleDuty = (st) => setDutyStatus(st);
 
   useEffect(() => {
     syncFromRemote();

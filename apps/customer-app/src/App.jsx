@@ -123,6 +123,65 @@ function ModalDialog({ open, onClose, title, icon: Icon, children }) {
   );
 }
 
+const LIFECYCLE_STAGES = [
+  {
+    key: 'BOOKING_PLACED',
+    step: '01',
+    label: 'Order Placed',
+    sub: 'Customer Request Logged',
+    badge: 'Verified',
+    icon: FileText,
+  },
+  {
+    key: 'AGENCY_APPROVED',
+    step: '02',
+    label: 'Agency Ready',
+    sub: 'Dispatch Cleared & Routed',
+    badge: 'Approved',
+    icon: ShieldCheck,
+  },
+  {
+    key: 'TECHNICIAN_ACCEPTED',
+    step: '03',
+    label: 'Tech Assigned',
+    sub: 'Chemical Vehicle Prepped',
+    badge: 'Assigned',
+    icon: UserCheck,
+  },
+  {
+    key: 'ON_THE_WAY',
+    step: '04',
+    label: 'En Route',
+    sub: 'Live GPS Satellite Transit',
+    badge: 'Live ETA',
+    icon: Navigation,
+  },
+  {
+    key: 'ARRIVED',
+    step: '05',
+    label: 'At Doorstep',
+    sub: '4-Digit Start OTP Check',
+    badge: 'Doorstep',
+    icon: MapPin,
+  },
+  {
+    key: 'IN_PROGRESS',
+    step: '06',
+    label: 'In Progress',
+    sub: '6-Step CIB Barrier Safety',
+    badge: 'Treating',
+    icon: SprayCan,
+  },
+  {
+    key: 'COMPLETED',
+    step: '07',
+    label: 'Completed',
+    sub: 'PIN, Review & UPI Settled',
+    badge: 'Closed',
+    icon: Award,
+  },
+];
+
 function LifecycleStepper({ currentStatus }) {
   const currentIndex = LIFECYCLE_STAGES.findIndex((s) => s.key === currentStatus);
   const activeIdx = currentIndex === -1 ? 0 : currentIndex;
@@ -1183,7 +1242,7 @@ function TrackSection({ toast, onNavigate }) {
             </View>
 
             {/* RIGHT COLUMN: Doorstep OTP Handshake, End-of-Service Completion PIN, QR Payment & Review */}
-            <View style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <View className="sticky-summary" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {/* 1. Doorstep Start OTP Card */}
               <View
                 className="web-card"
@@ -1197,10 +1256,14 @@ function TrackSection({ toast, onNavigate }) {
                     <KeyRound size={20} color="var(--primary)" />
                     <Text>Doorstep Treatment Start OTP</Text>
                   </h3>
-                  <Text className="badge badge-amber">Share on Arrival</Text>
+                  <Text className={`badge ${['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'badge-green' : 'badge-amber'}`}>
+                    {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? '✓ Verified by Tech' : 'Share on Arrival'}
+                  </Text>
                 </View>
                 <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', lineHeight: 1.45, marginBottom: 14 }}>
-                  Share this 4-digit code with your technician only when they arrive at your doorstep with their PPE kit.
+                  {['IN_PROGRESS', 'COMPLETED'].includes(booking.status)
+                    ? 'Technician verified this OTP upon doorstep arrival. Chemical treatment is active.'
+                    : 'Share this 4-digit code with your technician only when they arrive at your doorstep with their PPE kit.'}
                 </p>
                 <View
                   style={{
@@ -1210,10 +1273,10 @@ function TrackSection({ toast, onNavigate }) {
                     padding: '14px',
                     background: '#FFFFFF',
                     borderRadius: 14,
-                    border: '2px dashed var(--border-strong)',
+                    border: ['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? '2px solid var(--success)' : '2px dashed var(--border-strong)',
                   }}
                 >
-                  {String(startOtp || '4829')
+                  {String(startOtp || booking?.startOtp || '4829')
                     .split('')
                     .map((d, i) => (
                       <View
@@ -1222,7 +1285,7 @@ function TrackSection({ toast, onNavigate }) {
                           width: 54,
                           height: 60,
                           borderRadius: 12,
-                          background: 'var(--surface)',
+                          background: ['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'var(--primary-light)' : 'var(--surface)',
                           border: '1px solid var(--border-strong)',
                           display: 'flex',
                           alignItems: 'center',
@@ -1239,12 +1302,16 @@ function TrackSection({ toast, onNavigate }) {
                 </View>
               </View>
 
-              {/* 2. End-of-Service Completion PIN Card (Mocked until worker finishes work) */}
+              {/* 2. End-of-Service Completion Security PIN Card */}
               <View
                 className="web-card"
                 style={{
                   borderTop: '4px solid var(--primary)',
-                  background: workCompletedByWorker || booking.status === 'COMPLETED' ? 'var(--primary-light)' : 'var(--surface)',
+                  background: (customerReview || booking.status === 'COMPLETED')
+                    ? 'var(--primary-light)'
+                    : workCompletedByWorker
+                    ? 'rgba(232, 163, 23, 0.08)'
+                    : 'var(--surface)',
                 }}
               >
                 <View className="card-header-row">
@@ -1252,15 +1319,143 @@ function TrackSection({ toast, onNavigate }) {
                     <Award size={20} color="var(--primary)" />
                     <Text>End-of-Service Completion Security PIN</Text>
                   </h3>
-                  <Text className={`badge ${workCompletedByWorker || booking.status === 'COMPLETED' ? 'badge-green' : 'badge-neutral'}`}>
-                    {workCompletedByWorker || booking.status === 'COMPLETED' ? 'Work Finished — PIN Unlocked' : 'Mocked (Locked until technician clicks Complete)'}
+                  <Text className={`badge ${(customerReview || booking.status === 'COMPLETED') ? 'badge-green' : workCompletedByWorker ? 'badge-amber' : 'badge-neutral'}`}>
+                    {(customerReview || booking.status === 'COMPLETED')
+                      ? '✓ Review Submitted — PIN Unlocked'
+                      : workCompletedByWorker
+                      ? 'Work Finished — Review Required'
+                      : 'Mocked (Locked)'}
                   </Text>
                 </View>
 
-                {workCompletedByWorker || booking.status === 'COMPLETED' ? (
+                {/* State A: Treatment in progress, work not completed yet */}
+                {!workCompletedByWorker && booking.status !== 'COMPLETED' && (
+                  <View style={{ textAlign: 'center', padding: '16px', background: '#FFFFFF', borderRadius: 12, border: '1px dashed var(--border-strong)' }}>
+                    <Lock size={26} color="var(--ink-muted)" style={{ margin: '0 auto 8px' }} />
+                    <View style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--ink)' }}>
+                      PIN is Mocked & Locked
+                    </View>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.45 }}>
+                      Technician Arjun Sharma is performing the treatment. Once technician clicks "Complete Work" in their dashboard, you will be prompted to submit your review to reveal this PIN.
+                    </p>
+                    <View style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
+                      {['•', '•', '•', '•'].map((dot, i) => (
+                        <View
+                          key={i}
+                          style={{
+                            width: 50,
+                            height: 54,
+                            borderRadius: 10,
+                            background: 'var(--surface)',
+                            border: '1px solid var(--border-strong)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.8rem',
+                            color: 'var(--ink-muted)',
+                            fontWeight: 800,
+                          }}
+                        >
+                          {dot}
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* State B: Work marked completed by technician -> customer must give review to unlock PIN */}
+                {workCompletedByWorker && !customerReview && booking.status !== 'COMPLETED' && (
+                  <View style={{ background: '#FFFFFF', padding: '16px', borderRadius: 12, border: '1.5px solid var(--accent)' }}>
+                    <View style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--primary-dark)', fontWeight: 800, fontSize: '0.94rem' }}>
+                      <Sparkles size={18} color="var(--accent)" />
+                      <Text>Technician Completed Work! Submit Review to View PIN</Text>
+                    </View>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginBottom: 12, lineHeight: 1.45 }}>
+                      Technician Arjun Sharma finished all treatment steps. <b>Please rate your service below to reveal your 4-digit Completion PIN:</b>
+                    </p>
+
+                    {/* Star Rating Buttons */}
+                    <View style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <TouchableOpacity
+                          key={n}
+                          type="button"
+                          className={`btn ${stars >= n ? 'btn-accent' : 'btn-outline'} btn-sm`}
+                          onClick={() => setStars(n)}
+                        >
+                          <Star size={15} fill={stars >= n ? 'currentColor' : 'none'} /> {n}★
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    {/* Feedback Tags */}
+                    <View style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                      {['Punctual & Polite', 'Thorough 6-Step Safety', '100% Eco-Safe', 'Spotless Cleanup'].map((tag) => (
+                        <TouchableOpacity
+                          key={tag}
+                          type="button"
+                          className="badge badge-neutral"
+                          style={{ cursor: 'pointer', border: '1px solid var(--border-strong)', padding: '4px 8px', fontSize: '0.76rem' }}
+                          onClick={() => setComment((prev) => prev ? `${prev}, ${tag}` : tag)}
+                        >
+                          + {tag}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    <TextInput
+                      type="text"
+                      className="form-input"
+                      style={{ marginBottom: 12 }}
+                      placeholder="Add review feedback for technician & agency..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                    />
+
+                    <TouchableOpacity
+                      type="button"
+                      className="btn btn-primary btn-block btn-lg"
+                      onClick={async () => {
+                        await submitCustomerReview(stars, comment || 'Punctual, eco-safe, and very thorough treatment!');
+                        toast('Review submitted! Completion PIN unlocked and revealed below.', 'success');
+                      }}
+                    >
+                      <CheckCircle2 size={18} /> Submit Review & Reveal Completion PIN
+                    </TouchableOpacity>
+
+                    <View style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12 }}>
+                      {['•', '•', '•', '•'].map((dot, i) => (
+                        <View
+                          key={i}
+                          style={{
+                            width: 44,
+                            height: 48,
+                            borderRadius: 8,
+                            background: 'var(--surface)',
+                            border: '1px dashed var(--border-strong)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.6rem',
+                            color: 'var(--ink-muted)',
+                            fontWeight: 800,
+                          }}
+                        >
+                          {dot}
+                        </View>
+                      ))}
+                    </View>
+                    <Text style={{ display: 'block', textAlign: 'center', fontSize: '0.75rem', color: 'var(--ink-muted)', marginTop: 4 }}>
+                      (PIN reveals immediately after clicking submit above)
+                    </Text>
+                  </View>
+                )}
+
+                {/* State C: Customer submitted review OR status is COMPLETED -> PIN is REVEALED */}
+                {(customerReview || booking.status === 'COMPLETED') && (
                   <View>
                     <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', lineHeight: 1.45, marginBottom: 12 }}>
-                      The technician has completed all 6 treatment steps and photo proof. Provide this 4-digit Completion PIN so they can close the ticket and generate your payment invoice QR.
+                      Thank you for your {customerReview?.rating || 5}★ review! Share this 4-digit Completion PIN with your technician so they can verify completion:
                     </p>
                     <View
                       style={{
@@ -1271,6 +1466,7 @@ function TrackSection({ toast, onNavigate }) {
                         background: '#FFFFFF',
                         borderRadius: 14,
                         border: '2px solid var(--primary)',
+                        marginBottom: 14,
                       }}
                     >
                       {String(completionPin || '7391')
@@ -1296,19 +1492,19 @@ function TrackSection({ toast, onNavigate }) {
                           </View>
                         ))}
                     </View>
-                  </View>
-                ) : (
-                  <View style={{ textAlign: 'center', padding: '16px', background: '#FFFFFF', borderRadius: 12, border: '1px dashed var(--border-strong)' }}>
-                    <Lock size={28} color="var(--ink-muted)" style={{ margin: '0 auto 8px' }} />
-                    <View style={{ fontWeight: 700, fontSize: '0.95rem' }}>PIN is Mocked / Hidden</View>
-                    <View style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: 4 }}>
-                      This PIN will reveal here as soon as the worker ticks all 6 safety steps and clicks "Finish Treatment" on their dashboard.
-                    </View>
+
+                    <TouchableOpacity
+                      type="button"
+                      className="btn btn-success btn-block btn-lg"
+                      onClick={() => setQrModal(true)}
+                    >
+                      <QrCode size={18} /> Proceed to Pay Online / View QR (Rs. {rawTotal})
+                    </TouchableOpacity>
                   </View>
                 )}
               </View>
 
-              {/* 3. Assigned Technician & Contact Card */}
+              {/* 3. Assigned Technician & Agency Verification */}
               <View className="web-card">
                 <View className="card-header-row">
                   <h3 className="card-title">
@@ -1377,98 +1573,45 @@ function TrackSection({ toast, onNavigate }) {
                 </View>
               </View>
 
-              {/* 4. Review & Payment QR Trigger (Mandatory Review before Payment) */}
-              {(booking.status === 'COMPLETED' || pinVerifiedByWorker || paymentQrGenerated) && (
-                <View className="web-card" style={{ borderTop: '4px solid var(--primary)', background: 'var(--surface)' }}>
+              {/* 4. Payment Card (Direct Trigger) */}
+              {(booking.status === 'COMPLETED' || pinVerifiedByWorker || paymentQrGenerated || customerPaid) && (
+                <View className="web-card" style={{ borderTop: '4px solid var(--success)', background: '#FFFFFF' }}>
                   <View className="card-header-row">
                     <h3 className="card-title">
-                      <Award size={22} color="var(--primary)" />
-                      <Text>{paymentQrGenerated ? 'Service Review Submitted' : 'Step 4: Rate Service to Unlock Payment QR'}</Text>
+                      <QrCode size={20} color="var(--success)" />
+                      <Text>Doorstep Payment & Invoice</Text>
                     </h3>
-                    <Text className={`badge ${paymentQrGenerated ? 'badge-green' : 'badge-amber'}`}>
-                      {paymentQrGenerated ? 'Review Given &bull; Payment Unlocked' : 'Review Required Before Payment'}
+                    <Text className={`badge ${customerPaid ? 'badge-green' : 'badge-amber'}`}>
+                      {customerPaid ? '✓ Paid & Settled' : 'Payment Ready'}
                     </Text>
                   </View>
-
-                  {!customerReview ? (
-                    <View>
-                      <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.5 }}>
-                        The technician verified your Completion PIN! <b>Submitting your rating & review is required to unlock your official UPI payment invoice</b> for Rs. {rawTotal}.
-                      </p>
-
-                      <View style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <TouchableOpacity
-                            key={n}
-                            type="button"
-                            className={`btn ${stars >= n ? 'btn-accent' : 'btn-outline'} btn-sm`}
-                            onClick={() => setStars(n)}
-                          >
-                            <Star size={16} fill={stars >= n ? 'currentColor' : 'none'} /> {n} Star{n > 1 ? 's' : ''}
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-
-                      <View style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-                        {['Punctual & Polite', 'Thorough 6-Step Safety', '100% Eco-Safe', 'Spotless Cleanup'].map((tag) => (
-                          <TouchableOpacity
-                            key={tag}
-                            type="button"
-                            className="badge badge-neutral"
-                            style={{ cursor: 'pointer', border: '1px solid var(--border-strong)', padding: '5px 9px' }}
-                            onClick={() => setComment((prev) => prev ? `${prev}, ${tag}` : tag)}
-                          >
-                            + {tag}
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-
-                      <TextInput
-                        type="text"
-                        className="form-input"
-                        style={{ marginBottom: 14 }}
-                        placeholder="Feedback for technician & agency (e.g. prompt arrival, odorless formulation)..."
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                      />
-
-                      <TouchableOpacity
-                        type="button"
-                        className="btn btn-primary btn-block btn-lg"
-                        onClick={async () => {
-                          await submitCustomerReview(stars, comment || 'Excellent and thorough treatment!');
-                          toast('Review submitted! Redirecting to UPI Payment QR...', 'success');
-                          setQrModal(true);
-                        }}
-                      >
-                        <QrCode size={18} /> Submit Review & Unlock Payment QR (Rs. {rawTotal})
-                      </TouchableOpacity>
-                    </View>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: 14 }}>
+                    {customerPaid
+                      ? 'Payment has been settled successfully! 90-Day Warranty Certificate is active in History.'
+                      : `Scan the UPI QR code on technician's phone or click below to settle Rs. ${rawTotal}:`}
+                  </p>
+                  {!customerPaid ? (
+                    <TouchableOpacity
+                      type="button"
+                      className="btn btn-success btn-lg btn-block"
+                      onClick={() => setQrModal(true)}
+                    >
+                      <QrCode size={18} /> Open UPI Payment QR Code (Rs. {rawTotal})
+                    </TouchableOpacity>
                   ) : (
-                    <View>
-                      <View style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                        <CheckCircle2 size={18} color="var(--success)" />
-                        <Text style={{ fontWeight: 700, fontSize: '0.92rem' }}>
-                          Your {customerReview.rating}★ Review is Recorded
-                        </Text>
-                      </View>
-                      <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', fontStyle: 'italic', marginBottom: 14 }}>
-                        "{customerReview.comment || 'Punctual, eco-safe, and very thorough treatment!'}"
-                      </p>
-                      <TouchableOpacity
-                        type="button"
-                        className="btn btn-success btn-block"
-                        onClick={() => setQrModal(true)}
-                      >
-                        <QrCode size={18} /> Open UPI Payment QR Code (Rs. {rawTotal})
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                      type="button"
+                      className="btn btn-outline btn-block"
+                      onClick={() => onNavigate('history')}
+                    >
+                      <Award size={16} /> View 90-Day Warranty Certificate
+                    </TouchableOpacity>
                   )}
                 </View>
               )}
             </View>
           </View>
-{/* Interactive Payment QR & Warranty Modal */}
+          {/* Interactive Payment QR & Warranty Modal */}
           <ModalDialog
             open={qrModal}
             onClose={() => setQrModal(false)}

@@ -320,9 +320,9 @@ export const useAppStore = create((set, get) => ({
 
   workerMarkArrived: async () => {
     const { booking, etaSeconds } = get();
-    if (!booking || etaSeconds > 0) return;
+    if (!booking) return;
     const next = safeTransition(booking, 'ARRIVED');
-    set({ booking: next });
+    set({ booking: next, etaSeconds: 0 });
     await syncRemote(get());
   },
 
@@ -393,7 +393,7 @@ export const useAppStore = create((set, get) => ({
     set({
       booking: next,
       pinVerifiedByWorker: true,
-      paymentQrGenerated: false,
+      paymentQrGenerated: true,
       dutyStatus: 'ON_DUTY',
       incomingJob: null,
       contactUnlocked: false,
