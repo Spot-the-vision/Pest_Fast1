@@ -1,615 +1,711 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useAppStore } from './lib/api/store.js';
+import { SAFETY_CHECKLIST_STEPS, answerWorkerSafetyQuestion, BUNDLED_CHEMICAL_SHEETS } from './lib/api/index.ts';
+import './index.css';
 
-export default function App() {
-  const [dutyStatus, setDutyStatus] = useState('ON_DUTY'); // ON_DUTY, ON_JOB, OFF_DUTY
-  const [agencyUnlocked, setAgencyUnlocked] = useState(false); // Domain rule: agency 2nd approval
-  const [activeTab, setActiveTab] = useState('job'); // 'job', 'route', 'earnings', 'safety'
-  const [checklist, setChecklist] = useState({
-    ppe: true,
-    inspection: true,
-    evacuation: false,
-    chemicalMix: false,
-    sprayBarrier: false,
-    photoBefore: true,
-    photoAfter: false,
-    signOff: false
-  });
-  const [showSosModal, setShowSosModal] = useState(false);
-  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
-  const [whatsappSent, setWhatsappSent] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Toast Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function useToast() {
+  const [toasts, setToasts] = useState([]);
+  const show = useCallback((msg, type = 'default') => {
+    const id = Date.now();
+    setToasts(t => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3200);
+  }, []);
+  return { toasts, show };
+}
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
+function ToastLayer({ toasts }) {
+  return (
+    <div className="toast-container">
+      <AnimatePresence>
+        {toasts.map(t => (
+          <motion.div key={t.id} className={`toast ${t.type}`}
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+            {t.msg}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
 
-  const toggleCheck = (key) => {
-    setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Bottom Sheet wrapper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function Sheet({ open, onClose, children }) {
+  if (!open) return null;
+  return (
+    <div className="sheet-overlay" onClick={onClose}>
+      <motion.div className="sheet" onClick={e => e.stopPropagation()}
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 35 }}>
+        <div className="sheet-handle" />
+        {children}
+      </motion.div>
+    </div>
+  );
+}
 
-  const completedSteps = Object.values(checklist).filter(Boolean).length;
-  const totalSteps = Object.keys(checklist).length;
-  const progressPercent = Math.round((completedSteps / totalSteps) * 100);
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Emergency SOS Sheet Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function SosSheet({ open, onClose }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <Sheet open={open} onClose={onClose}>
+          <h2 style={{ color: 'var(--danger)', marginBottom: 10 }}>Ã°Å¸Å¡Â¨ Emergency Alert</h2>
+          <p style={{ fontSize: '.9rem', color: 'var(--ink-muted)', marginBottom: 16 }}>
+            This will notify your agency supervisor, share your current GPS location, and call emergency services.
+          </p>
+          <div style={{ background: '#fee2e2', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
+            <strong style={{ color: 'var(--danger)' }}>Emergency contacts:</strong>
+            <div style={{ marginTop: 6, fontSize: '.88rem' }}>
+              <div>Ã°Å¸Å¡â€™ Fire: 101</div>
+              <div>Ã°Å¸Å¡â€˜ Ambulance: 108</div>
+              <div>Ã°Å¸ÂÂ¢ Agency: +91-99999-00001</div>
+            </div>
+          </div>
+          <button className="btn btn-danger" style={{ width: '100%' }}
+            onClick={() => { window.open('tel:108'); onClose(); }}>
+            Ã°Å¸Å¡Â¨ Call Emergency (108)
+          </button>
+          <button className="btn btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={onClose}>
+            Cancel Ã¢â‚¬â€ I'm fine
+          </button>
+        </Sheet>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Safety Assistant Chat Sheet Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function SafetyChatSheet({ open, onClose }) {
+  const [messages, setMessages] = useState([
+    { role: 'bot', text: 'Hello! I can answer questions about chemical handling, PPE, and first-aid from our bundled safety data sheets. How can I help?' },
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  async function send() {
+    const q = input.trim();
+    if (!q) return;
+    setInput('');
+    setMessages(m => [...m, { role: 'user', text: q }]);
+    setLoading(true);
+    await new Promise(r => setTimeout(r, 700));
+    const result = answerWorkerSafetyQuestion(q); const answer = typeof result === "object" ? result.answer : result;
+    setMessages(m => [...m, { role: 'bot', text: answer }]);
+    setLoading(false);
+  }
 
   return (
-    <div className="bg-surface min-h-screen text-on-surface font-body flex flex-col max-w-md mx-auto shadow-2xl relative pb-20">
-      {/* Toast Alert */}
-      {toastMessage && (
-        <div className="fixed top-4 inset-x-4 max-w-sm mx-auto z-50 bg-primary text-on-primary px-4 py-3 rounded-xl shadow-lg flex items-center justify-between text-sm animate-bounce">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">verified</span>
-            <span>{toastMessage}</span>
+    <AnimatePresence>
+      {open && (
+        <Sheet open={open} onClose={onClose}>
+          <h2 style={{ marginBottom: 8 }}>Ã°Å¸Â¤â€“ Safety Assistant</h2>
+          <p style={{ fontSize: '.8rem', color: 'var(--ink-muted)', marginBottom: 10 }}>Answers from bundled CSDS sheets only</p>
+          <div className="chat-area">
+            {messages.map((m, i) => (
+              <div key={i} className={`chat-msg ${m.role}`}>{m.text}</div>
+            ))}
+            {loading && <div className="chat-msg bot">Ã¢â‚¬Â¦</div>}
+            <div ref={bottomRef} />
           </div>
-          <button onClick={() => setToastMessage(null)} className="text-on-primary/70 hover:text-on-primary">
-            <span className="material-symbols-outlined text-[16px]">close</span>
-          </button>
-        </div>
+          <div className="chat-input-row">
+            <input className="chat-inp" value={input} onChange={e => setInput(e.target.value)}
+              placeholder="Ask a chemical safety questionÃ¢â‚¬Â¦"
+              onKeyDown={e => e.key === 'Enter' && send()} />
+            <button className="chat-send" onClick={send}>Ã¢Å¾Â¤</button>
+          </div>
+        </Sheet>
       )}
+    </AnimatePresence>
+  );
+}
 
-      {/* Top Professional Header */}
-      <header className="bg-surface-container-lowest border-b border-surface-container-high px-4 py-3 sticky top-0 z-40">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-bold text-lg shadow-sm">
-              VR
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CSDS Sheet Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function CsdsSheet({ open, onClose }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <Sheet open={open} onClose={onClose}>
+          <h2 style={{ marginBottom: 12 }}>Ã°Å¸â€œâ€ž Chemical Data Sheets</h2>
+          {BUNDLED_CHEMICAL_SHEETS.map((s, i) => (
+            <div key={i} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: i < BUNDLED_CHEMICAL_SHEETS.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: 4 }}>{s.chemical}</div>
+              <div style={{ fontSize: '.82rem', color: 'var(--ink-muted)', marginBottom: 6 }}>{s.usedFor}</div>
+              <div style={{ fontSize: '.82rem' }}><strong>PPE:</strong> {s.ppe}</div>
+              <div style={{ fontSize: '.82rem', marginTop: 4 }}><strong>First aid:</strong> {s.firstAid}</div>
+              {s.doNotMixWith && <div style={{ fontSize: '.78rem', color: 'var(--danger)', marginTop: 4 }}>Ã¢Å¡Â Ã¯Â¸Â Do NOT mix with: {s.doNotMixWith}</div>}
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="font-headline font-bold text-sm text-primary">Vikram Rathore</h1>
-                <span className="material-symbols-outlined text-[15px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-              </div>
-              <div className="flex items-center gap-1 text-[11px] text-on-surface-variant">
-                <span className="font-medium">EcoPest Solutions</span>
-                <span>•</span>
-                <span className="text-secondary font-semibold">#CHL-2024-889</span>
-              </div>
-            </div>
-          </div>
-          <button 
-            onClick={() => setShowSosModal(true)} 
-            className="w-9 h-9 rounded-full bg-error-container text-error flex items-center justify-center hover:bg-error hover:text-on-error transition-colors shadow-sm cursor-pointer"
-            title="Emergency Chemical Spill / Safety SOS"
-          >
-            <span className="material-symbols-outlined text-[20px]">e911_emergency</span>
-          </button>
-        </div>
+          ))}
+          <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onClose}>Close</button>
+        </Sheet>
+      )}
+    </AnimatePresence>
+  );
+}
 
-        {/* Tactile Duty Status Bar */}
-        <div className="mt-3 grid grid-cols-3 gap-1.5 bg-surface-container-low p-1 rounded-xl">
-          <button 
-            onClick={() => { setDutyStatus('ON_DUTY'); showToast('Status: Available for Dispatches'); }}
-            className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${dutyStatus === 'ON_DUTY' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>On Duty</span>
-          </button>
-          <button 
-            onClick={() => { setDutyStatus('ON_JOB'); showToast('Status: In Active Treatment'); }}
-            className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${dutyStatus === 'ON_JOB' ? 'bg-secondary-container text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-          >
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>On Job</span>
-          </button>
-          <button 
-            onClick={() => { setDutyStatus('OFF_DUTY'); showToast('Status: Off Duty / Offline'); }}
-            className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${dutyStatus === 'OFF_DUTY' ? 'bg-surface-container-highest text-on-surface' : 'text-on-surface-variant hover:text-on-surface'}`}
-          >
-            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-            <span>Off Duty</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Main Tab Views */}
-      <main className="p-4 flex-1 overflow-y-auto space-y-4">
-        {activeTab === 'job' && (
-          <>
-            {/* Agency Confirmation & WhatsApp Ping Banner */}
-            <div className={`rounded-2xl p-3.5 border transition-all ${
-              agencyUnlocked 
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-900' 
-                : 'bg-amber-50 border-amber-300 text-amber-900'
-            }`}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px]">
-                    {agencyUnlocked ? 'lock_open' : 'lock_clock'}
-                  </span>
-                  <div>
-                    <h3 className="font-headline font-bold text-xs uppercase tracking-wide">
-                      {agencyUnlocked ? 'Agency Confirmed — Navigation & Contact Unlocked' : 'Waiting for Agency Owner Confirmation'}
-                    </h3>
-                    <p className="text-[11px] opacity-85 mt-0.5 leading-tight">
-                      {agencyUnlocked 
-                        ? 'Agency confirmed dispatch. Direct mobile calling, exact house coordinates and Google Maps navigation are active.' 
-                        : 'Exact address, Google Maps GPS, and direct customer phone are locked until agency owner confirms dispatch.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons for Agency WhatsApp Confirmation */}
-              <div className="mt-3 pt-2.5 border-t border-current/15 flex flex-wrap items-center gap-2">
-                {!agencyUnlocked ? (
-                  <>
-                    <button 
-                      onClick={() => setShowWhatsappModal(true)}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">chat</span>
-                      <span>{whatsappSent ? 'Resend WhatsApp Alert' : 'Ping Agency Owner on WhatsApp'}</span>
-                    </button>
-
-                    <button 
-                      onClick={() => {
-                        setAgencyUnlocked(true);
-                        showToast('✅ Agency Owner Approved via WhatsApp! Exact Address, Mobile & GPS Navigation Unlocked.');
-                      }}
-                      className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition-colors cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">check_circle</span>
-                      <span>Owner Approved: Unlock All</span>
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-semibold text-emerald-800 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">verified</span>
-                      All Coordinates & Contacts Active
-                    </span>
-                    <button 
-                      onClick={() => {
-                        setAgencyUnlocked(false);
-                        setWhatsappSent(false);
-                        showToast('Re-locked: Waiting for Agency Confirmation.');
-                      }}
-                      className="text-[11px] font-bold text-emerald-900 underline hover:no-underline cursor-pointer"
-                    >
-                      Re-Lock Job
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Current Active Assignment Card */}
-            <div className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-4 shadow-sm relative overflow-hidden">
-              <div className="flex items-center justify-between mb-3">
-                <span className="px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold text-xs">
-                  #JOB-7491 • Priority Dispatch
-                </span>
-                <span className="text-xs font-semibold text-secondary flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[15px]">schedule</span>
-                  2:00 PM Slot
-                </span>
-              </div>
-
-              <h2 className="font-headline font-bold text-base text-primary mb-1">
-                Subterranean Termite Dual-Barrier Eradication
-              </h2>
-              <p className="text-xs text-on-surface-variant mb-4">
-                Residential 3 BHK • Pre-Treatment Perimeter & Woodwork Drill Injection
-              </p>
-
-              {/* Customer & Location Card */}
-              <div className="bg-surface-container-low rounded-xl p-3.5 space-y-3 mb-4 text-xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-primary">person</span>
-                    <span className="font-bold">
-                      {agencyUnlocked ? 'Johnathan Doe' : 'John D. (Masked Profile)'}
-                    </span>
-                  </div>
-                  <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                    agencyUnlocked ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {agencyUnlocked ? 'Unlocked' : 'Locked 🔒'}
-                  </span>
-                </div>
-
-                {/* Mobile Phone (Locked vs Unlocked) */}
-                <div className="flex items-center justify-between pt-1 border-t border-surface-container-high/60">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-primary">call</span>
-                    <div>
-                      {agencyUnlocked ? (
-                        <span className="font-bold text-primary">+91 98765 43210</span>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-on-surface-variant font-medium">
-                          <span>+91 ••••• •••••</span>
-                          <span className="text-[10px] text-error font-semibold">(Agency Approval Needed)</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {agencyUnlocked ? (
-                    <a 
-                      href="tel:+919876543210" 
-                      className="px-2.5 py-1 rounded-lg bg-primary text-on-primary font-semibold text-[11px] flex items-center gap-1 shadow-sm"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">call</span>
-                      Direct Call
-                    </a>
-                  ) : (
-                    <button 
-                      onClick={() => setShowWhatsappModal(true)}
-                      className="px-2 py-1 rounded-lg bg-surface-container text-on-surface-variant font-semibold text-[10px] flex items-center gap-1 cursor-pointer hover:bg-surface-container-high"
-                      title="Request Agency Approval to unlock direct phone"
-                    >
-                      <span className="material-symbols-outlined text-[13px]">lock</span>
-                      Locked
-                    </button>
-                  )}
-                </div>
-
-                {/* Address & Navigation (Locked vs Unlocked) */}
-                <div className="flex items-start justify-between pt-1 border-t border-surface-container-high/60">
-                  <div className="flex items-start gap-2 flex-1 pr-2">
-                    <span className="material-symbols-outlined text-[18px] text-primary shrink-0 mt-0.5">location_on</span>
-                    <div>
-                      <p className="font-medium">
-                        {agencyUnlocked 
-                          ? 'Villa #14, Orchid Petals, Sector 48, Gurgaon (Gate Code: #4812)' 
-                          : 'Sector 48, Gurgaon (Approximate Zone Only)'}
-                      </p>
-                      {!agencyUnlocked && (
-                        <p className="text-[10px] text-error font-semibold mt-0.5 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[12px]">lock</span>
-                          Exact unit, street & gate code locked by agency
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {agencyUnlocked ? (
-                    <a 
-                      href="https://maps.google.com/?q=Sector+48+Gurgaon" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm shrink-0 hover:bg-emerald-800 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">navigation</span>
-                      Open GPS Maps
-                    </a>
-                  ) : (
-                    <button 
-                      onClick={() => {
-                        showToast('Navigation is locked. Please send WhatsApp message to Agency Owner.');
-                        setShowWhatsappModal(true);
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface-container text-on-surface-variant font-bold text-[11px] flex items-center gap-1 shadow-xs shrink-0 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">lock</span>
-                      GPS Locked
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Chemical Formulation & Kit Telemetry */}
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="bg-surface-container-low p-2.5 rounded-xl border border-surface-container">
-                  <p className="text-[10px] uppercase font-bold text-on-surface-variant">Active Chemical</p>
-                  <p className="font-bold text-xs text-primary mt-0.5">Deltamethrin 2.5% EC</p>
-                  <p className="text-[10px] text-secondary font-medium mt-0.5">Batch #CIB-9921</p>
-                </div>
-                <div className="bg-surface-container-low p-2.5 rounded-xl border border-surface-container">
-                  <p className="text-[10px] uppercase font-bold text-on-surface-variant">Technician Payout</p>
-                  <p className="font-bold text-xs text-primary mt-0.5">₹600.00</p>
-                  <p className="text-[10px] text-emerald-600 font-medium mt-0.5">+ ₹50 Tip Potential</p>
-                </div>
-              </div>
-
-              {/* Safety & Execution Checklist */}
-              <div className="border-t border-surface-container-high pt-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-headline font-bold text-xs text-primary uppercase tracking-wide">
-                    Safety & Protocol Steps ({completedSteps}/{totalSteps})
-                  </h3>
-                  <span className="font-bold text-xs text-primary">{progressPercent}%</span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden mb-3">
-                  <div 
-                    className="h-full bg-primary transition-all duration-300" 
-                    style={{ width: `${progressPercent}%` }}
-                  ></div>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  {[
-                    { id: 'ppe', label: '1. Don Organic Vapor Respirator & Nitrile Gloves' },
-                    { id: 'inspection', label: '2. Perform Thermal Moisture & Crevice Scan' },
-                    { id: 'evacuation', label: '3. Confirm Pets & Children Evacuated from Zone' },
-                    { id: 'chemicalMix', label: '4. Calibrate Formulation (50ml/m² Barrier)' },
-                    { id: 'sprayBarrier', label: '5. Apply Injection & Cold Fogging Barrier' },
-                    { id: 'photoBefore', label: '6. Capture Pre-Treatment Infestation Evidence' },
-                    { id: 'photoAfter', label: '7. Capture Post-Treatment Verification Proof' },
-                    { id: 'signOff', label: '8. Customer Digital Sign-off / OTP Verification' }
-                  ].map(step => (
-                    <label 
-                      key={step.id} 
-                      className="flex items-center gap-2.5 p-2 rounded-lg bg-surface-container-low/60 hover:bg-surface-container-low cursor-pointer transition-colors"
-                    >
-                      <input 
-                        type="checkbox" 
-                        checked={checklist[step.id]} 
-                        onChange={() => toggleCheck(step.id)}
-                        className="w-4 h-4 rounded text-primary focus:ring-primary accent-primary cursor-pointer"
-                      />
-                      <span className={`flex-1 text-[11px] ${checklist[step.id] ? 'line-through text-on-surface-variant font-normal' : 'font-medium text-on-surface'}`}>
-                        {step.label}
-                      </span>
-                      {checklist[step.id] && (
-                        <span className="material-symbols-outlined text-[14px] text-primary">check_circle</span>
-                      )}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Photo Evidence Dropzone */}
-              <div className="mt-4 border-t border-surface-container-high pt-3">
-                <h4 className="font-headline font-bold text-xs text-primary mb-2">Photographic Compliance Proof</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="border border-dashed border-primary/40 bg-surface-container-low p-3 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-container transition-colors">
-                    <span className="material-symbols-outlined text-[24px] text-primary mb-1">camera_alt</span>
-                    <span className="text-[11px] font-bold text-primary">Before Evidence</span>
-                    <span className="text-[10px] text-emerald-600 font-semibold mt-0.5">✓ Captured (1 Photo)</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      toggleCheck('photoAfter');
-                      showToast('Post-Treatment Photo Proof Attached!');
-                    }}
-                    className="border border-dashed border-secondary/50 bg-secondary-container/10 p-3 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:bg-secondary-container/20 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[24px] text-secondary mb-1">add_a_photo</span>
-                    <span className="text-[11px] font-bold text-secondary">After Proof</span>
-                    <span className="text-[10px] text-on-surface-variant mt-0.5">
-                      {checklist.photoAfter ? '✓ Captured (1 Photo)' : 'Tap to Capture Proof'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Completion Button */}
-              <button 
-                onClick={() => {
-                  if (progressPercent < 75) {
-                    showToast('Please complete mandatory checklist items first!');
-                  } else {
-                    showToast('Job #JOB-7491 Completed! ₹600 credited to payout wallet.');
-                  }
-                }}
-                className="w-full mt-4 py-3 bg-primary text-on-primary rounded-xl font-headline font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:bg-primary-container transition-colors cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">task_alt</span>
-                Complete Treatment & Submit Proof
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* Tab 2: Today Route Schedule */}
-        {activeTab === 'route' && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-headline font-bold text-sm text-primary">Today's Route Schedule</h2>
-              <span className="text-xs text-on-surface-variant">3 Stops • 14.8 km total</span>
-            </div>
-
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Emergency Protocol Sheet Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function EmergencyProtocolSheet({ open, onClose }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <Sheet open={open} onClose={onClose}>
+          <h2 style={{ color: 'var(--danger)', marginBottom: 12 }}>Ã°Å¸Â©Âº Exposure Protocol</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { id: 'JOB-7489', time: '09:30 AM', title: 'Cockroach Odorless Gel Barrier', loc: 'Indiranagar 100ft Rd', payout: '₹450', status: 'Completed', color: 'bg-emerald-100 text-emerald-800' },
-              { id: 'JOB-7491', time: '02:00 PM', title: 'Subterranean Termite Treatment', loc: 'Sector 48, Gurgaon', payout: '₹600', status: 'In Progress', color: 'bg-amber-100 text-amber-800' },
-              { id: 'JOB-7494', time: '05:30 PM', title: 'Rodent Bait Station Inspection', loc: 'Cyber Hub Phase 2', payout: '₹350', status: 'Upcoming', color: 'bg-slate-100 text-slate-800' }
-            ].map(item => (
-              <div key={item.id} className="bg-surface-container-lowest border border-surface-container-high p-3.5 rounded-xl shadow-sm flex items-start justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.color}`}>
-                      {item.status}
-                    </span>
-                    <span className="text-xs font-semibold text-on-surface-variant">{item.time}</span>
-                  </div>
-                  <h4 className="font-headline font-bold text-xs text-primary">{item.title}</h4>
-                  <p className="text-[11px] text-on-surface-variant mt-0.5 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[13px]">location_on</span>
-                    {item.loc}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold text-sm text-primary">{item.payout}</span>
-                  <p className="text-[10px] text-on-surface-variant">Net Payout</p>
-                </div>
+              { step: '1. Remove from exposure', detail: 'Move affected person to fresh air immediately. Remove contaminated clothing.' },
+              { step: '2. Skin contact', detail: 'Flush with water for 15+ minutes. Do not scrub.' },
+              { step: '3. Eye contact', detail: 'Irrigate eyes with clean water for 15 minutes. Remove contacts first.' },
+              { step: '4. Ingestion', detail: 'Do NOT induce vomiting. Give water only if person is conscious. Call 108.' },
+              { step: '5. Inhalation', detail: 'Fresh air immediately. Loosen clothing. Administer OÃ¢â€šâ€š if trained.' },
+              { step: '6. Call emergency', detail: 'Dial 108. Give the chemical name from the CSDS sheet to responders.' },
+            ].map((p, i) => (
+              <div key={i} style={{ background: 'var(--surface)', borderRadius: 10, padding: '10px 14px' }}>
+                <div style={{ fontWeight: 700, fontSize: '.88rem', color: 'var(--primary)' }}>{p.step}</div>
+                <div style={{ fontSize: '.82rem', color: 'var(--ink-muted)', marginTop: 4 }}>{p.detail}</div>
               </div>
             ))}
           </div>
+          <button className="btn btn-ghost" style={{ width: '100%', marginTop: 12 }} onClick={onClose}>Close</button>
+        </Sheet>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Job Tab Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function JobTab({ toast }) {
+  const {
+    booking, incomingJob, contactUnlocked, startOtp, etaSeconds,
+    dutyStatus, workerAcceptJob, workerMarkArrived, workerStartTreatment,
+    workerCompleteBooking, toggleSafetyStep, captureAfterPhoto,
+    safetyChecklist, afterPhotoTaken, canWorkerMarkArrived, canWorkerStart, canWorkerComplete,
+    syncFromRemote,
+  } = useAppStore();
+
+  const [otpInput, setOtpInput] = useState(['', '', '', '']);
+  const [otpError, setOtpError] = useState('');
+  const otpRefs = [useRef(), useRef(), useRef(), useRef()];
+
+  // Poll for state sync from customer app every 3 s
+  useEffect(() => {
+    const id = setInterval(() => syncFromRemote(), 3000);
+    syncFromRemote();
+    return () => clearInterval(id);
+  }, [syncFromRemote]);
+
+  function handleOtpInput(i, val) {
+    const clean = val.replace(/\D/, '').slice(-1);
+    const next = [...otpInput];
+    next[i] = clean;
+    setOtpInput(next);
+    setOtpError('');
+    if (clean && i < 3) otpRefs[i + 1].current?.focus();
+  }
+
+  async function handleVerifyOtp() {
+    const code = otpInput.join('');
+    const res = await workerStartTreatment(code);
+    if (!res.ok) { setOtpError(res.error); return; }
+    toast('OTP verified Ã¢â‚¬â€ treatment started!', 'success');
+    setOtpInput(['','','','']);
+  }
+
+  // No job at all
+  if (!booking || booking.status === 'CANCELLED') {
+    return (
+      <div className="content-area" style={{ textAlign: 'center', paddingTop: 40 }}>
+        <div style={{ fontSize: '3rem' }}>Ã°Å¸â€œÂ­</div>
+        <h2 style={{ marginTop: 12 }}>No active job</h2>
+        <p className="text-muted mt-8">
+          {dutyStatus === 'OFF_DUTY'
+            ? 'Switch to "On duty" to receive jobs.'
+            : 'Waiting for the agency to assign a bookingÃ¢â‚¬Â¦'}
+        </p>
+        {dutyStatus === 'OFF_DUTY' && (
+          <button className="btn btn-primary" style={{ maxWidth: 220, margin: '16px auto 0' }}
+            onClick={() => useAppStore.getState().setDutyStatus('ON_DUTY')}>
+            Go on duty
+          </button>
         )}
+      </div>
+    );
+  }
 
-        {/* Tab 3: Earnings & Wallet */}
-        {activeTab === 'earnings' && (
-          <div className="space-y-4">
-            <div className="bg-primary text-on-primary p-5 rounded-2xl shadow-md">
-              <p className="text-xs uppercase font-medium text-on-primary/80">Today's Accumulated Payout</p>
-              <h2 className="font-headline font-extrabold text-3xl mt-1">₹1,400.00</h2>
-              <div className="mt-3 pt-3 border-t border-on-primary/20 flex items-center justify-between text-xs">
-                <span>This Week: <strong>₹8,750</strong></span>
-                <span>Safety Bonus: <strong>+₹500</strong></span>
-              </div>
-            </div>
-
-            <div className="bg-surface-container-lowest border border-surface-container-high rounded-xl p-4 shadow-sm">
-              <h3 className="font-headline font-bold text-xs text-primary uppercase mb-3">Direct Bank Transfer Status</h3>
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span className="text-on-surface-variant">Linked UPI ID</span>
-                <span className="font-semibold">vikram.rathore@okhdfcbank</span>
-              </div>
-              <div className="flex items-center justify-between text-xs mb-3">
-                <span className="text-on-surface-variant">Payout Frequency</span>
-                <span className="font-semibold text-emerald-600">Daily 08:00 PM Auto-Settlement</span>
-              </div>
-              <button 
-                onClick={() => showToast('Withdrawal request initiated for ₹1,400 via IMPS.')}
-                className="w-full py-2 bg-secondary text-on-primary rounded-lg text-xs font-bold shadow-sm hover:bg-secondary/90 transition-colors cursor-pointer"
-              >
-                Instant Payout Request (IMPS)
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 4: Safety Protocols */}
-        {activeTab === 'safety' && (
-          <div className="space-y-3">
-            <h2 className="font-headline font-bold text-sm text-primary">Chemical Safety & Compliance Docs</h2>
-            <div className="bg-surface-container-lowest border border-surface-container-high rounded-xl p-3.5 shadow-sm space-y-2.5 text-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px] text-primary">description</span>
-                  <div>
-                    <p className="font-bold">Deltamethrin 2.5% EC CSDS</p>
-                    <p className="text-[10px] text-on-surface-variant">Chemical Safety Data Sheet • Rev 2024</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => showToast('Downloading Safety Data Sheet PDF...')}
-                  className="px-2 py-1 rounded bg-surface-container text-primary font-bold text-[11px] cursor-pointer"
-                >
-                  View
-                </button>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-surface-container">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px] text-secondary">shield</span>
-                  <div>
-                    <p className="font-bold">Antidote Guide: Atropine Protocol</p>
-                    <p className="text-[10px] text-on-surface-variant">Field Exposure Emergency Procedure</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => showToast('Emergency Antidote Protocol Opened')}
-                  className="px-2 py-1 rounded bg-error-container text-error font-bold text-[11px] cursor-pointer"
-                >
-                  Emergency
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-            {/* WhatsApp Message Modal */}
-      {showWhatsappModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-emerald-500">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
-              <span className="material-symbols-outlined text-[28px]">chat</span>
-            </div>
-            <h3 className="font-headline font-bold text-center text-base text-primary mb-1">
-              Ping Agency Owner on WhatsApp
-            </h3>
-            <p className="text-center text-xs text-on-surface-variant mb-4 leading-relaxed">
-              If the agency owner has not unlocked the coordinates, send a direct WhatsApp alert requesting Stage-2 Approval for Job <strong>#JOB-7491</strong>.
-            </p>
-
-            <div className="bg-surface-container-low p-3 rounded-xl text-xs space-y-1 mb-4 text-on-surface-variant">
-              <p className="font-bold text-primary">Pre-Filled Message Preview:</p>
-              <p className="italic">"Hello EcoPest Owner, Technician Vikram Rathore is ready for Job #JOB-7491. Please accept & grant Stage-2 Approval to unlock destination coordinates and client phone."</p>
-            </div>
-
-            <div className="space-y-2">
-              <button 
-                onClick={() => {
-                  setWhatsappSent(true);
-                  setShowWhatsappModal(false);
-                  showToast('📲 WhatsApp Request Sent to Agency Owner! Awaiting Confirmation.');
-                }}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[16px]">send</span>
-                Send WhatsApp Alert to Agency Owner
-              </button>
-              <button 
-                onClick={() => setShowWhatsappModal(false)}
-                className="w-full py-2 text-xs font-semibold text-on-surface-variant hover:text-on-surface cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
+  // Ã¢â€â‚¬Ã¢â€â‚¬ BOOKING_PLACED: Agency hasn't approved yet Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  if (booking.status === 'BOOKING_PLACED') {
+    return (
+      <div className="content-area" style={{ textAlign: 'center', paddingTop: 40 }}>
+        <div style={{ fontSize: '3rem' }}>Ã¢ÂÂ³</div>
+        <h2 style={{ marginTop: 12 }}>Awaiting agency approval</h2>
+        <p className="text-muted mt-8">A new booking has been placed. The agency owner must approve it before you see details.</p>
+        <div className="card mt-12" style={{ textAlign: 'left' }}>
+          <div className="flex-between">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Status</span>
+            <span className="badge badge-warning">Pending approval</span>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Emergency SOS Modal */}
-      {showSosModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-error">
-            <div className="w-12 h-12 rounded-full bg-error-container text-error flex items-center justify-center mx-auto mb-3">
-              <span className="material-symbols-outlined text-[28px]">warning</span>
-            </div>
-            <h3 className="font-headline font-bold text-center text-lg text-error mb-1">Field Emergency Helpline</h3>
-            <p className="text-center text-xs text-on-surface-variant mb-4 leading-relaxed">
-              For accidental pesticide splash, inhalation distress, or on-site physical confrontation.
-            </p>
-            <div className="space-y-2">
-              <a 
-                href="tel:1800112233" 
-                className="w-full py-2.5 bg-error text-on-error rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm"
-              >
-                <span className="material-symbols-outlined text-[16px]">call</span>
-                National Poison Info Centre (1800-11-2233)
-              </a>
-              <a 
-                href="tel:+918049120000" 
-                className="w-full py-2.5 bg-surface-container text-primary rounded-xl font-bold text-xs flex items-center justify-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[16px]">support_agent</span>
-                EcoPest Agency Dispatch Emergency Desk
-              </a>
-              <button 
-                onClick={() => setShowSosModal(false)}
-                className="w-full py-2 text-xs font-semibold text-on-surface-variant hover:text-on-surface cursor-pointer"
-              >
-                Cancel / Return to Job
-              </button>
-            </div>
+  // Ã¢â€â‚¬Ã¢â€â‚¬ AGENCY_APPROVED: Show masked info, offer Accept Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  if (booking.status === 'AGENCY_APPROVED' && incomingJob) {
+    return (
+      <div className="content-area">
+        <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 14, padding: '12px 16px', marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, color: '#92400e', fontSize: '.88rem' }}>New job available</div>
+          <div style={{ fontSize: '.8rem', color: '#78350f', marginTop: 2 }}>Agency approved. Review masked details before accepting.</div>
+        </div>
+
+        <div className="card">
+          <div className="flex-between">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Customer</span>
+            <strong>{incomingJob.maskedName}</strong>
+          </div>
+          <div className="flex-between mt-8">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Phone</span>
+            <strong>{incomingJob.maskedPhone}</strong>
+          </div>
+          <div className="flex-between mt-8">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Area</span>
+            <strong>{incomingJob.area}</strong>
+          </div>
+          <div className="divider" />
+          <div className="flex-between">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Service</span>
+            <span>{incomingJob.pestLabel} Ã‚Â· {incomingJob.sizeLabel}</span>
+          </div>
+          <div className="flex-between mt-8">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Plan</span>
+            <span>{incomingJob.planLabel}</span>
+          </div>
+          <div className="flex-between mt-8">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Slot</span>
+            <span>{incomingJob.slot}</span>
+          </div>
+          <div className="divider" />
+          <div className="flex-between">
+            <span style={{ fontWeight: 700 }}>Your payout</span>
+            <span className="price" style={{ fontSize: '1.2rem' }}>Ã¢â€šÂ¹{incomingJob.payout}</span>
           </div>
         </div>
-      )}
 
-      {/* Bottom Sticky Mobile Navigation */}
-      <nav className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-surface-container-lowest border-t border-surface-container-high py-2 px-3 flex items-center justify-around z-40">
-        <button 
-          onClick={() => setActiveTab('job')}
-          className={`flex flex-col items-center gap-0.5 text-xs transition-colors cursor-pointer ${activeTab === 'job' ? 'text-primary font-bold' : 'text-on-surface-variant'}`}
-        >
-          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'job' ? "'FILL' 1" : "'FILL' 0" }}>assignment</span>
-          <span className="text-[10px]">Active Job</span>
+        <div style={{ background: 'var(--surface)', border: '1px dashed var(--border)', borderRadius: 12, padding: '10px 14px', marginTop: 12, fontSize: '.8rem', color: 'var(--ink-muted)' }}>
+          Ã°Å¸â€â€™ Exact address and full phone number will be unlocked after you accept AND the agency confirms dispatch.
+        </div>
+
+        <button className="btn btn-primary" style={{ marginTop: 14 }}
+          onClick={async () => { await workerAcceptJob(); toast('Job accepted! Waiting for address unlockÃ¢â‚¬Â¦', 'success'); }}>
+          Accept job
         </button>
-        <button 
-          onClick={() => setActiveTab('route')}
-          className={`flex flex-col items-center gap-0.5 text-xs transition-colors cursor-pointer ${activeTab === 'route' ? 'text-primary font-bold' : 'text-on-surface-variant'}`}
-        >
-          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'route' ? "'FILL' 1" : "'FILL' 0" }}>route</span>
-          <span className="text-[10px]">Route</span>
+      </div>
+    );
+  }
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ TECHNICIAN_ACCEPTED: Waiting for owner to unlock contact Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  if (booking.status === 'TECHNICIAN_ACCEPTED') {
+    return (
+      <div className="content-area" style={{ textAlign: 'center', paddingTop: 32 }}>
+        <div style={{ fontSize: '3rem' }}>Ã°Å¸â€â€œ</div>
+        <h2 style={{ marginTop: 12 }}>Waiting for address unlock</h2>
+        <p className="text-muted mt-8">
+          The agency owner is reviewing your acceptance. Full address and phone will appear once they confirm.
+        </p>
+        <div className="card mt-12" style={{ textAlign: 'left' }}>
+          <div style={{ fontSize: '.82rem', color: 'var(--ink-muted)', marginBottom: 6 }}>In the meantime:</div>
+          <div style={{ fontSize: '.88rem' }}>1. Ensure PPE kit is ready</div>
+          <div style={{ fontSize: '.88rem', marginTop: 4 }}>2. Check chemical stock</div>
+          <div style={{ fontSize: '.88rem', marginTop: 4 }}>3. Confirm your vehicle is fuelled</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'center' }}>
+          <div className="spinner" />
+          <span className="text-muted" style={{ fontSize: '.88rem' }}>Auto-unlocks in ~6 sÃ¢â‚¬Â¦</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ ON_THE_WAY: Show full address, ETA countdown Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  if (booking.status === 'ON_THE_WAY') {
+    const formatEta = (s) => { const m = Math.floor(s/60); const sec = s%60; return m>0 ? `${m}m ${sec}s` : `${sec}s`; };
+    return (
+      <div className="content-area">
+        <div className="card" style={{ background: 'rgba(31,91,58,.04)', marginBottom: 12 }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, color: 'var(--primary)' }}>Ã°Å¸â€œÂ Full address (unlocked)</div>
+          <div style={{ fontSize: '.95rem', lineHeight: 1.5 }}>{booking.address}</div>
+          <div className="divider" />
+          <div className="flex-between">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Customer phone</span>
+            <a href={`tel:+919876543210`} style={{ fontWeight: 700, color: 'var(--primary)' }}>+91-98765-43210</a>
+          </div>
+        </div>
+
+        {/* Map mini */}
+        <div className="map-mini">
+          <div className="map-mini-grid" />
+          <div style={{ position: 'absolute', bottom: '30%', left: '50%', transform: 'translateX(-50%)', fontSize: '1.4rem' }}>Ã°Å¸â€œÂ</div>
+          <div style={{ position: 'absolute', top: '20%', left: '20%', width: 14, height: 14, background: 'var(--primary)', border: '2px solid white', borderRadius: '50%' }} />
+        </div>
+
+        {/* ETA */}
+        <div style={{ textAlign: 'center', margin: '10px 0' }}>
+          <div className="price" style={{ fontSize: '2rem' }}>{etaSeconds > 0 ? formatEta(etaSeconds) : '0s'}</div>
+          <div className="text-muted" style={{ fontSize: '.82rem' }}>ETA to customer</div>
+        </div>
+
+        <button className="btn btn-primary"
+          disabled={!canWorkerMarkArrived()}
+          onClick={async () => { await workerMarkArrived(); toast('Marked as arrived!', 'success'); }}>
+          {etaSeconds > 0 ? `Mark arrived (available in ${formatEta(etaSeconds)})` : 'Ã¢Å“â€œ Mark arrived'}
         </button>
-        <button 
-          onClick={() => setActiveTab('earnings')}
-          className={`flex flex-col items-center gap-0.5 text-xs transition-colors cursor-pointer ${activeTab === 'earnings' ? 'text-primary font-bold' : 'text-on-surface-variant'}`}
-        >
-          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'earnings' ? "'FILL' 1" : "'FILL' 0" }}>payments</span>
-          <span className="text-[10px]">Earnings</span>
+      </div>
+    );
+  }
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ ARRIVED: OTP entry Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  if (booking.status === 'ARRIVED') {
+    return (
+      <div className="content-area">
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <div style={{ fontSize: '2.5rem' }}>Ã°Å¸Å¡Âª</div>
+          <h2 style={{ marginTop: 8 }}>You've arrived!</h2>
+          <p className="text-muted mt-8">Ask the customer for their 4-digit OTP to start the treatment.</p>
+        </div>
+
+        <div className="card">
+          <div style={{ textAlign: 'center', fontWeight: 600, marginBottom: 12, fontSize: '.88rem', color: 'var(--ink-muted)' }}>Enter customer OTP</div>
+          <div className="otp-input">
+            {otpInput.map((d, i) => (
+              <input key={i} ref={otpRefs[i]} className="otp-digit-inp"
+                type="tel" inputMode="numeric" maxLength={1} value={d}
+                onChange={e => handleOtpInput(i, e.target.value)}
+                onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) otpRefs[i-1].current?.focus(); }} />
+            ))}
+          </div>
+          {otpError && <p style={{ color: 'var(--danger)', fontSize: '.82rem', textAlign: 'center', marginBottom: 8 }}>{otpError}</p>}
+          <button className="btn btn-primary" disabled={otpInput.join('').length < 4} onClick={handleVerifyOtp}>
+            Verify & start treatment
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ IN_PROGRESS: Safety checklist + photo Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  if (booking.status === 'IN_PROGRESS') {
+    return (
+      <div className="content-area">
+        <div style={{ background: 'rgba(31,91,58,.06)', borderRadius: 14, padding: '12px 16px', marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, color: 'var(--primary)' }}>Treatment in progress</div>
+          <div style={{ fontSize: '.82rem', color: 'var(--ink-muted)', marginTop: 4 }}>Complete all 6 steps and capture proof photo to enable completion.</div>
+        </div>
+
+        <div className="card">
+          <h3 style={{ marginBottom: 8 }}>Safety & protocol checklist</h3>
+          {SAFETY_CHECKLIST_STEPS.map((step, i) => (
+            <div key={i} className="check-item" onClick={() => toggleSafetyStep(i)}>
+              <div className={`check-box ${safetyChecklist[i] ? 'checked' : ''}`}>
+                {safetyChecklist[i] && 'Ã¢Å“â€œ'}
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '.9rem' }}>{step.title}</div>
+                <div style={{ fontSize: '.78rem', color: 'var(--ink-muted)' }}>{step.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="card mt-12">
+          <h3>After-treatment photo</h3>
+          <p className="text-muted" style={{ fontSize: '.82rem', margin: '6px 0 12px' }}>Capture proof of treatment completion</p>
+          {afterPhotoTaken ? (
+            <div style={{ background: '#d4f5e1', borderRadius: 12, padding: '12px 16px', textAlign: 'center', color: 'var(--success)', fontWeight: 700 }}>
+              Ã°Å¸â€œÂ· Photo captured Ã¢Å“â€œ
+            </div>
+          ) : (
+            <button className="btn btn-ghost" onClick={() => { captureAfterPhoto(); toast('Photo saved', 'success'); }}>
+              Ã°Å¸â€œÂ· Capture after-photo
+            </button>
+          )}
+        </div>
+
+        <button className="btn btn-success" style={{ marginTop: 16 }}
+          disabled={!canWorkerComplete()}
+          onClick={async () => { await workerCompleteBooking(); toast('Job completed! Payout added.', 'success'); }}>
+          Ã¢Å“â€œ Complete and submit proof
         </button>
-        <button 
-          onClick={() => setActiveTab('safety')}
-          className={`flex flex-col items-center gap-0.5 text-xs transition-colors cursor-pointer ${activeTab === 'safety' ? 'text-primary font-bold' : 'text-on-surface-variant'}`}
-        >
-          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: activeTab === 'safety' ? "'FILL' 1" : "'FILL' 0" }}>health_and_safety</span>
-          <span className="text-[10px]">Safety</span>
+
+        {!canWorkerComplete() && (
+          <p className="text-muted" style={{ fontSize: '.78rem', textAlign: 'center', marginTop: 8 }}>
+            {!safetyChecklist.every(Boolean) ? `${safetyChecklist.filter(Boolean).length}/6 steps done` : ''}{!afterPhotoTaken ? ' Ã‚Â· Photo needed' : ''}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬ COMPLETED Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  if (booking.status === 'COMPLETED') {
+    return (
+      <div className="content-area" style={{ textAlign: 'center', paddingTop: 40 }}>
+        <div style={{ fontSize: '3.5rem' }}>Ã°Å¸Å½â€°</div>
+        <h2 style={{ marginTop: 12 }}>Job complete!</h2>
+        <p className="text-muted mt-8">Great work. Payout has been added to today's earnings.</p>
+        <div className="card mt-12" style={{ textAlign: 'left' }}>
+          <div className="flex-between">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Service</span>
+            <strong>{booking.pestLabel}</strong>
+          </div>
+          <div className="flex-between mt-8">
+            <span className="text-muted" style={{ fontSize: '.82rem' }}>Payout</span>
+            <span className="price">Ã¢â€šÂ¹{Math.round((booking.price?.total ?? 0) * 0.55)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Route Tab Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function RouteTab() {
+  const { booking, etaSeconds } = useAppStore();
+  const formatEta = (s) => { const m = Math.floor(s/60); const sec = s%60; return m>0?`${m}m ${sec}s`:`${sec}s`; };
+
+  const stops = booking ? [{
+    label: booking.address || 'Customer address',
+    pestLabel: booking.pestLabel,
+    status: booking.status,
+    payout: Math.round((booking.price?.total ?? 0) * 0.55),
+    slot: booking.slot,
+  }] : [];
+
+  return (
+    <div className="content-area">
+      <h2 style={{ marginBottom: 14 }}>Today's route</h2>
+
+      {!stops.length ? (
+        <div style={{ textAlign: 'center', paddingTop: 40 }}>
+          <div style={{ fontSize: '2.5rem' }}>Ã°Å¸â€”ÂºÃ¯Â¸Â</div>
+          <p className="text-muted mt-8">No stops scheduled yet</p>
+        </div>
+      ) : (
+        stops.map((s, i) => (
+          <div key={i} className="card">
+            <div className="flex-between">
+              <div>
+                <div style={{ fontWeight: 700 }}>Stop {i+1}</div>
+                <div style={{ fontSize: '.82rem', color: 'var(--ink-muted)', marginTop: 2 }}>{s.pestLabel} Ã‚Â· {s.slot}</div>
+              </div>
+              <StopBadge status={s.status} />
+            </div>
+            <div className="divider" />
+            <div style={{ fontSize: '.88rem', color: 'var(--ink-muted)' }}>{s.label}</div>
+            <div className="flex-between mt-8">
+              <span style={{ fontSize: '.82rem', color: 'var(--ink-muted)' }}>Payout</span>
+              <span className="price">Ã¢â€šÂ¹{s.payout}</span>
+            </div>
+            {s.status === 'ON_THE_WAY' && (
+              <div style={{ marginTop: 8, fontSize: '.82rem', color: 'var(--primary)', fontWeight: 600 }}>
+                ETA: {etaSeconds > 0 ? formatEta(etaSeconds) : 'Arriving now'}
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function StopBadge({ status }) {
+  const map = {
+    BOOKING_PLACED: ['Pending', 'badge-warning'],
+    AGENCY_APPROVED: ['Approved', 'badge-warning'],
+    TECHNICIAN_ACCEPTED: ['Accepted', 'badge-success'],
+    ON_THE_WAY: ['En route', 'badge-primary'],
+    ARRIVED: ['Arrived', 'badge-primary'],
+    IN_PROGRESS: ['In progress', 'badge-primary'],
+    COMPLETED: ['Done Ã¢Å“â€œ', 'badge-success'],
+    CANCELLED: ['Cancelled', 'badge-danger'],
+  };
+  const [label, cls] = map[status] ?? ['Unknown', 'badge-neutral'];
+  return <span className={`badge ${cls}`}>{label}</span>;
+}
+
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Earnings Tab Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function EarningsTab({ toast }) {
+  const { earnings, requestInstantPayout } = useAppStore();
+  const [showPayoutSheet, setShowPayoutSheet] = useState(false);
+
+  return (
+    <div className="content-area">
+      <h2 style={{ marginBottom: 14 }}>Earnings</h2>
+
+      <div className="stat-grid">
+        <div className="stat-card">
+          <div className="stat-val">Ã¢â€šÂ¹{earnings.today}</div>
+          <div className="stat-lbl">Today</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val">Ã¢â€šÂ¹{earnings.week}</div>
+          <div className="stat-lbl">This week</div>
+        </div>
+        <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
+          <div className="flex-between">
+            <div>
+              <div className="stat-val" style={{ color: 'var(--success)' }}>Ã¢â€šÂ¹{earnings.safetyBonus}</div>
+              <div className="stat-lbl">Safety bonus</div>
+            </div>
+            <span className="badge badge-success">On track Ã¢Å“â€œ</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="card mt-12">
+        <div className="flex-between">
+          <div>
+            <div style={{ fontWeight: 700 }}>UPI account</div>
+            <div style={{ fontSize: '.82rem', color: 'var(--ink-muted)', marginTop: 2 }}>{earnings.upiId}</div>
+          </div>
+          <span className="badge badge-success">Linked Ã¢Å“â€œ</span>
+        </div>
+        <div className="divider" />
+        <div style={{ fontSize: '.82rem', color: 'var(--ink-muted)' }}>
+          Ã°Å¸â€™Â° Daily auto-settlement at 11 PM to your linked UPI
+        </div>
+      </div>
+
+      <button className="btn btn-accent" style={{ marginTop: 16 }}
+        disabled={earnings.pendingPayout || earnings.today === 0}
+        onClick={() => setShowPayoutSheet(true)}>
+        {earnings.pendingPayout ? 'Ã¢ÂÂ³ ProcessingÃ¢â‚¬Â¦' : 'Ã¢Å¡Â¡ Instant payout'}
+      </button>
+
+      <AnimatePresence>
+        {showPayoutSheet && (
+          <Sheet open={showPayoutSheet} onClose={() => setShowPayoutSheet(false)}>
+            <h2 style={{ marginBottom: 12 }}>Confirm instant payout</h2>
+            <div className="card" style={{ background: 'var(--surface)', marginBottom: 16 }}>
+              <div className="flex-between">
+                <span>Amount</span>
+                <span className="price" style={{ fontSize: '1.4rem' }}>Ã¢â€šÂ¹{earnings.today}</span>
+              </div>
+              <div className="flex-between mt-8">
+                <span>To</span>
+                <strong>{earnings.upiId}</strong>
+              </div>
+              <div className="flex-between mt-8">
+                <span style={{ fontSize: '.82rem', color: 'var(--ink-muted)' }}>Fee</span>
+                <span style={{ fontSize: '.82rem' }}>Ã¢â€šÂ¹2 (instant)</span>
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={() => { requestInstantPayout(); setShowPayoutSheet(false); toast('Payout initiated! Arrives in ~10 s', 'success'); }}>
+              Confirm payout
+            </button>
+            <button className="btn btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={() => setShowPayoutSheet(false)}>
+              Cancel
+            </button>
+          </Sheet>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Safety Tab Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+function SafetyTab() {
+  const [showCsds, setShowCsds] = useState(false);
+  const [showProtocol, setShowProtocol] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+
+  return (
+    <div className="content-area">
+      <h2 style={{ marginBottom: 14 }}>Safety resources</h2>
+
+      {[
+        { emoji: 'Ã°Å¸â€œâ€ž', title: 'Chemical data sheets (CSDS)', desc: 'Fipronil, Imidacloprid, Deltamethrin, Cypermethrin + more', action: () => setShowCsds(true) },
+        { emoji: 'Ã°Å¸Â©Âº', title: 'Emergency exposure protocol', desc: 'Step-by-step first aid for skin, eye, inhalation and ingestion', action: () => setShowProtocol(true) },
+        { emoji: 'Ã°Å¸Â¤â€“', title: 'Safety assistant (AI)', desc: 'Ask chemical handling and first-aid questions', action: () => setShowChat(true) },
+      ].map((item, i) => (
+        <button key={i} className="card" style={{ width: '100%', textAlign: 'left', cursor: 'pointer', display: 'block', marginBottom: 10, border: 'none' }}
+          onClick={item.action}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            <div style={{ fontSize: '2rem', lineHeight: 1 }}>{item.emoji}</div>
+            <div>
+              <div style={{ fontWeight: 700 }}>{item.title}</div>
+              <div style={{ fontSize: '.82rem', color: 'var(--ink-muted)', marginTop: 2 }}>{item.desc}</div>
+            </div>
+            <div style={{ marginLeft: 'auto', color: 'var(--ink-muted)' }}>Ã¢â‚¬Âº</div>
+          </div>
         </button>
+      ))}
+
+      <CsdsSheet open={showCsds} onClose={() => setShowCsds(false)} />
+      <EmergencyProtocolSheet open={showProtocol} onClose={() => setShowProtocol(false)} />
+      <SafetyChatSheet open={showChat} onClose={() => setShowChat(false)} />
+    </div>
+  );
+}
+
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Root App Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+export default function App() {
+  const [tab, setTab] = useState(0);
+  const [sosOpen, setSosOpen] = useState(false);
+  const { dutyStatus, setDutyStatus, booking } = useAppStore();
+  const { toasts, show: toast } = useToast();
+
+  const tabs = [
+    { label: 'Job',      icon: 'Ã°Å¸â€™Â¼', comp: <JobTab toast={toast} /> },
+    { label: 'Route',    icon: 'Ã°Å¸â€”ÂºÃ¯Â¸Â',  comp: <RouteTab /> },
+    { label: 'Earnings', icon: 'Ã°Å¸â€™Â°', comp: <EarningsTab toast={toast} /> },
+    { label: 'Safety',   icon: 'Ã°Å¸â€ºÂ¡Ã¯Â¸Â',  comp: <SafetyTab /> },
+  ];
+
+  const dutyOpts = ['ON_DUTY', 'OFF_DUTY'];
+  const dutyLabels = { ON_DUTY: 'On duty', ON_JOB: 'On job', OFF_DUTY: 'Off duty' };
+  const effectiveDuty = booking && ['ON_THE_WAY','ARRIVED','IN_PROGRESS'].includes(booking.status) ? 'ON_JOB' : dutyStatus;
+
+  return (
+    <div className="app-shell">
+      <ToastLayer toasts={toasts} />
+      <SosSheet open={sosOpen} onClose={() => setSosOpen(false)} />
+
+      {/* Worker header */}
+      <header className="worker-header">
+        <div className="logo">Ã°Å¸Å’Â¿ Pest Free</div>
+        <div className="duty-pill">
+          {dutyOpts.map(opt => (
+            <button key={opt} className={`duty-opt ${effectiveDuty === opt || (opt === 'ON_DUTY' && effectiveDuty === 'ON_JOB') ? 'active' : ''}`}
+              onClick={() => { if (effectiveDuty !== 'ON_JOB') setDutyStatus(opt); }}>
+              {opt === 'ON_DUTY' && effectiveDuty === 'ON_JOB' ? 'On job' : dutyLabels[opt]}
+            </button>
+          ))}
+        </div>
+        <button className="sos-btn" onClick={() => setSosOpen(true)} aria-label="Emergency SOS">Ã°Å¸Å¡Â¨</button>
+      </header>
+
+      {/* Tab content */}
+      <AnimatePresence mode="wait">
+        <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {tabs[tab].comp}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Tab bar */}
+      <nav className="tab-bar" role="tablist">
+        {tabs.map((t, i) => (
+          <button key={i} role="tab" aria-selected={i === tab} className={`tab-btn ${i === tab ? 'active' : ''}`}
+            onClick={() => setTab(i)}>
+            <span style={{ fontSize: 20 }}>{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
       </nav>
     </div>
   );
