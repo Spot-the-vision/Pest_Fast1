@@ -594,103 +594,67 @@ function ActiveJobSection({ toast, onNavigate }) {
 
           {/* DEDICATED LIVE NAVIGATION & EXECUTION DASHBOARD (Opens upon Accept & Navigate) */}
           {inExecutionView && ['ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* Navigation Header Bar */}
-              <div
-                className="web-card"
-                style={{
-                  background: 'linear-gradient(135deg, #1F5B3A, #123C25)',
-                  color: '#FFFFFF',
-                  padding: '18px 24px',
-                  borderRadius: 16,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <span className="badge" style={{ background: 'rgba(255,255,255,0.2)', color: '#FFFFFF', marginBottom: 6 }}>
-                    Live Active Execution Console
-                  </span>
-                  <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800 }}>
-                    {booking.customerFullName || 'Aarav Sharma'} &bull; {booking.pestLabel}
-                  </h2>
-                  <div style={{ fontSize: '0.84rem', opacity: 0.85, marginTop: 4 }}>
-                    {booking.address} &bull; <a href={`tel:${booking.customerRealPhone || '+919845067890'}`} style={{ color: '#FDE047', fontWeight: 700 }}>{booking.customerRealPhone || '+91 98450 67890'}</a>
+            <div className="dashboard-grid-2">
+              {/* LEFT COLUMN: Map Radar & Safety Checklist */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* 1. Map Radar Card */}
+                <div className="web-card">
+                  <div className="card-header-row">
+                    <div>
+                      <span className="badge badge-neutral" style={{ marginBottom: 4 }}>
+                        Booking #{booking.id}
+                      </span>
+                      <h2 className="card-title" style={{ fontSize: '1.25rem' }}>
+                        Real Live Technician GPS Radar (OpenStreetMap)
+                      </h2>
+                    </div>
+                    {booking.status === 'ON_THE_WAY' && (
+                      <span className="badge badge-green">
+                        <Clock size={14} /> ETA: {etaSeconds}s remaining
+                      </span>
+                    )}
+                    {booking.status === 'ARRIVED' && (
+                      <span className="badge badge-amber">Technician at Doorstep</span>
+                    )}
+                    {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) && (
+                      <span className="badge badge-green">On-Site Treatment Active</span>
+                    )}
                   </div>
-                </div>
 
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button
-                    className="btn btn-sm"
-                    style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.3)' }}
-                    onClick={() => setInExecutionView(false)}
-                  >
-                    Minimize to Overview
-                  </button>
-                  <a
-                    href={`tel:${booking.customerRealPhone || '+919845067890'}`}
-                    className="btn btn-sm"
-                    style={{ background: '#E8A317', color: '#1D2B1A', fontWeight: 800 }}
-                  >
-                    <Phone size={15} /> Call Customer
-                  </a>
-                </div>
-              </div>
+                  {/* Leaflet Map (Height 340px) */}
+                  <WorkerMiniMap
+                    customerCoords={booking.coords || liveCustomerLocation || { lat, lng }}
+                    workerCoords={workerPosition || { lat: 12.9352, lng: 77.6245 }}
+                    height="340px"
+                  />
 
-              {/* REAL INTERACTIVE MAP DISPLAYED IN THIS OPENED EXECUTION VIEW */}
-              <div className="web-card" style={{ padding: 18 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <div style={{ fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Navigation size={18} color="var(--primary)" />
-                    <span>Real-Time Turn-by-Turn GPS Map (OpenStreetMap)</span>
-                  </div>
-                  <span className="badge badge-green">Live Satellite Sync Active</span>
-                </div>
-                <WorkerMiniMap
-                  customerCoords={booking.coords || liveCustomerLocation || { lat, lng }}
-                  workerCoords={workerPosition || { lat: 12.9352, lng: 77.6245 }}
-                  height="280px"
-                />
-              </div>
-
-              {/* ACTION EXECUTION DECK */}
-              <div className="web-card">
-                {/* Stage 1: En Route */}
-                {booking.status === 'ON_THE_WAY' && (
-                  <div>
-                    <span className="badge badge-green" style={{ marginBottom: 10 }}>
-                      En Route to Customer Doorstep
-                    </span>
-                    <h3 style={{ fontSize: '1.25rem', marginBottom: 6 }}>
-                      Travel in Progress &bull; Approaching Destination
-                    </h3>
-                    <p style={{ color: 'var(--ink-muted)', fontSize: '0.86rem', marginBottom: 16 }}>
-                      Navigate to {booking.address}. Once parked at gate, mark arrival to prompt customer for Start OTP.
-                    </p>
-
-                    <div
-                      className="web-card-surface"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: 16,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <Clock size={28} color="var(--primary)" />
-                        <div>
-                          <div style={{ fontSize: '0.74rem', color: 'var(--ink-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
-                            Live ETA Remaining
-                          </div>
-                          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800 }}>
-                            {etaSeconds > 0 ? `${etaSeconds} seconds remaining` : 'Arrived at Gate (0s)'}
-                          </div>
-                        </div>
+                  {/* 2 sub-boxes below map */}
+                  <div className="field-grid" style={{ marginTop: 16 }}>
+                    <div className="field-box">
+                      <div className="field-label">TARGET TREATMENT & SERVICES</div>
+                      <div className="field-value">{booking.pestLabel}</div>
+                      <div className="field-sub">
+                        {booking.planLabel} ({booking.sizeLabel})
                       </div>
+                    </div>
+                    <div className="field-box">
+                      <div className="field-label">PINNED CUSTOMER COORDINATES</div>
+                      <div className="field-value">
+                        Lat: {Number(lat).toFixed(4)}, Lng: {Number(lng).toFixed(4)}
+                      </div>
+                      <div className="field-sub">{booking.address}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Travel Action Bar (When ON_THE_WAY) */}
+                {booking.status === 'ON_THE_WAY' && (
+                  <div className="web-card">
+                    <div className="card-header-row">
+                      <h3 className="card-title">
+                        <Navigation size={18} color="var(--primary)" />
+                        <span>En Route to Customer Doorstep</span>
+                      </h3>
                       {etaSeconds > 0 && (
                         <button
                           className="btn btn-outline btn-sm"
@@ -703,13 +667,15 @@ function ActiveJobSection({ toast, onNavigate }) {
                         </button>
                       )}
                     </div>
-
+                    <p style={{ color: 'var(--ink-muted)', fontSize: '0.85rem', marginBottom: 14 }}>
+                      Travel in progress to {booking.address}. Once parked at gate, click below to mark arrival.
+                    </p>
                     <button
                       className="btn btn-primary btn-lg btn-block"
                       disabled={!canWorkerMarkArrived()}
                       onClick={async () => {
                         await workerMarkArrived();
-                        toast('Marked Arrived! Enter customer 4-digit start OTP.', 'success');
+                        toast('Marked Arrived! Ask homeowner for 4-digit Treatment Start OTP.', 'success');
                       }}
                     >
                       <MapPin size={18} />
@@ -720,133 +686,46 @@ function ActiveJobSection({ toast, onNavigate }) {
                   </div>
                 )}
 
-                {/* Stage 2: Arrived - Enter Doorstep Start OTP */}
-                {booking.status === 'ARRIVED' && (
-                  <div>
-                    <span className="badge badge-amber" style={{ marginBottom: 10 }}>
-                      Doorstep Arrival &bull; OTP Verification
-                    </span>
-                    <h3 style={{ fontSize: '1.3rem', marginBottom: 6 }}>
-                      Enter Customer 4-Digit Treatment Start OTP
-                    </h3>
-                    <p style={{ color: 'var(--ink-muted)', fontSize: '0.86rem', marginBottom: 16 }}>
-                      Ask homeowner for the 4-digit Treatment Start OTP shown on their screen to begin chemical application.
-                    </p>
-
-                    <div
-                      className="web-card-surface"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: 16,
-                        borderLeft: '4px solid var(--accent)',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <KeyRound size={20} color="var(--accent)" />
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>Customer OTP Prompt</div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
-                            Required before opening chemical seals
-                          </div>
-                        </div>
-                      </div>
-                      <button className="btn btn-outline btn-sm" onClick={fillDemoOtp}>
-                        Demo Quick Fill ({startOtp || booking?.startOtp || '4829'})
-                      </button>
-                    </div>
-
-                    <div className="otp-row" style={{ marginBottom: 16 }}>
-                      {otpDigits.map((digit, i) => (
-                        <input
-                          key={i}
-                          ref={otpRefs[i]}
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={1}
-                          value={digit}
-                          aria-label={`OTP digit ${i + 1}`}
-                          className="otp-box"
-                          onChange={(e) => handleOtpChange(i, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Backspace' && !digit && i > 0) {
-                              otpRefs[i - 1].current?.focus();
-                            }
+                {/* 3. Safety Protocol Checklist (When ARRIVED, IN_PROGRESS, or COMPLETED) */}
+                {['ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(booking.status) && (
+                  <div className="web-card">
+                    <div className="card-header-row">
+                      <h3 className="card-title">
+                        <ShieldCheck size={20} color="var(--success)" />
+                        <span>Mandatory Safety Checklist & Protocol</span>
+                      </h3>
+                      {booking.status === 'IN_PROGRESS' && (
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => {
+                            checkAllSafetySteps();
+                            toast('All 6 safety steps ticked!', 'success');
                           }}
-                        />
-                      ))}
+                        >
+                          <Check size={14} /> Check All 6 Steps
+                        </button>
+                      )}
                     </div>
 
-                    {otpError && (
-                      <div
-                        style={{
-                          background: 'var(--danger-light)',
-                          color: 'var(--danger)',
-                          padding: '10px 14px',
-                          borderRadius: 10,
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                          marginBottom: 14,
-                          textAlign: 'center',
-                        }}
-                      >
-                        {otpError}
-                      </div>
-                    )}
-
-                    <button
-                      className="btn btn-primary btn-lg btn-block"
-                      disabled={otpDigits.join('').length < 4}
-                      onClick={handleVerifyOtp}
-                    >
-                      <CheckCircle2 size={18} /> Verify Start OTP & Begin Treatment
-                    </button>
-                  </div>
-                )}
-
-                {/* Stage 3: Treatment In Progress + Below that Completion PIN */}
-                {booking.status === 'IN_PROGRESS' && (
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <span className="badge badge-green">
-                        Chemical Treatment In Progress
-                      </span>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={() => {
-                          checkAllSafetySteps();
-                          toast('All 6 safety steps ticked!', 'success');
-                        }}
-                      >
-                        <Check size={14} /> Check All 6 Steps
-                      </button>
-                    </div>
-
-                    <h3 style={{ fontSize: '1.25rem', marginBottom: 6 }}>
-                      Mandatory Safety Checklist & Protocol
-                    </h3>
-                    <p style={{ color: 'var(--ink-muted)', fontSize: '0.86rem', marginBottom: 16 }}>
-                      Complete all 6 steps and capture post-treatment photo proof to unlock completion.
-                    </p>
-
-                    <div className="checklist-stack">
+                    <div className="checklist-stack" style={{ marginTop: 10 }}>
                       {SAFETY_CHECKLIST_STEPS.map((step, i) => {
                         const isChecked = safetyChecklist[i];
                         return (
                           <div
                             key={i}
                             className={`checklist-row ${isChecked ? 'checked' : ''}`}
-                            onClick={() => toggleSafetyStep(i)}
+                            onClick={() => {
+                              if (booking.status === 'IN_PROGRESS') toggleSafetyStep(i);
+                            }}
                           >
                             <div className="custom-checkbox">
                               {isChecked && <Check size={15} strokeWidth={3} />}
                             </div>
                             <div>
-                              <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>
+                              <div style={{ fontWeight: 700, fontSize: '0.90rem' }}>
                                 {i + 1}. {step.title}
                               </div>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                              <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>
                                 {step.description}
                               </div>
                             </div>
@@ -855,16 +734,16 @@ function ActiveJobSection({ toast, onNavigate }) {
                       })}
                     </div>
 
-                    <div className="web-card-surface" style={{ marginTop: 16, marginBottom: 16 }}>
+                    <div className="web-card-surface" style={{ marginTop: 14 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
-                          <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>
+                          <div style={{ fontWeight: 700, fontSize: '0.90rem' }}>
                             Post-Treatment Barrier Photo Proof
                           </div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
                             {afterPhotoTaken
-                              ? 'Timestamped photo attached and verified.'
-                              : 'Required before marking completed.'}
+                              ? 'Timestamped photo attached & verified.'
+                              : 'Required before unlocking completion PIN.'}
                           </div>
                         </div>
                         {afterPhotoTaken ? (
@@ -874,6 +753,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                         ) : (
                           <button
                             className="btn btn-outline btn-sm"
+                            disabled={booking.status !== 'IN_PROGRESS'}
                             onClick={() => {
                               captureAfterPhoto();
                               toast('After-treatment photo captured and attached!', 'success');
@@ -884,151 +764,477 @@ function ActiveJobSection({ toast, onNavigate }) {
                         )}
                       </div>
                     </div>
+                  </div>
+                )}
+              </div>
 
-                    {/* Step A: Worker clicks Completed */}
-                    {!workCompletedByWorker ? (
-                      <div>
-                        <button
-                          className="btn btn-success btn-lg btn-block"
-                          disabled={!canMarkWorkFinished}
-                          onClick={async () => {
-                            const res = await workerMarkWorkFinished();
-                            if (res.ok) {
-                              toast('Work completed! Customer dashboard now reveals the 4-digit Completion PIN.', 'success');
-                            } else {
-                              toast(res.error, 'error');
-                            }
+              {/* RIGHT COLUMN: Start OTP, Completion PIN, Agency Info, and Payment QR */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* 1. Doorstep Treatment Start OTP */}
+                <div className="web-card">
+                  <div className="card-header-row">
+                    <h3 className="card-title">
+                      <KeyRound size={20} color="var(--primary)" />
+                      <span>Doorstep Treatment Start OTP</span>
+                    </h3>
+                    <span className={`badge ${['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'badge-green' : 'badge-amber'}`}>
+                      {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'Verified & Started' : 'Enter on Arrival'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.45 }}>
+                    {['IN_PROGRESS', 'COMPLETED'].includes(booking.status)
+                      ? 'Customer Doorstep OTP was verified successfully. Chemical seals unlatched.'
+                      : 'Ask homeowner for the 4-digit code shown on their screen upon doorstep arrival.'}
+                  </p>
+
+                  {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 12,
+                        justifyContent: 'center',
+                        padding: '12px',
+                        background: 'var(--primary-light)',
+                        borderRadius: 14,
+                        border: '1.5px solid var(--primary)',
+                      }}
+                    >
+                      {String(startOtp || booking.startOtp || '4829')
+                        .split('')
+                        .map((d, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: 48,
+                              height: 54,
+                              borderRadius: 10,
+                              background: 'var(--primary)',
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontFamily: 'var(--font-heading)',
+                              fontSize: '1.6rem',
+                              fontWeight: 800,
+                            }}
+                          >
+                            {d}
+                          </div>
+                        ))}
+                    </div>
+                  ) : booking.status === 'ARRIVED' ? (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                        <button className="btn btn-outline btn-sm" onClick={fillDemoOtp}>
+                          Demo Quick Fill ({startOtp || booking?.startOtp || '4829'})
+                        </button>
+                      </div>
+                      <div className="otp-row" style={{ marginBottom: 12 }}>
+                        {otpDigits.map((digit, i) => (
+                          <input
+                            key={i}
+                            ref={otpRefs[i]}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            aria-label={`OTP digit ${i + 1}`}
+                            className="otp-box"
+                            onChange={(e) => handleOtpChange(i, e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Backspace' && !digit && i > 0) {
+                                otpRefs[i - 1].current?.focus();
+                              }
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {otpError && (
+                        <div style={{ background: 'var(--danger-light)', color: 'var(--danger)', padding: '8px 12px', borderRadius: 8, fontSize: '0.82rem', marginBottom: 10, textAlign: 'center' }}>
+                          {otpError}
+                        </div>
+                      )}
+                      <button
+                        className="btn btn-primary btn-block btn-lg"
+                        disabled={otpDigits.join('').length < 4}
+                        onClick={handleVerifyOtp}
+                      >
+                        <CheckCircle2 size={18} /> Verify Start OTP & Begin Treatment
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 12,
+                        justifyContent: 'center',
+                        padding: '12px',
+                        background: '#FFFFFF',
+                        borderRadius: 14,
+                        border: '1.5px dashed var(--border-strong)',
+                      }}
+                    >
+                      {['4', '8', '2', '9'].map((d, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            width: 48,
+                            height: 54,
+                            borderRadius: 10,
+                            background: 'var(--surface)',
+                            color: 'var(--ink-muted)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontFamily: 'var(--font-heading)',
+                            fontSize: '1.6rem',
+                            fontWeight: 800,
                           }}
                         >
-                          <CheckCircle2 size={18} />
-                          {canMarkWorkFinished
-                            ? 'Complete My Work (Reveal Customer PIN)'
-                            : `Complete (${safetyChecklist.filter(Boolean).length}/6 steps, ${
-                                afterPhotoTaken ? '1/1' : '0/1'
-                              } photo)`}
-                        </button>
-                        <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', textAlign: 'center', marginTop: 8 }}>
-                          Clicking this unlocks and displays the Completion PIN on the customer's phone.
-                        </p>
-                      </div>
-                    ) : (
-                      /* Step B: Below that, enter Completion PIN */
-                      <div className="web-card-surface" style={{ border: '2px solid var(--primary)', padding: 18, borderRadius: 12, marginTop: 14 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                          <div>
-                            <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1rem' }}>
-                              Enter Customer 4-Digit Completion PIN
-                            </div>
-                            <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>
-                              Ask customer for the 4-digit PIN now displayed on their screen.
-                            </div>
-                          </div>
-                          <button className="btn btn-outline btn-sm" onClick={fillDemoCompPin}>
-                            Demo Fill ({completionPin || '7391'})
-                          </button>
+                          {d}
                         </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                        <div className="otp-row" style={{ marginBottom: 14 }}>
-                          {compPinDigits.map((digit, i) => (
-                            <input
-                              key={i}
-                              ref={compPinRefs[i]}
-                              type="text"
-                              inputMode="numeric"
-                              maxLength={1}
-                              value={digit}
-                              aria-label={`Completion PIN digit ${i + 1}`}
-                              className="otp-box"
-                              onChange={(e) => handleCompPinChange(i, e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Backspace' && !digit && i > 0) {
-                                  compPinRefs[i - 1].current?.focus();
-                                }
-                              }}
-                            />
+                {/* 2. End-of-Service Completion Security PIN */}
+                <div className="web-card">
+                  <div className="card-header-row">
+                    <h3 className="card-title">
+                      <Award size={20} color="var(--success)" />
+                      <span>End-of-Service Completion Security PIN</span>
+                    </h3>
+                    <span className={`badge ${booking.status === 'COMPLETED' ? 'badge-green' : workCompletedByWorker ? 'badge-green' : 'badge-amber'}`}>
+                      {booking.status === 'COMPLETED' ? 'PIN Verified & Closed' : workCompletedByWorker ? 'Work Finished — PIN Unlocked' : 'Work in Progress'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14, lineHeight: 1.45 }}>
+                    {booking.status === 'COMPLETED'
+                      ? 'Customer 4-digit Completion PIN verified. Treatment ticket is closed.'
+                      : workCompletedByWorker
+                      ? 'Work marked finished! Ask homeowner for the 4-digit PIN now displayed on their phone.'
+                      : 'Complete all 6 treatment steps and photo proof, then click below to reveal PIN on customer screen.'}
+                  </p>
+
+                  {booking.status === 'COMPLETED' ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 12,
+                        justifyContent: 'center',
+                        padding: '12px',
+                        background: 'rgba(31,91,58,0.1)',
+                        borderRadius: 14,
+                        border: '1.5px solid var(--primary)',
+                      }}
+                    >
+                      {String(completionPin || '7391')
+                        .split('')
+                        .map((d, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: 48,
+                              height: 54,
+                              borderRadius: 10,
+                              background: '#1F5B3A',
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontFamily: 'var(--font-heading)',
+                              fontSize: '1.6rem',
+                              fontWeight: 800,
+                            }}
+                          >
+                            {d}
+                          </div>
+                        ))}
+                    </div>
+                  ) : workCompletedByWorker ? (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                        <button className="btn btn-outline btn-sm" onClick={fillDemoCompPin}>
+                          Demo Fill ({completionPin || '7391'})
+                        </button>
+                      </div>
+                      <div className="otp-row" style={{ marginBottom: 12 }}>
+                        {compPinDigits.map((digit, i) => (
+                          <input
+                            key={i}
+                            ref={compPinRefs[i]}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            aria-label={`Completion PIN digit ${i + 1}`}
+                            className="otp-box"
+                            onChange={(e) => handleCompPinChange(i, e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Backspace' && !digit && i > 0) {
+                                compPinRefs[i - 1].current?.focus();
+                              }
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {compPinError && (
+                        <div style={{ background: 'var(--danger-light)', color: 'var(--danger)', padding: '8px 12px', borderRadius: 8, fontSize: '0.82rem', marginBottom: 10, textAlign: 'center' }}>
+                          {compPinError}
+                        </div>
+                      )}
+                      <button
+                        className="btn btn-primary btn-block btn-lg"
+                        disabled={compPinDigits.join('').length < 4}
+                        onClick={handleVerifyCompPin}
+                      >
+                        <Award size={18} /> Verify Completion PIN (Proceed to Review & Payout)
+                      </button>
+                    </div>
+                  ) : booking.status === 'IN_PROGRESS' ? (
+                    <div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: 12,
+                          justifyContent: 'center',
+                          padding: '12px',
+                          background: '#FFFFFF',
+                          borderRadius: 14,
+                          border: '1.5px dashed var(--border-strong)',
+                          marginBottom: 14,
+                        }}
+                      >
+                        {['7', '3', '9', '1'].map((d, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: 48,
+                              height: 54,
+                              borderRadius: 10,
+                              background: 'var(--surface)',
+                              color: 'var(--ink-muted)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontFamily: 'var(--font-heading)',
+                              fontSize: '1.6rem',
+                              fontWeight: 800,
+                            }}
+                          >
+                            {d}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        className="btn btn-success btn-lg btn-block"
+                        disabled={!canMarkWorkFinished}
+                        onClick={async () => {
+                          const res = await workerMarkWorkFinished();
+                          if (res.ok) {
+                            toast('Work completed! Customer dashboard now reveals the 4-digit Completion PIN.', 'success');
+                          } else {
+                            toast(res.error, 'error');
+                          }
+                        }}
+                      >
+                        <CheckCircle2 size={18} />
+                        {canMarkWorkFinished
+                          ? 'Complete My Work (Reveal Customer PIN)'
+                          : `Complete (${safetyChecklist.filter(Boolean).length}/6 steps, ${afterPhotoTaken ? '1/1' : '0/1'} photo)`}
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 12,
+                        justifyContent: 'center',
+                        padding: '12px',
+                        background: '#FFFFFF',
+                        borderRadius: 14,
+                        border: '1.5px dashed var(--border-strong)',
+                      }}
+                    >
+                      {['7', '3', '9', '1'].map((d, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            width: 48,
+                            height: 54,
+                            borderRadius: 10,
+                            background: 'var(--surface)',
+                            color: 'var(--ink-muted)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontFamily: 'var(--font-heading)',
+                            fontSize: '1.6rem',
+                            fontWeight: 800,
+                          }}
+                        >
+                          {d}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Assigned Technician & Agency Verification */}
+                <div className="web-card">
+                  <div className="card-header-row">
+                    <h3 className="card-title">
+                      <UserCheck size={20} color="var(--primary)" />
+                      <span>Assigned Technician & Agency Verification</span>
+                    </h3>
+                    <span className="badge badge-green">KYC Verified</span>
+                  </div>
+
+                  <div className="field-grid" style={{ marginBottom: 14 }}>
+                    <div className="field-box">
+                      <div className="field-label">TECHNICIAN NAME</div>
+                      <div className="field-value">Arjun Sharma</div>
+                      <div className="field-sub">Rating: 4.92 Stars (428 jobs)</div>
+                    </div>
+                    <div className="field-box">
+                      <div className="field-label">GOVERNMENT LICENSE</div>
+                      <div className="field-value">CHL-2024-889</div>
+                      <div className="field-sub">CIB&RC Registered Applicator</div>
+                    </div>
+                  </div>
+
+                  <div className="field-box" style={{ marginBottom: 14 }}>
+                    <div className="field-label">
+                      <Lock size={12} style={{ display: 'inline', marginRight: 4 }} />
+                      AGENCY COMMUNICATION LINE
+                    </div>
+                    <div className="field-value">{booking.customerRealPhone || '+91 98450 67890'}</div>
+                    <div className="field-sub">Agency approved &bull; Direct communication active</div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <a
+                      href={`tel:${booking.customerRealPhone || '+919845067890'}`}
+                      className="btn btn-outline btn-sm"
+                      style={{ flex: 1, justifyContent: 'center' }}
+                    >
+                      <Phone size={14} /> Call Customer
+                    </a>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      style={{ flex: 1, justifyContent: 'center' }}
+                      onClick={() => setInExecutionView(false)}
+                    >
+                      Minimize to Overview
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4. Service Review & Automatic Payment QR (When COMPLETED) */}
+                {booking.status === 'COMPLETED' && (
+                  <div className="web-card" style={{ borderTop: '4px solid var(--primary)' }}>
+                    <div className="card-header-row">
+                      <h3 className="card-title">
+                        <Award size={20} color="var(--primary)" />
+                        <span>Service Review & Payout</span>
+                      </h3>
+                      <span className={`badge ${customerReview ? 'badge-green' : 'badge-amber'}`}>
+                        {customerReview ? 'Review Given &bull; Payment Unlocked' : 'Awaiting Customer Review'}
+                      </span>
+                    </div>
+
+                    {customerReview ? (
+                      <div>
+                        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <span
+                              key={n}
+                              className="badge btn-accent"
+                              style={{ padding: '4px 8px', fontSize: '0.78rem' }}
+                            >
+                              ★ {n} Star{n > 1 ? 's' : ''}
+                            </span>
                           ))}
                         </div>
 
-                        {compPinError && (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                          {['Punctual & Polite', 'Thorough 6-Step Safety', '100% Eco-Safe'].map((tag) => (
+                            <span key={tag} className="badge badge-neutral" style={{ fontSize: '0.74rem' }}>
+                              + {tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', fontStyle: 'italic', marginBottom: 16 }}>
+                          "{customerReview.comment || 'Punctual, eco-safe, and very thorough treatment!'}"
+                        </p>
+
+                        {/* UPI Payment QR Code */}
+                        <div
+                          className="web-card-surface"
+                          style={{
+                            border: '2px solid var(--primary)',
+                            padding: 16,
+                            borderRadius: 14,
+                            textAlign: 'center',
+                            marginBottom: 14,
+                          }}
+                        >
+                          <div style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--primary)', marginBottom: 2 }}>
+                            <QrCode size={18} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                            UPI Payment QR Generated Automatically
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginBottom: 12 }}>
+                            Customer verified! Scan with any UPI app for payment of Rs. {rawPrice}
+                          </div>
+
                           <div
                             style={{
-                              background: 'var(--danger-light)',
-                              color: 'var(--danger)',
-                              padding: '10px 14px',
-                              borderRadius: 10,
-                              fontSize: '0.85rem',
-                              fontWeight: 600,
-                              marginBottom: 14,
-                              textAlign: 'center',
+                              display: 'inline-block',
+                              padding: 10,
+                              background: '#FFFFFF',
+                              borderRadius: 12,
+                              border: '1.5px dashed var(--primary)',
+                              marginBottom: 10,
                             }}
                           >
-                            {compPinError}
-                          </div>
-                        )}
-
-                        <button
-                          className="btn btn-primary btn-lg btn-block"
-                          disabled={compPinDigits.join('').length < 4}
-                          onClick={handleVerifyCompPin}
-                        >
-                          <Award size={18} /> Verify Completion PIN (Proceed to Review & Payout)
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Stage 4: Completed - Review & Automatic Payment QR */}
-                {booking.status === 'COMPLETED' && (
-                  <div>
-                    <div style={{ textAlign: 'center', padding: '12px 8px' }}>
-                      <div
-                        style={{
-                          width: 60,
-                          height: 60,
-                          borderRadius: '50%',
-                          background: 'var(--success-light)',
-                          color: 'var(--success)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          margin: '0 auto 12px',
-                        }}
-                      >
-                        <Award size={32} />
-                      </div>
-                      <span className="badge badge-green" style={{ marginBottom: 8 }}>
-                        Treatment & Completion PIN Verified
-                      </span>
-                      <h3 style={{ fontSize: '1.35rem', marginBottom: 6 }}>
-                        Great Work! Rs. {workerPayout} Payout Earned
-                      </h3>
-                    </div>
-
-                    {/* Waiting for Customer Review */}
-                    {!customerReview && (
-                      <div
-                        className="web-card-surface"
-                        style={{
-                          borderLeft: '4px solid #E8A317',
-                          padding: 18,
-                          borderRadius: 12,
-                          marginBottom: 16,
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                          <Clock size={22} color="#E8A317" />
-                          <div>
-                            <div style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--ink)' }}>
-                              Awaiting Customer Review
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
+                                `upi://pay?pa=pestfast.billing@icici&pn=PestFast&am=${rawPrice}&cu=INR&tn=Booking-${booking.id}`
+                              )}`}
+                              alt="UPI Payment QR Code"
+                              style={{ width: 160, height: 160, display: 'block', margin: '0 auto' }}
+                            />
+                            <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--primary)', marginTop: 6 }}>
+                              Rs. {rawPrice}
                             </div>
-                            <div style={{ fontSize: '0.80rem', color: 'var(--ink-muted)' }}>
-                              Payment QR will generate automatically once client gives review
+                            <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
+                              UPI: pestfast.billing@icici
                             </div>
                           </div>
+
+                          {!customerPaid ? (
+                            <button
+                              className="btn btn-success btn-lg btn-block"
+                              onClick={async () => {
+                                await workerConfirmPaymentReceived();
+                                toast(`Payment of Rs. ${rawPrice} confirmed! Payout settled.`, 'success');
+                              }}
+                            >
+                              <CheckCircle2 size={18} /> Confirm Payment Received (Rs. {rawPrice})
+                            </button>
+                          ) : (
+                            <div className="badge badge-green" style={{ width: '100%', padding: '10px', fontSize: '0.88rem' }}>
+                              <CheckCircle2 size={16} /> Payment Confirmed & Settled (Rs. {rawPrice})
+                            </div>
+                          )}
                         </div>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', lineHeight: 1.5, marginBottom: 12 }}>
-                          The client is submitting their service review in their UI. As soon as the client gives review, the UPI Payment QR code will generate here automatically!
+                      </div>
+                    ) : (
+                      <div>
+                        <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', lineHeight: 1.5, marginBottom: 14 }}>
+                          The technician verified the Completion PIN! Submitting rating & review in customer UI is required to generate the official payment QR for Rs. {rawPrice}.
                         </p>
                         <button
                           className="btn btn-outline btn-sm btn-block"
@@ -1037,135 +1243,8 @@ function ActiveJobSection({ toast, onNavigate }) {
                             toast('Simulated customer review! Payment QR generated.', 'success');
                           }}
                         >
-                          <Sparkles size={15} /> Quick Demo: Submit Customer Review (5★)
+                          <Sparkles size={14} /> Quick Demo: Submit Customer Review (5★)
                         </button>
-                      </div>
-                    )}
-
-                    {/* Customer Review Given -> QR Generated Automatically */}
-                    {customerReview && !customerPaid && (
-                      <div
-                        className="web-card-surface"
-                        style={{
-                          border: '2px solid var(--primary)',
-                          padding: 20,
-                          borderRadius: 14,
-                          textAlign: 'center',
-                          marginBottom: 16,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 8,
-                            color: 'var(--primary)',
-                            fontWeight: 800,
-                            fontSize: '1.05rem',
-                            marginBottom: 4,
-                          }}
-                        >
-                          <QrCode size={22} />
-                          <span>UPI Payment QR Generated Automatically</span>
-                        </div>
-                        <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14 }}>
-                          Client completed review! Show this QR to customer for instant UPI payment.
-                        </p>
-
-                        <div
-                          style={{
-                            display: 'inline-block',
-                            padding: 14,
-                            background: '#FFFFFF',
-                            borderRadius: 16,
-                            border: '2px dashed var(--primary)',
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                            marginBottom: 12,
-                          }}
-                        >
-                          <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                              `upi://pay?pa=pestfast.billing@icici&pn=PestFast&am=${rawPrice}&cu=INR&tn=Booking-${booking.id}`
-                            )}`}
-                            alt="UPI Payment QR Code"
-                            style={{ width: 180, height: 180, display: 'block', margin: '0 auto' }}
-                          />
-                          <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--primary)', marginTop: 8 }}>
-                            Rs. {rawPrice}
-                          </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
-                            UPI ID: pestfast.billing@icici
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            background: 'var(--bg-canvas)',
-                            borderRadius: 10,
-                            padding: '10px 14px',
-                            maxWidth: 380,
-                            margin: '0 auto 16px',
-                            textAlign: 'left',
-                            border: '1px solid var(--border)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.84rem', color: 'var(--accent)' }}>
-                            <Star size={15} fill="var(--accent)" /> {customerReview.rating} / 5 Stars Client Review
-                          </div>
-                          <div style={{ fontSize: '0.80rem', color: 'var(--ink)', fontStyle: 'italic', marginTop: 3 }}>
-                            "{customerReview.comment || 'Punctual, thorough, and highly professional!'}"
-                          </div>
-                        </div>
-
-                        <button
-                          className="btn btn-success btn-lg btn-block"
-                          onClick={async () => {
-                            await workerConfirmPaymentReceived();
-                            toast(`Payment of Rs. ${rawPrice} confirmed! Payout settled.`, 'success');
-                          }}
-                        >
-                          <CheckCircle2 size={18} /> Confirm Payment Received (Rs. {rawPrice})
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Payment Confirmed */}
-                    {customerPaid && (
-                      <div
-                        className="web-card-surface"
-                        style={{
-                          borderLeft: '4px solid var(--success)',
-                          padding: 18,
-                          borderRadius: 12,
-                          textAlign: 'left',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--success)', fontWeight: 800, fontSize: '1rem', marginBottom: 4 }}>
-                          <CheckCircle2 size={20} />
-                          <span>Payment Confirmed & Settled</span>
-                        </div>
-                        <div style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 12 }}>
-                          Client paid Rs. {rawPrice} via UPI. Rs. {workerPayout} credited to wallet.
-                        </div>
-                        <div style={{ display: 'flex', gap: 10 }}>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => onNavigate('earnings')}
-                          >
-                            <Wallet size={15} /> Go to Earnings & Withdraw
-                          </button>
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={() => {
-                              setInExecutionView(false);
-                              simulateIncomingJob('BOOKING_PLACED');
-                              toast('Ready for next dispatch!', 'info');
-                            }}
-                          >
-                            <RefreshCw size={15} /> Close & Take Next Dispatch
-                          </button>
-                        </div>
                       </div>
                     )}
                   </div>
