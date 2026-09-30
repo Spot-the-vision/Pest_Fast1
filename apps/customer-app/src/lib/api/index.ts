@@ -193,6 +193,46 @@ export function calculatePrice(
   };
 }
 
+
+/**
+ * Multi-service pricing calculator:
+ * Sums base prices of all selected pests (with 15% bundle discount if 2+ pests),
+ * then applies size & plan multipliers + 18% GST.
+ */
+export function calculateMultiServicePrice(
+  pestTypes: PestTypeId[],
+  propertySize: PropertySizeId,
+  plan: PlanId,
+  dispatchMode: DispatchMode
+): PriceBreakdown & { bundleDiscount: number; pests: PestTypeOption[] } {
+  const selectedPests = (pestTypes.length > 0 ? pestTypes : ['cockroaches' as PestTypeId])
+    .map((id) => PEST_TYPES.find((p) => p.id === id) ?? PEST_TYPES[0]);
+
+  const rawSum = selectedPests.reduce((acc, p) => acc + p.basePrice, 0);
+  const bundleDiscount = selectedPests.length > 1 ? Math.round(rawSum * 0.15) : 0;
+  const effectiveBase = rawSum - bundleDiscount;
+
+  const size = PROPERTY_SIZES.find((s) => s.id === propertySize) ?? PROPERTY_SIZES[0];
+  const planObj = TREATMENT_PLANS.find((pl) => pl.id === plan) ?? TREATMENT_PLANS[0];
+
+  const subtotal = Math.round(effectiveBase * size.multiplier * planObj.multiplier);
+  const gst = Math.round(subtotal * 0.18);
+  const total = subtotal + gst;
+  const payableNow = dispatchMode === 'inspection' ? 0 : total;
+
+  return {
+    basePrice: effectiveBase,
+    sizeMultiplier: size.multiplier,
+    planMultiplier: planObj.multiplier,
+    subtotal,
+    gst,
+    total,
+    payableNow,
+    bundleDiscount,
+    pests: selectedPests,
+  };
+}
+
 export const BookingInputSchema = z.object({
   pestType: z.enum(['cockroaches', 'termites', 'bedbugs', 'rodents', 'mosquitoes', 'sanitization']),
   propertySize: z.enum(['1bhk', '2bhk', '3bhk', '4bhk', 'commercial']),

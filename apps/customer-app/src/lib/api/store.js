@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import {
   transitionBooking,
-  calculatePrice,
+  calculatePrice, calculateMultiServicePrice,
   scoreAndRankWorkers,
   PEST_TYPES,
   PROPERTY_SIZES,
@@ -166,23 +166,30 @@ export const useAppStore = create((set, get) => ({
   placeBooking: async (formData) => {
     set({ isLoading: true, error: null });
     try {
-      const pest = PEST_TYPES.find((p) => p.id === formData.pestType) ?? PEST_TYPES[0];
+      const pestList = Array.isArray(formData.pestTypes) && formData.pestTypes.length > 0
+        ? formData.pestTypes
+        : [formData.pestType || 'cockroaches'];
+
       const size = PROPERTY_SIZES.find((s) => s.id === formData.propertySize) ?? PROPERTY_SIZES[0];
       const plan = PLANS.find((p) => p.id === formData.plan) ?? PLANS[0];
-      const price = calculatePrice(
-        formData.pestType,
+      const priceCalc = calculateMultiServicePrice(
+        pestList,
         formData.propertySize,
         formData.plan,
         formData.dispatchMode
       );
       const otp = generateOtp();
 
+      const pestNames = priceCalc.pests.map(p => p.name).join(' + ');
+      const chemNames = priceCalc.pests.map(p => p.chemicalUsed).join(' | ');
+
       const booking = {
         id: generateBookingId(),
         status: 'BOOKING_PLACED',
-        pestType: formData.pestType,
-        pestLabel: pest.name,
-        chemicalUsed: pest.chemicalUsed,
+        pestType: pestList[0],
+        pestTypes: pestList,
+        pestLabel: pestNames,
+        chemicalUsed: chemNames,
         propertySize: formData.propertySize,
         sizeLabel: size.label,
         plan: formData.plan,
@@ -193,8 +200,8 @@ export const useAppStore = create((set, get) => ({
         note: formData.note ?? '',
         slot: formData.slot,
         day: formData.day,
-        price,
-        pricing: price,
+        price: priceCalc,
+        pricing: priceCalc,
         createdAt: new Date().toISOString(),
         rating: null,
         reviewComment: '',
