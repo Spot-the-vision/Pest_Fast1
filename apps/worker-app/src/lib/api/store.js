@@ -38,6 +38,7 @@ async function syncRemote(state) {
         startOtp: state.startOtp,
         completionPin: state.completionPin,
         workCompletedByWorker: state.workCompletedByWorker,
+        pinVerifiedByWorker: state.pinVerifiedByWorker,
         paymentQrGenerated: state.paymentQrGenerated,
         customerPaid: state.customerPaid,
         customerReview: state.customerReview,
@@ -391,7 +392,8 @@ export const useAppStore = create((set, get) => ({
 
     set({
       booking: next,
-      paymentQrGenerated: true,
+      pinVerifiedByWorker: true,
+      paymentQrGenerated: false,
       dutyStatus: 'ON_DUTY',
       incomingJob: null,
       contactUnlocked: false,
@@ -443,7 +445,7 @@ export const useAppStore = create((set, get) => ({
         completionPin: remote.completionPin ?? s.completionPin ?? '7391',
         workCompletedByWorker: remote.workCompletedByWorker ?? s.workCompletedByWorker,
         pinVerifiedByWorker: remote.pinVerifiedByWorker ?? s.pinVerifiedByWorker,
-        paymentQrGenerated: remote.paymentQrGenerated ?? s.paymentQrGenerated,
+      paymentQrGenerated: remote.paymentQrGenerated ?? Boolean(remote.customerReview),
         customerPaid: remote.customerPaid ?? s.customerPaid,
         customerReview: remote.customerReview ?? s.customerReview,
         liveCustomerLocation: remote.liveCustomerLocation ?? s.liveCustomerLocation,

@@ -346,57 +346,9 @@ function BookSection({ toast, onNavigate }) {
     setForm((prev) => {
       const current = prev.pestTypes || [];
       const exists = current.includes(pestId);
-      if (exists) {
-        if (current.length === 1) {
-          toast('Select at least one pest service.', 'info');
-          return prev;
-        }
-        return { ...prev, pestTypes: current.filter((id) => id !== pestId) };
-      } else {
-        const next = [...current, pestId];
-        if (next.length === 2) {
-          toast('15% Combo Bundle Discount applied for selecting 2+ services!', 'success');
-        }
-        return { ...prev, pestTypes: next };
-      }
+      const next = exists ? current.filter((id) => id !== pestId) : [...current, pestId];
+      return { ...prev, pestTypes: next };
     });
-  };
-
-  const handleDoubleClickPlan = (planId) => {
-    if (form.plan === planId) {
-      setForm((f) => ({ ...f, plan: '' }));
-      toast('Deselected protection plan (Double-click)', 'info');
-    } else {
-      setForm((f) => ({ ...f, plan: planId }));
-      toast(`Selected ${planId} plan`, 'success');
-    }
-  };
-
-  const handleDoubleClickDay = (dayId) => {
-    if (form.day === dayId) {
-      setForm((f) => ({ ...f, day: '' }));
-      toast('Deselected schedule day', 'info');
-    } else {
-      setForm((f) => ({ ...f, day: dayId }));
-    }
-  };
-
-  const handleDoubleClickSlot = (slotVal) => {
-    if (form.slot === slotVal) {
-      setForm((f) => ({ ...f, slot: '' }));
-      toast('Deselected time slot', 'info');
-    } else {
-      setForm((f) => ({ ...f, slot: slotVal }));
-    }
-  };
-
-  const handleDoubleClickDispatch = (mode) => {
-    if (form.dispatchMode === mode) {
-      setForm((f) => ({ ...f, dispatchMode: '' }));
-      toast('Deselected dispatch mode', 'info');
-    } else {
-      setForm((f) => ({ ...f, dispatchMode: mode }));
-    }
   };
 
   const captureLiveGps = () => {
@@ -452,8 +404,20 @@ function BookSection({ toast, onNavigate }) {
     if (!form.pestTypes || form.pestTypes.length === 0) {
       newErr.pestTypes = 'Please select at least one treatment service.';
     }
+    if (!form.propertySize) {
+      newErr.propertySize = 'Please select your property configuration.';
+    }
     if (!form.plan) {
       newErr.plan = 'Please select a protection plan.';
+    }
+    if (!form.day) {
+      newErr.day = 'Please select a preferred date.';
+    }
+    if (!form.slot) {
+      newErr.slot = 'Please select a preferred time slot.';
+    }
+    if (!form.dispatchMode) {
+      newErr.dispatchMode = 'Please select a dispatch mode.';
     }
     if (!form.address || form.address.trim().length < 10) {
       newErr.address = 'Mandatory: Enter exact flat/house number, street, and locality (min 10 characters).';
@@ -589,7 +553,7 @@ function BookSection({ toast, onNavigate }) {
             </div>
 
             <div className="form-label" style={{ marginBottom: 8 }}>
-              Choose Property Configuration (Click to select)
+              Choose Property Configuration (Click to select, click again to deselect)
             </div>
             <div className="select-grid-5" style={{ marginBottom: 22 }}>
               {PROPERTY_SIZES.map((s) => {
@@ -608,6 +572,7 @@ function BookSection({ toast, onNavigate }) {
                 );
               })}
             </div>
+            {errors.propertySize && <div className="form-error" style={{ marginBottom: 16 }}>{errors.propertySize}</div>}
 
             {/* AI Smart Quote Banner */}
             <div
@@ -656,7 +621,7 @@ function BookSection({ toast, onNavigate }) {
             </div>
 
             <div className="form-label" style={{ marginBottom: 8 }}>
-              Select Protection Plan (Click to select, Double-click to deselect) — Estimated Prices Displayed Below
+              Select Protection Plan (Click to select, click again to deselect) — Estimated Prices Displayed Below
             </div>
             <div className="select-grid-3">
               {PLANS.map((pl) => {
@@ -702,7 +667,7 @@ function BookSection({ toast, onNavigate }) {
             <div className="card-header-row">
               <h2 className="card-title">
                 <Calendar size={20} color="var(--primary)" />
-                <span>3. Schedule & Dispatch Mode (Click to select, Double-click to deselect)</span>
+                <span>3. Schedule & Dispatch Mode (Click to select, click again to deselect)</span>
               </h2>
             </div>
 
@@ -723,6 +688,7 @@ function BookSection({ toast, onNavigate }) {
                     </button>
                   ))}
                 </div>
+                {errors.day && <div className="form-error" style={{ marginTop: 6 }}>{errors.day}</div>}
               </div>
 
               <div>
@@ -741,10 +707,11 @@ function BookSection({ toast, onNavigate }) {
                     </button>
                   ))}
                 </div>
+                {errors.slot && <div className="form-error" style={{ marginTop: 6 }}>{errors.slot}</div>}
               </div>
             </div>
 
-            <div className="form-label">Dispatch Mode</div>
+            <div className="form-label">Dispatch Mode (Click to select, click again to deselect)</div>
             <div className="field-grid">
               <button
                 type="button"
@@ -773,6 +740,7 @@ function BookSection({ toast, onNavigate }) {
                 </div>
               </button>
             </div>
+            {errors.dispatchMode && <div className="form-error" style={{ marginTop: 8 }}>{errors.dispatchMode}</div>}
           </div>
 
           {/* STEP 4: Mandatory Exact Location Pinning & Address */}
@@ -1044,7 +1012,7 @@ function TrackSection({ toast, onNavigate }) {
   const [comment, setComment] = useState('');
   const [qrModal, setQrModal] = useState(false);
   useEffect(() => {
-    if (paymentQrGenerated && !customerPaid) {
+    if (paymentQrGenerated && !customerPaid && booking?.status === 'COMPLETED') {
       setQrModal(true);
     }
   }, [paymentQrGenerated, customerPaid]);

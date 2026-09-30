@@ -127,6 +127,7 @@ async function syncRemote(state) {
         startOtp: state.startOtp,
         completionPin: state.completionPin,
         workCompletedByWorker: state.workCompletedByWorker,
+        pinVerifiedByWorker: state.pinVerifiedByWorker,
         paymentQrGenerated: state.paymentQrGenerated,
         customerPaid: state.customerPaid,
         customerReview: state.customerReview,

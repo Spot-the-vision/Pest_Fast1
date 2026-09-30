@@ -205,8 +205,22 @@ export function calculateMultiServicePrice(
   plan: PlanId,
   dispatchMode: DispatchMode
 ): PriceBreakdown & { bundleDiscount: number; pests: PestTypeOption[] } {
-  const selectedPests = (pestTypes.length > 0 ? pestTypes : ['cockroaches' as PestTypeId])
-    .map((id) => PEST_TYPES.find((p) => p.id === id) ?? PEST_TYPES[0]);
+  if (!pestTypes || pestTypes.length === 0) {
+    const size = PROPERTY_SIZES.find((s) => s.id === propertySize) ?? PROPERTY_SIZES[0];
+    const planObj = TREATMENT_PLANS.find((pl) => pl.id === plan) ?? TREATMENT_PLANS[0];
+    return {
+      basePrice: 0,
+      sizeMultiplier: size ? size.multiplier : 1,
+      planMultiplier: planObj ? planObj.multiplier : 1,
+      subtotal: 0,
+      gst: 0,
+      total: 0,
+      payableNow: 0,
+      bundleDiscount: 0,
+      pests: [],
+    };
+  }
+  const selectedPests = pestTypes.map((id) => PEST_TYPES.find((p) => p.id === id) ?? PEST_TYPES[0]);
 
   const rawSum = selectedPests.reduce((acc, p) => acc + p.basePrice, 0);
   const bundleDiscount = selectedPests.length > 1 ? Math.round(rawSum * 0.15) : 0;
