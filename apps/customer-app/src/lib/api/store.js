@@ -164,6 +164,7 @@ const initialState = {
   startOtp: '4829',
   completionPin: '7391',
   workCompletedByWorker: false,
+  pinVerifiedByWorker: false,
   paymentQrGenerated: false,
   customerPaid: false,
   customerReview: null,
@@ -373,6 +374,40 @@ export const useAppStore = create((set, get) => ({
     }, 1000);
   },
 
+  
+  submitCustomerReview: async (stars, comment = '') => {
+    set({
+      customerReview: { rating: stars, comment },
+      paymentQrGenerated: true,
+    });
+    await syncRemote(get());
+  },
+
+  confirmCustomerPayment: async (txId = '') => {
+    const { booking, history, assignedWorker, customerReview } = get();
+    if (!booking) {
+      set({ customerPaid: true });
+      await syncRemote(get());
+      return;
+    }
+    const completedRecord = {
+      ...booking,
+      status: 'COMPLETED',
+      rating: customerReview?.rating || 5,
+      reviewComment: customerReview?.comment || 'Excellent service completed thoroughly.',
+      paymentTxId: txId || ('UPI-' + Math.floor(100000 + Math.random() * 900000)),
+      paymentConfirmedAt: new Date().toISOString(),
+      technicianName: assignedWorker?.name || 'Arjun Sharma',
+      licenseCode: assignedWorker?.licenseCode || 'CHL-2024-889',
+    };
+    set({
+      customerPaid: true,
+      booking: null,
+      history: [completedRecord, ...history],
+    });
+    await syncRemote(get());
+  },
+
   submitCustomerReviewAndPay: async (stars, comment = '') => {
     const { booking, history, assignedWorker } = get();
     if (!booking) return;
@@ -439,6 +474,7 @@ export const useAppStore = create((set, get) => ({
       startOtp: remote.startOtp ?? s.startOtp,
       completionPin: remote.completionPin ?? s.completionPin ?? '7391',
       workCompletedByWorker: remote.workCompletedByWorker ?? s.workCompletedByWorker,
+        pinVerifiedByWorker: remote.pinVerifiedByWorker ?? s.pinVerifiedByWorker,
       paymentQrGenerated: remote.paymentQrGenerated ?? s.paymentQrGenerated,
       customerPaid: remote.customerPaid ?? s.customerPaid,
       customerReview: remote.customerReview ?? s.customerReview,

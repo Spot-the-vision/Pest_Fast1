@@ -164,34 +164,132 @@ function SosModal({ open, onClose, toast }) {
 }
 
 const LIFECYCLE_STAGES = [
-  { key: 'BOOKING_PLACED', label: '1. Placed' },
-  { key: 'AGENCY_APPROVED', label: '2. Agency Ready' },
-  { key: 'TECHNICIAN_ACCEPTED', label: '3. Accepted' },
-  { key: 'ON_THE_WAY', label: '4. En Route' },
-  { key: 'ARRIVED', label: '5. Arrived' },
-  { key: 'IN_PROGRESS', label: '6. In Progress' },
-  { key: 'COMPLETED', label: '7. Completed' },
+  {
+    key: 'BOOKING_PLACED',
+    step: '01',
+    label: 'Order Placed',
+    sub: 'Customer Request Logged',
+    badge: 'Verified',
+    icon: FileText,
+  },
+  {
+    key: 'AGENCY_APPROVED',
+    step: '02',
+    label: 'Agency Ready',
+    sub: 'Dispatch Cleared & Routed',
+    badge: 'Approved',
+    icon: ShieldCheck,
+  },
+  {
+    key: 'TECHNICIAN_ACCEPTED',
+    step: '03',
+    label: 'Tech Assigned',
+    sub: 'Chemical Vehicle Prepped',
+    badge: 'Assigned',
+    icon: UserCheck,
+  },
+  {
+    key: 'ON_THE_WAY',
+    step: '04',
+    label: 'En Route',
+    sub: 'Live GPS Satellite Transit',
+    badge: 'Live ETA',
+    icon: Navigation,
+  },
+  {
+    key: 'ARRIVED',
+    step: '05',
+    label: 'At Doorstep',
+    sub: '4-Digit Start OTP Check',
+    badge: 'Doorstep',
+    icon: MapPin,
+  },
+  {
+    key: 'IN_PROGRESS',
+    step: '06',
+    label: 'In Progress',
+    sub: '6-Step CIB Barrier Safety',
+    badge: 'Treating',
+    icon: SprayCan,
+  },
+  {
+    key: 'COMPLETED',
+    step: '07',
+    label: 'Completed',
+    sub: 'PIN, Review & UPI Settled',
+    badge: 'Closed',
+    icon: Award,
+  },
 ];
 
 function LifecycleStepper({ currentStatus }) {
   const currentIndex = LIFECYCLE_STAGES.findIndex((s) => s.key === currentStatus);
   const activeIdx = currentIndex === -1 ? 0 : currentIndex;
+  const progressPct = Math.round(((activeIdx + 1) / LIFECYCLE_STAGES.length) * 100);
 
   return (
-    <div className="stepper-container" aria-label="Job Lifecycle Progress">
-      <div className="stepper-track">
+    <div className="lifecycle-stepper-v2" aria-label="Job Lifecycle Progress">
+      {/* Top Header Row with Motion Graphics Meta */}
+      <div className="stepper-header-row">
+        <div className="stepper-live-indicator">
+          <span className="pulse-indicator-dot" />
+          <span>Live Operations Progression &bull; Stage {activeIdx + 1} of {LIFECYCLE_STAGES.length}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)' }}>
+            Mission Execution:
+          </span>
+          <span className="badge badge-green" style={{ fontSize: '0.75rem', fontWeight: 800 }}>
+            {progressPct}% Completed
+          </span>
+        </div>
+      </div>
+
+      {/* Glowing Liquid Progress Bar */}
+      <div className="stepper-progress-bar-wrap">
+        <div
+          className="stepper-progress-bar-fill"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+
+      {/* 7 Motion Graphic Stage Cards */}
+      <div className="stepper-grid-v2">
         {LIFECYCLE_STAGES.map((st, i) => {
           const isDone = i < activeIdx;
           const isCurrent = i === activeIdx;
+          const isUpcoming = i > activeIdx;
+          const Icon = st.icon;
+
           return (
-            <div key={st.key} className="stepper-node-wrapper">
-              <div className={`stepper-node ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''}`}>
-                {isDone ? <Check size={14} strokeWidth={3} /> : <span>{i + 1}</span>}
+            <div
+              key={st.key}
+              className={`step-card-v2 ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isUpcoming ? 'upcoming' : ''}`}
+            >
+              {/* Top Row: Step # and Status Badge */}
+              <div className="step-card-top-row">
+                <span className="step-num-pill">STEP {st.step}</span>
+                <span
+                  className="step-badge-pill"
+                  style={{
+                    background: isCurrent ? 'rgba(255,255,255,0.22)' : isDone ? 'rgba(16,185,129,0.15)' : 'rgba(0,0,0,0.05)',
+                    color: isCurrent ? '#FFFFFF' : isDone ? '#065F46' : 'var(--ink-muted)',
+                  }}
+                >
+                  {isDone ? '✓ Done' : isCurrent ? 'Live Now' : st.badge}
+                </span>
               </div>
-              <div className={`stepper-node-label ${isCurrent ? 'current' : ''}`}>{st.label}</div>
-              {i < LIFECYCLE_STAGES.length - 1 && (
-                <div className={`stepper-connector ${i < activeIdx ? 'done' : ''}`} />
-              )}
+
+              {/* Center Motion Icon Bubble */}
+              <div className="step-icon-bubble">
+                <Icon size={20} strokeWidth={isCurrent ? 2.5 : 2} />
+              </div>
+
+              {/* Stage Title and Micro Content */}
+              <div>
+                <div className="step-title-v2">{st.label}</div>
+                <div className="step-sub-v2">{st.sub}</div>
+              </div>
             </div>
           );
         })}
@@ -291,6 +389,7 @@ function ActiveJobSection({ toast, onNavigate }) {
     startOtp,
     completionPin,
     workCompletedByWorker,
+    pinVerifiedByWorker,
     paymentQrGenerated,
     customerPaid,
     customerReview,
@@ -313,6 +412,8 @@ function ActiveJobSection({ toast, onNavigate }) {
     captureAfterPhoto,
     workerMarkWorkFinished,
     workerVerifyCustomerCompletionPin,
+    workerSimulateCustomerReview,
+    workerConfirmPaymentReceived,
     canWorkerMarkArrived,
   } = useAppStore();
 
@@ -372,7 +473,7 @@ function ActiveJobSection({ toast, onNavigate }) {
       toast(res.error, 'error');
       return;
     }
-    toast(`Completion PIN verified! Rs. ${res.payout} credited and Customer Payment QR generated.`, 'success');
+    toast(`Completion PIN verified! Customer must now submit review to generate payment QR.`, 'success');
     setCompPinDigits(['', '', '', '']);
   };
 
@@ -392,22 +493,42 @@ function ActiveJobSection({ toast, onNavigate }) {
 
   return (
     <div>
-      <div className="demo-toolbar">
-        <div className="demo-toolbar-label">
-          <Sparkles size={16} />
-          <span>Interactive Job State Simulator:</span>
+      {/* High-Tech Dispatch Simulator Console */}
+      <div
+        className="demo-toolbar"
+        style={{
+          background: 'linear-gradient(135deg, rgba(31,91,58,0.06), rgba(232,163,23,0.06))',
+          border: '1.5px solid rgba(31,91,58,0.2)',
+          padding: '14px 18px',
+          borderRadius: 16,
+          marginBottom: 20,
+        }}
+      >
+        <div className="demo-toolbar-label" style={{ color: 'var(--primary-dark)', fontSize: '0.86rem' }}>
+          <Sparkles size={18} color="#E8A317" style={{ filter: 'drop-shadow(0 0 6px #E8A317)' }} />
+          <span>Interactive Dispatch State Simulator:</span>
         </div>
         <div className="demo-stage-pills">
           {LIFECYCLE_STAGES.map((st) => (
             <button
               key={st.key}
               className={`stage-pill-btn ${booking?.status === st.key ? 'active' : ''}`}
+              style={
+                booking?.status === st.key
+                  ? {
+                      background: 'var(--primary)',
+                      color: '#FFFFFF',
+                      borderColor: 'var(--primary)',
+                      boxShadow: '0 4px 12px rgba(31,91,58,0.25)',
+                    }
+                  : {}
+              }
               onClick={() => {
                 simulateIncomingJob(st.key);
                 toast(`Loaded job in ${st.label} state`, 'info');
               }}
             >
-              {st.label}
+              <span>{st.step}. {st.label}</span>
             </button>
           ))}
         </div>
@@ -960,7 +1081,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                       >
                         <CheckCircle2 size={18} />
                         {canMarkWorkFinished
-                          ? 'Finish Treatment & Reveal Customer Completion PIN'
+                          ? 'Complete My Work (Reveal Customer PIN)'
                           : `Complete (${safetyChecklist.filter(Boolean).length}/6 steps, ${
                               afterPhotoTaken ? '1/1' : '0/1'
                             } photo)`}
@@ -1029,7 +1150,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                         disabled={compPinDigits.join('').length < 4}
                         onClick={handleVerifyCompPin}
                       >
-                        <Award size={18} /> Verify Completion PIN & Close Job (Claim Rs. {workerPayout})
+                        <Award size={18} /> Verify Completion PIN (Proceed to Review & Payout)
                       </button>
                     </div>
                   )}
@@ -1037,78 +1158,198 @@ function ActiveJobSection({ toast, onNavigate }) {
               )}
 
               {booking.status === 'COMPLETED' && (
-                <div style={{ textAlign: 'center', padding: '16px 8px' }}>
-                  <div
-                    style={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: '50%',
-                      background: 'var(--success-light)',
-                      color: 'var(--success)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 16px',
-                    }}
-                  >
-                    <Award size={34} />
+                <div>
+                  <div style={{ textAlign: 'center', padding: '16px 8px 12px' }}>
+                    <div
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: '50%',
+                        background: 'var(--success-light)',
+                        color: 'var(--success)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 14px',
+                      }}
+                    >
+                      <Award size={34} />
+                    </div>
+                    <span className="badge badge-green" style={{ marginBottom: 8 }}>
+                      Treatment & Completion PIN Verified
+                    </span>
+                    <h3 style={{ fontSize: '1.4rem', marginBottom: 6 }}>
+                      Great Work! Rs. {workerPayout} Earned
+                    </h3>
                   </div>
-                  <span className="badge badge-green" style={{ marginBottom: 10 }}>
-                    Treatment Verified & Job Closed
-                  </span>
-                  <h3 style={{ fontSize: '1.45rem', marginBottom: 8 }}>
-                    Great Work! Rs. {workerPayout} Added to Wallet
-                  </h3>
-                  <p style={{ color: 'var(--ink-muted)', marginBottom: 18, lineHeight: 1.5 }}>
-                    All 6 safety protocols, photo proof, and completion PIN have been verified.
-                  </p>
 
-                  {/* Payment QR and Customer Feedback status */}
-                  <div className="web-card-surface" style={{ textAlign: 'left', marginBottom: 20, borderLeft: '4px solid var(--primary)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                      <QrCode size={20} color="var(--primary)" />
-                      <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>
-                        Customer UPI Payment QR Live
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 8 }}>
-                      Instant payment QR code for Rs. {rawPrice} is displayed on the customer's dashboard.
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className={`badge ${customerPaid ? 'badge-green' : 'badge-amber'}`}>
-                        {customerPaid ? 'Payment Confirmed by Customer' : 'Awaiting Customer Payment'}
-                      </span>
-                    </div>
-
-                    {customerReview && (
-                      <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--bg-canvas)', borderRadius: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.88rem', color: 'var(--accent)' }}>
-                          <Star size={16} fill="var(--accent)" /> {customerReview.rating} / 5 Customer Rating
+                  {/* Flow Gate 1: Awaiting Customer Review */}
+                  {!customerReview && (
+                    <div
+                      className="web-card-surface"
+                      style={{
+                        borderLeft: '4px solid #E8A317',
+                        padding: 18,
+                        borderRadius: 12,
+                        marginBottom: 18,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                        <Clock size={22} color="#E8A317" />
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--ink)' }}>
+                            Step 7A: Waiting for Customer Review
+                          </div>
+                          <div style={{ fontSize: '0.80rem', color: 'var(--ink-muted)' }}>
+                            Review is strictly required to proceed to payment
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.82rem', color: 'var(--ink)', fontStyle: 'italic', marginTop: 4 }}>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', lineHeight: 1.5, marginBottom: 14 }}>
+                        The homeowner is rating and reviewing your service on their dashboard. Once submitted, your UPI Payment QR code will generate right here for instant scan & pay!
+                      </p>
+                      <button
+                        className="btn btn-outline btn-sm btn-block"
+                        onClick={async () => {
+                          await workerSimulateCustomerReview(5, 'Punctual, eco-safe, and very thorough treatment!');
+                          toast('Simulated customer review! Payment QR generated.', 'success');
+                        }}
+                      >
+                        <Sparkles size={15} /> Quick Demo: Simulate Customer Review (5★)
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Flow Gate 2: Customer Review Submitted -> Generate Payment QR */}
+                  {customerReview && !customerPaid && (
+                    <div
+                      className="web-card-surface"
+                      style={{
+                        border: '2px solid var(--primary)',
+                        padding: 22,
+                        borderRadius: 14,
+                        textAlign: 'center',
+                        marginBottom: 18,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          color: 'var(--primary)',
+                          fontWeight: 800,
+                          fontSize: '1.05rem',
+                          marginBottom: 4,
+                        }}
+                      >
+                        <QrCode size={22} />
+                        <span>Step 7B: Payment QR Code Generated</span>
+                      </div>
+                      <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 14 }}>
+                        Customer gave review! Present this QR code to the customer to scan via PhonePe, GPay, or Paytm.
+                      </p>
+
+                      {/* Visual QR Code Display */}
+                      <div
+                        style={{
+                          display: 'inline-block',
+                          padding: 14,
+                          background: '#FFFFFF',
+                          borderRadius: 16,
+                          border: '2px dashed var(--primary)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                          marginBottom: 12,
+                        }}
+                      >
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                            `upi://pay?pa=pestfast.billing@icici&pn=PestFast&am=${rawPrice}&cu=INR&tn=Booking-${booking.id}`
+                          )}`}
+                          alt="UPI Payment QR Code"
+                          style={{ width: 180, height: 180, display: 'block', margin: '0 auto' }}
+                        />
+                        <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--primary)', marginTop: 8 }}>
+                          Rs. {rawPrice}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
+                          UPI ID: pestfast.billing@icici
+                        </div>
+                      </div>
+
+                      {/* Customer Review Summary Box */}
+                      <div
+                        style={{
+                          background: 'var(--bg-canvas)',
+                          borderRadius: 10,
+                          padding: '10px 14px',
+                          maxWidth: 380,
+                          margin: '0 auto 16px',
+                          textAlign: 'left',
+                          border: '1px solid var(--border)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.84rem', color: 'var(--accent)' }}>
+                          <Star size={15} fill="var(--accent)" /> {customerReview.rating} / 5 Stars Homeowner Review
+                        </div>
+                        <div style={{ fontSize: '0.80rem', color: 'var(--ink)', fontStyle: 'italic', marginTop: 3 }}>
                           "{customerReview.comment || 'Punctual, thorough, and highly professional!'}"
                         </div>
                       </div>
-                    )}
-                  </div>
 
-                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => onNavigate('earnings')}
-                    >
-                      <Wallet size={16} /> Go to Earnings & Withdraw
-                    </button>
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => {
-                        simulateIncomingJob('AGENCY_APPROVED');
-                        toast('Loaded next dispatch job!', 'info');
+                      <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                        <button
+                          className="btn btn-success btn-lg btn-block"
+                          onClick={async () => {
+                            await workerConfirmPaymentReceived();
+                            toast(`Payment of Rs. ${rawPrice} confirmed! Payout settled.`, 'success');
+                          }}
+                        >
+                          <CheckCircle2 size={18} /> Confirm Payment Received (Rs. {rawPrice})
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Flow Gate 3: Payment Settled */}
+                  {customerPaid && (
+                    <div
+                      className="web-card-surface"
+                      style={{
+                        borderLeft: '4px solid var(--success)',
+                        padding: 18,
+                        borderRadius: 12,
+                        marginBottom: 18,
+                        textAlign: 'left',
                       }}
                     >
-                      <RefreshCw size={16} /> Take Next Dispatch
-                    </button>
-                  </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--success)', fontWeight: 800, fontSize: '1rem', marginBottom: 4 }}>
+                        <CheckCircle2 size={20} />
+                        <span>Payment Confirmed & Verified</span>
+                      </div>
+                      <div style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginBottom: 12 }}>
+                        Customer has paid Rs. {rawPrice} via UPI. Rs. {workerPayout} is instantly credited to your wallet balance.
+                      </div>
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => onNavigate('earnings')}
+                        >
+                          <Wallet size={15} /> Go to Earnings & Withdraw
+                        </button>
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => {
+                            simulateIncomingJob('AGENCY_APPROVED');
+                            toast('Loaded next dispatch job!', 'info');
+                          }}
+                        >
+                          <RefreshCw size={15} /> Take Next Dispatch
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

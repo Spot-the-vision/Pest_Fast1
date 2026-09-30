@@ -125,6 +125,7 @@ const initialState = {
   startOtp: '4829',
   completionPin: '7391',
   workCompletedByWorker: false,
+  pinVerifiedByWorker: false,
   paymentQrGenerated: false,
   customerPaid: false,
   customerReview: null,
@@ -335,6 +336,22 @@ export const useAppStore = create((set, get) => ({
     return { ok: true };
   },
 
+  
+  workerSimulateCustomerReview: async (rating = 5, comment = 'Punctual, eco-safe, and very thorough treatment!') => {
+    set({
+      customerReview: { rating, comment },
+      pinVerifiedByWorker: true,
+      // paymentQrGenerated will be true after customer review is given
+      paymentQrGenerated: !!get().customerReview,
+    });
+    await syncRemote(get());
+  },
+
+  workerConfirmPaymentReceived: async () => {
+    set({ customerPaid: true });
+    await syncRemote(get());
+  },
+
   workerVerifyCustomerCompletionPin: async (enteredPin) => {
     const { booking, completionPin } = get();
     if (!booking) return { ok: false, error: 'No active booking.' };
@@ -399,6 +416,7 @@ export const useAppStore = create((set, get) => ({
         startOtp: remote.startOtp ?? s.startOtp ?? '4829',
         completionPin: remote.completionPin ?? s.completionPin ?? '7391',
         workCompletedByWorker: remote.workCompletedByWorker ?? s.workCompletedByWorker,
+        pinVerifiedByWorker: remote.pinVerifiedByWorker ?? s.pinVerifiedByWorker,
         paymentQrGenerated: remote.paymentQrGenerated ?? s.paymentQrGenerated,
         customerPaid: remote.customerPaid ?? s.customerPaid,
         customerReview: remote.customerReview ?? s.customerReview,
