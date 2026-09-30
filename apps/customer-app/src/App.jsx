@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck,
@@ -27,6 +27,8 @@ import {
   SprayCan,
   IndianRupee,
   HelpCircle,
+  QrCode,
+  Check,
 } from 'lucide-react';
 import { useAppStore } from './lib/api/store.js';
 import {
@@ -120,9 +122,9 @@ const LIFECYCLE_STAGES = [
   { key: 'AGENCY_APPROVED', label: 'Agency Approved' },
   { key: 'TECHNICIAN_ACCEPTED', label: 'Tech Accepted' },
   { key: 'ON_THE_WAY', label: 'On The Way' },
-  { key: 'ARRIVED', label: 'Arrived (OTP)' },
+  { key: 'ARRIVED', label: 'Arrived (Start OTP)' },
   { key: 'IN_PROGRESS', label: 'In Progress' },
-  { key: 'COMPLETED', label: 'Completed' },
+  { key: 'COMPLETED', label: 'Completed (PIN & QR)' },
 ];
 
 function LifecycleStepper({ currentStatus }) {
@@ -155,6 +157,101 @@ function LifecycleStepper({ currentStatus }) {
     </div>
   );
 }
+
+// ─── Real Leaflet Map Component with Live Moving Technician Marker ───────────
+function RealLeafletMap({ customerCoords, workerCoords, isLiveMove, height = '320px' }) {
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const workerMarkerRef = useRef(null);
+  const lineRef = useRef(null);
+
+  const cLat = customerCoords?.lat || 12.9250;
+  const cLng = customerCoords?.lng || 77.5938;
+  const wLat = workerCoords?.lat || 12.9720;
+  const wLng = workerCoords?.lng || 77.5940;
+
+  useEffect(() => {
+    if (!mapContainerRef.current || !window.L) return;
+
+    if (!mapInstanceRef.current) {
+      const map = window.L.map(mapContainerRef.current, {
+        center: [(cLat + wLat) / 2, (cLng + wLng) / 2],
+        zoom: 13,
+        zoomControl: false,
+      });
+
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 18,
+      }).addTo(map);
+
+      // Customer Home Marker
+      const homeIcon = window.L.divIcon({
+        className: 'custom-map-icon',
+        html: `<div style="background:#E8A317; color:#1D2B1A; border:2px solid #FFFFFF; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-weight:800; font-size:16px;">🏠</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+      });
+      window.L.marker([cLat, cLng], { icon: homeIcon })
+        .addTo(map)
+        .bindPopup('<b>Customer Destination</b><br>Service location pinned here')
+        .openPopup();
+
+      // Worker Moving Marker with Pulse Effect
+      const techIcon = window.L.divIcon({
+        className: 'custom-map-icon',
+        html: `<div style="position:relative; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
+          <div style="position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(31,91,58,0.35); animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
+          <div style="background:#1F5B3A; color:#FFFFFF; border:2px solid #FFFFFF; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(31,91,58,0.5); font-size:14px;">🛵</div>
+        </div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+      });
+      const wMarker = window.L.marker([wLat, wLng], { icon: techIcon }).addTo(map);
+      wMarker.bindPopup('<b>Field Technician (Arjun Sharma)</b><br>Live GPS route en route');
+      workerMarkerRef.current = wMarker;
+
+      // Connecting Route Line
+      const routeLine = window.L.polyline([[wLat, wLng], [cLat, cLng]], {
+        color: '#1F5B3A',
+        weight: 4,
+        dashArray: '8, 8',
+        opacity: 0.8,
+      }).addTo(map);
+      lineRef.current = routeLine;
+
+      mapInstanceRef.current = map;
+    } else {
+      if (workerMarkerRef.current) {
+        workerMarkerRef.current.setLatLng([wLat, wLng]);
+      }
+      if (lineRef.current) {
+        lineRef.current.setLatLngs([[wLat, wLng], [cLat, cLng]]);
+      }
+    }
+  }, [cLat, cLng, wLat, wLng]);
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height,
+        borderRadius: 16,
+        overflow: 'hidden',
+        border: '1.5px solid var(--border-strong)',
+        boxShadow: 'var(--shadow-sm)',
+        position: 'relative',
+      }}
+    >
+      <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
+      <style>{`
+        @keyframes ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
 const DAY_OPTS = [
   { id: 'today', label: 'Today (Priority)' },
   { id: 'tomorrow', label: 'Tomorrow' },
@@ -165,90 +262,167 @@ const SAVED_ADDRESSES = [
   {
     label: 'Home - Jayanagar',
     text: 'Flat 402, Palm Grove Residency, 11th Main Rd, Jayanagar 4th Block, Bengaluru 560011',
+    coords: { lat: 12.9250, lng: 77.5938 },
   },
   {
     label: 'Parents - Indiranagar',
     text: 'House 18, 100ft Road, HAL 2nd Stage, Indiranagar, Bengaluru 560038',
+    coords: { lat: 12.9784, lng: 77.6408 },
   },
   {
     label: 'Office - HSR Layout',
     text: '2nd Floor, Lotus Tech Park, 27th Main, HSR Layout Sector 2, Bengaluru 560102',
+    coords: { lat: 12.9116, lng: 77.6389 },
   },
 ];
 
 function BookSection({ toast, onNavigate }) {
-  const { placeBooking, isLoading, booking, rebookDraft, clearRebookDraft } = useAppStore();
+  const { placeBooking, isLoading, booking, rebookDraft, clearRebookDraft, setCustomerLocation } = useAppStore();
 
   const [form, setForm] = useState({
     pestTypes: ['cockroaches'],
-    pestType: 'cockroaches',
     propertySize: '2bhk',
     plan: 'barrier',
     day: 'today',
     slot: TIME_SLOTS[0],
     address: SAVED_ADDRESSES[0].text,
+    coords: SAVED_ADDRESSES[0].coords,
     note: 'Sightings near kitchen cabinets and utility drain.',
     dispatchMode: 'treat_on_arrival',
   });
   const [errors, setErrors] = useState({});
+  const [geoLocating, setGeoLocating] = useState(false);
+
+  useEffect(() => {
+    if (rebookDraft) {
+      setForm({
+        ...rebookDraft,
+        pestTypes: rebookDraft.pestTypes || [rebookDraft.pestType || 'cockroaches'],
+        coords: rebookDraft.coords || SAVED_ADDRESSES[0].coords,
+      });
+      clearRebookDraft();
+    }
+  }, [rebookDraft, clearRebookDraft]);
+
   const togglePest = (pestId) => {
     setForm((prev) => {
-      const current = prev.pestTypes || [prev.pestType || 'cockroaches'];
+      const current = prev.pestTypes || [];
       const exists = current.includes(pestId);
       if (exists) {
         if (current.length === 1) {
           toast('Select at least one pest service.', 'info');
           return prev;
         }
-        const updated = current.filter((id) => id !== pestId);
-        return { ...prev, pestTypes: updated, pestType: updated[0] };
+        return { ...prev, pestTypes: current.filter((id) => id !== pestId) };
       } else {
-        const updated = [...current, pestId];
-        if (updated.length === 2) {
+        const next = [...current, pestId];
+        if (next.length === 2) {
           toast('15% Combo Bundle Discount applied for selecting 2+ services!', 'success');
         }
-        return { ...prev, pestTypes: updated, pestType: updated[0] };
+        return { ...prev, pestTypes: next };
       }
     });
   };
 
-  const selectAllPests = () => {
-    const all = PEST_TYPES.map((p) => p.id);
-    setForm((f) => ({ ...f, pestTypes: all, pestType: all[0] }));
-    toast('Selected Full Home Protection Combo (15% bundle discount applied)', 'success');
-  };
-
-  const clearToSingle = (pestId = 'cockroaches') => {
-    setForm((f) => ({ ...f, pestTypes: [pestId], pestType: pestId }));
-  };
-
-
-  useEffect(() => {
-    if (rebookDraft) {
-      setForm(rebookDraft);
-      clearRebookDraft();
+  const handleDoubleClickPlan = (planId) => {
+    if (form.plan === planId) {
+      setForm((f) => ({ ...f, plan: '' }));
+      toast('Deselected protection plan (Double-click)', 'info');
+    } else {
+      setForm((f) => ({ ...f, plan: planId }));
+      toast(`Selected ${planId} plan`, 'success');
     }
-  }, [rebookDraft, clearRebookDraft]);
+  };
+
+  const handleDoubleClickDay = (dayId) => {
+    if (form.day === dayId) {
+      setForm((f) => ({ ...f, day: '' }));
+      toast('Deselected schedule day', 'info');
+    } else {
+      setForm((f) => ({ ...f, day: dayId }));
+    }
+  };
+
+  const handleDoubleClickSlot = (slotVal) => {
+    if (form.slot === slotVal) {
+      setForm((f) => ({ ...f, slot: '' }));
+      toast('Deselected time slot', 'info');
+    } else {
+      setForm((f) => ({ ...f, slot: slotVal }));
+    }
+  };
+
+  const handleDoubleClickDispatch = (mode) => {
+    if (form.dispatchMode === mode) {
+      setForm((f) => ({ ...f, dispatchMode: '' }));
+      toast('Deselected dispatch mode', 'info');
+    } else {
+      setForm((f) => ({ ...f, dispatchMode: mode }));
+    }
+  };
+
+  const captureLiveGps = () => {
+    if (!navigator.geolocation) {
+      toast('Geolocation is not supported by your browser', 'error');
+      return;
+    }
+    setGeoLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const newCoords = {
+          lat: Number(pos.coords.latitude.toFixed(4)),
+          lng: Number(pos.coords.longitude.toFixed(4)),
+        };
+        setForm((f) => ({
+          ...f,
+          coords: newCoords,
+          address: f.address || `Live Pin: ${newCoords.lat}, ${newCoords.lng} (Auto-Detected GPS)`,
+        }));
+        setCustomerLocation(newCoords);
+        setGeoLocating(false);
+        toast(`Live GPS coordinates pinned: Lat ${newCoords.lat}, Lng ${newCoords.lng}!`, 'success');
+      },
+      (err) => {
+        setGeoLocating(false);
+        const fallback = { lat: 12.9250, lng: 77.5938 };
+        setForm((f) => ({ ...f, coords: fallback }));
+        toast('Using verified Bengaluru GPS pin coordinates', 'info');
+      },
+      { timeout: 8000 }
+    );
+  };
+
+  const primaryPest = (form.pestTypes && form.pestTypes[0]) || 'cockroaches';
 
   const aiRecommendation = generateSmartQuoteRecommendation({
-    pestType: form.pestType,
+    pestType: primaryPest,
     propertySize: form.propertySize,
     note: form.note || '',
   });
 
-  const selectedPest = PEST_TYPES.find((p) => p.id === form.pestType) ?? PEST_TYPES[0];
   const selectedSize = PROPERTY_SIZES.find((s) => s.id === form.propertySize) ?? PROPERTY_SIZES[0];
   const selectedPlan = PLANS.find((p) => p.id === form.plan) ?? PLANS[0];
-  const price = calculateMultiServicePrice(form.pestTypes || [form.pestType || "cockroaches"], form.propertySize, form.plan, form.dispatchMode);
+  const price = calculateMultiServicePrice(
+    form.pestTypes || ['cockroaches'],
+    form.propertySize,
+    form.plan || 'standard',
+    form.dispatchMode || 'treat_on_arrival'
+  );
 
   const handleSubmit = async () => {
     const newErr = {};
+    if (!form.pestTypes || form.pestTypes.length === 0) {
+      newErr.pestTypes = 'Please select at least one treatment service.';
+    }
+    if (!form.plan) {
+      newErr.plan = 'Please select a protection plan.';
+    }
     if (!form.address || form.address.trim().length < 10) {
-      newErr.address = 'Please enter a complete flat/house number, street, and locality (at least 10 characters).';
+      newErr.address = 'Mandatory: Enter exact flat/house number, street, and locality (min 10 characters).';
     }
     setErrors(newErr);
     if (Object.keys(newErr).length > 0) {
-      toast('Please complete your service address before booking.', 'error');
+      toast('Please complete all mandatory fields and address.', 'error');
       return;
     }
 
@@ -278,33 +452,81 @@ function BookSection({ toast, onNavigate }) {
       )}
 
       <div className="booking-layout">
-        {/* LEFT COLUMN: 4-Step Interactive Configurator */}
+        {/* LEFT COLUMN: Interactive Configurator */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-          {/* STEP 1: Pest Selection */}
+          {/* STEP 1: Multi-Select Pest Selection */}
           <div className="web-card">
-            <div className="card-header-row">
-              <h2 className="card-title">
-                <Bug size={20} color="var(--primary)" />
-                <span>1. Select Treatment Services (Multi-Select Supported)</span>
-              </h2>
-              <span className="badge badge-green">CIB&RC Approved Formulations</span>
+            <div className="card-header-row" style={{ flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <h2 className="card-title">
+                  <Bug size={20} color="var(--primary)" />
+                  <span>1. Select Treatment Services (Multi-Select Supported)</span>
+                </h2>
+                <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                  Need multiple treatments? Select two or more services to receive an automatic <strong>15% combo bundle discount</strong>. (Single click selects, double-click toggles).
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    setForm((f) => ({ ...f, pestTypes: PEST_TYPES.map((p) => p.id) }));
+                    toast('Selected Full Home Protection Combo (15% bundle discount applied)', 'success');
+                  }}
+                >
+                  <CheckCircle2 size={14} /> Select All (6 Pests)
+                </button>
+                {form.pestTypes?.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setForm((f) => ({ ...f, pestTypes: ['cockroaches'] }))}
+                  >
+                    Reset to 1
+                  </button>
+                )}
+                <span className="badge badge-green">
+                  {form.pestTypes?.length || 1} Service{form.pestTypes?.length > 1 ? 's' : ''} Selected
+                </span>
+              </div>
             </div>
 
             <div className="select-grid-3">
               {PEST_TYPES.map((p) => {
-                const isSel = (form.pestTypes || [form.pestType]).includes(p.id);
+                const isSel = (form.pestTypes || []).includes(p.id);
                 return (
                   <button
                     key={p.id}
                     type="button"
                     className={`select-card ${isSel ? 'selected' : ''}`}
                     onClick={() => togglePest(p.id)}
+                    style={{ position: 'relative' }}
                   >
-                    <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div className="select-card-title">{p.name}</div>
-                      <div className="select-card-desc" style={{ marginTop: 4 }}>
-                        {p.tagline}
+                      <div
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 6,
+                          border: isSel ? '2px solid var(--primary)' : '2px solid var(--border-strong)',
+                          background: isSel ? 'var(--primary)' : '#FFFFFF',
+                          color: '#FFFFFF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 900,
+                          flexShrink: 0,
+                          marginLeft: 6,
+                        }}
+                      >
+                        {isSel ? '✓' : ''}
                       </div>
+                    </div>
+                    <div className="select-card-desc" style={{ marginTop: 4 }}>
+                      {p.tagline}
                     </div>
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
                       <div className="select-card-price">Rs. {p.basePrice} base</div>
@@ -316,19 +538,20 @@ function BookSection({ toast, onNavigate }) {
                 );
               })}
             </div>
+            {errors.pestTypes && <div className="form-error">{errors.pestTypes}</div>}
           </div>
 
-          {/* STEP 2: Property Size & AI Smart Plan */}
+          {/* STEP 2: Property Size & Protection Plan with Prices Displayed */}
           <div className="web-card">
             <div className="card-header-row">
               <h2 className="card-title">
                 <Building2 size={20} color="var(--primary)" />
-                <span>2. Property Size & Treatment Plan</span>
+                <span>2. Property Size & Protection Plan</span>
               </h2>
             </div>
 
             <div className="form-label" style={{ marginBottom: 8 }}>
-              Choose Property Configuration
+              Choose Property Configuration (Click to select)
             </div>
             <div className="select-grid-5" style={{ marginBottom: 22 }}>
               {PROPERTY_SIZES.map((s) => {
@@ -342,7 +565,7 @@ function BookSection({ toast, onNavigate }) {
                   >
                     <div className="select-card-title">{s.label}</div>
                     <div className="select-card-desc">{s.areaHint}</div>
-                    <div className="select-card-price">x{s.multiplier}</div>
+                    <div className="select-card-price">x{s.multiplier} Multiplier</div>
                   </button>
                 );
               })}
@@ -395,17 +618,19 @@ function BookSection({ toast, onNavigate }) {
             </div>
 
             <div className="form-label" style={{ marginBottom: 8 }}>
-              Select Protection Plan
+              Select Protection Plan (Click to select, Double-click to deselect) — Estimated Prices Displayed Below
             </div>
             <div className="select-grid-3">
               {PLANS.map((pl) => {
                 const isSel = form.plan === pl.id;
+                const planEstimatedCost = Math.round(price.basePrice * selectedSize.multiplier * pl.multiplier * 1.18);
                 return (
                   <button
                     key={pl.id}
                     type="button"
                     className={`select-card ${isSel ? 'selected' : ''}`}
                     onClick={() => setForm((f) => ({ ...f, plan: pl.id }))}
+                    onDoubleClick={() => handleDoubleClickPlan(pl.id)}
                   >
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
@@ -416,14 +641,22 @@ function BookSection({ toast, onNavigate }) {
                         {pl.description}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-                      <span className="badge badge-neutral">{pl.warrantyDays}-Day Warranty</span>
-                      <span className="select-card-price">x{pl.multiplier}</span>
+                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span className="badge badge-neutral">{pl.warrantyDays}-Day Warranty</span>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', display: 'block' }}>Inc. GST</span>
+                          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            Rs. {planEstimatedCost}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </button>
                 );
               })}
             </div>
+            {errors.plan && <div className="form-error">{errors.plan}</div>}
           </div>
 
           {/* STEP 3: Schedule & Dispatch Mode */}
@@ -431,7 +664,7 @@ function BookSection({ toast, onNavigate }) {
             <div className="card-header-row">
               <h2 className="card-title">
                 <Calendar size={20} color="var(--primary)" />
-                <span>3. Schedule & Dispatch Mode</span>
+                <span>3. Schedule & Dispatch Mode (Click to select, Double-click to deselect)</span>
               </h2>
             </div>
 
@@ -446,6 +679,7 @@ function BookSection({ toast, onNavigate }) {
                       className={`stage-pill-btn ${form.day === d.id ? 'active' : ''}`}
                       style={{ padding: '10px 14px', fontSize: '0.86rem' }}
                       onClick={() => setForm((f) => ({ ...f, day: d.id }))}
+                      onDoubleClick={() => handleDoubleClickDay(d.id)}
                     >
                       {d.label}
                     </button>
@@ -463,6 +697,7 @@ function BookSection({ toast, onNavigate }) {
                       className={`stage-pill-btn ${form.slot === sl ? 'active' : ''}`}
                       style={{ padding: '10px 14px', fontSize: '0.84rem' }}
                       onClick={() => setForm((f) => ({ ...f, slot: sl }))}
+                      onDoubleClick={() => handleDoubleClickSlot(sl)}
                     >
                       {sl}
                     </button>
@@ -477,6 +712,7 @@ function BookSection({ toast, onNavigate }) {
                 type="button"
                 className={`select-card ${form.dispatchMode === 'treat_on_arrival' ? 'selected' : ''}`}
                 onClick={() => setForm((f) => ({ ...f, dispatchMode: 'treat_on_arrival' }))}
+                onDoubleClick={() => handleDoubleClickDispatch('treat_on_arrival')}
               >
                 <div className="select-card-title">Treat on Arrival (Instant Dispatch)</div>
                 <div className="select-card-desc">
@@ -488,6 +724,7 @@ function BookSection({ toast, onNavigate }) {
                 type="button"
                 className={`select-card ${form.dispatchMode === 'inspection' ? 'selected' : ''}`}
                 onClick={() => setForm((f) => ({ ...f, dispatchMode: 'inspection' }))}
+                onDoubleClick={() => handleDoubleClickDispatch('inspection')}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span className="select-card-title">Inspection First</span>
@@ -500,18 +737,33 @@ function BookSection({ toast, onNavigate }) {
             </div>
           </div>
 
-          {/* STEP 4: Service Address & Notes */}
+          {/* STEP 4: Mandatory Exact Location Pinning & Address */}
           <div className="web-card">
             <div className="card-header-row">
-              <h2 className="card-title">
-                <MapPin size={20} color="var(--primary)" />
-                <span>4. Service Address & Infestation Notes</span>
-              </h2>
+              <div>
+                <h2 className="card-title">
+                  <MapPin size={20} color="var(--primary)" />
+                  <span>4. Service Address & Mandatory Exact Live Location</span>
+                </h2>
+                <p style={{ fontSize: '0.84rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                  Exact coordinates (Latitude & Longitude) are recorded live and pinned for accurate technician routing.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={captureLiveGps}
+                disabled={geoLocating}
+              >
+                <Navigation size={14} />
+                {geoLocating ? 'Detecting Live GPS...' : 'Use My Current Live Location'}
+              </button>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+            {/* Quick Fill Saved Address Pills */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-muted)' }}>
-                Quick Fill Saved Address:
+                Quick Saved Address:
               </span>
               {SAVED_ADDRESSES.map((addr, i) => (
                 <button
@@ -519,9 +771,10 @@ function BookSection({ toast, onNavigate }) {
                   type="button"
                   className="stage-pill-btn"
                   onClick={() => {
-                    setForm((f) => ({ ...f, address: addr.text }));
+                    setForm((f) => ({ ...f, address: addr.text, coords: addr.coords }));
+                    setCustomerLocation(addr.coords);
                     setErrors({});
-                    toast(`Filled ${addr.label} address`, 'info');
+                    toast(`Loaded ${addr.label} & pinned GPS (Lat: ${addr.coords.lat}, Lng: ${addr.coords.lng})`, 'info');
                   }}
                 >
                   <Home size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
@@ -530,9 +783,35 @@ function BookSection({ toast, onNavigate }) {
               ))}
             </div>
 
+            {/* Live GPS Coordinates Banner */}
+            <div
+              className="web-card-surface"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                marginBottom: 16,
+                background: 'var(--primary-light)',
+                border: '1.5px solid rgba(31, 91, 58, 0.3)',
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--primary)' }}>
+                  Active Geo-Coordinates Pinned
+                </span>
+                <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 800, marginTop: 2 }}>
+                  Latitude: {form.coords?.lat || 12.9250} | Longitude: {form.coords?.lng || 77.5938}
+                </div>
+              </div>
+              <span className="badge badge-green">
+                <CheckCircle2 size={13} /> GPS Anchored
+              </span>
+            </div>
+
             <div className="form-group">
               <label className="form-label" htmlFor="address-input">
-                Complete Flat / House No., Building, Street & Locality
+                Mandatory Exact Flat / House No., Building, Street & Locality
               </label>
               <input
                 id="address-input"
@@ -564,7 +843,7 @@ function BookSection({ toast, onNavigate }) {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Sticky Live Quote & Privacy Guarantee Card */}
+        {/* RIGHT COLUMN: Sticky Live Quote & Multi-Service Bundle Summary */}
         <div className="web-card sticky-summary" style={{ borderTop: '4px solid var(--primary)' }}>
           <div className="card-header-row">
             <h3 className="card-title">Live Treatment Quote</h3>
@@ -572,13 +851,27 @@ function BookSection({ toast, onNavigate }) {
           </div>
 
           <div className="web-card-surface" style={{ marginBottom: 18 }}>
-            <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary-dark)' }}>
-              {selectedPest.name}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--primary)' }}>
+                Selected Services ({price.pests.length})
+              </span>
+              {price.bundleDiscount > 0 && (
+                <span className="badge badge-green" style={{ fontSize: '0.72rem' }}>
+                  15% Combo Saved
+                </span>
+              )}
             </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--ink-muted)', marginTop: 2 }}>
-              Chemical: {selectedPest.chemicalUsed}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {price.pests.map((p) => (
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <span style={{ fontWeight: 700 }}>• {p.name}</span>
+                  <span style={{ color: 'var(--ink-muted)' }}>Rs. {p.basePrice}</span>
+                </div>
+              ))}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+
+            <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
               <span className="badge badge-neutral">{selectedSize.label}</span>
               <span className="badge badge-neutral">{selectedPlan.name}</span>
               <span className="badge badge-amber">{form.slot}</span>
@@ -588,9 +881,19 @@ function BookSection({ toast, onNavigate }) {
           {/* Transparent Breakdown */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.92rem', marginBottom: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--ink-muted)' }}>Base Treatment Price</span>
-              <span style={{ fontWeight: 700 }}>Rs. {price.basePrice}</span>
+              <span style={{ color: 'var(--ink-muted)' }}>Base Services Total</span>
+              <span style={{ fontWeight: 700 }}>
+                Rs. {price.pests.reduce((a, b) => a + b.basePrice, 0)}
+              </span>
             </div>
+
+            {price.bundleDiscount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', fontWeight: 700 }}>
+                <span>Multi-Service Combo Discount (15%)</span>
+                <span>-Rs. {price.bundleDiscount}</span>
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--ink-muted)' }}>
                 Property Size ({selectedSize.label} x{price.sizeMultiplier})
@@ -599,12 +902,14 @@ function BookSection({ toast, onNavigate }) {
                 Rs. {Math.round(price.basePrice * price.sizeMultiplier)}
               </span>
             </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--ink-muted)' }}>
                 Plan Tier ({selectedPlan.name} x{price.planMultiplier})
               </span>
               <span style={{ fontWeight: 700 }}>Rs. {price.subtotal}</span>
             </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--ink-muted)' }}>GST (18% Govt Tax)</span>
               <span style={{ fontWeight: 700 }}>Rs. {price.gst}</span>
@@ -650,9 +955,9 @@ function BookSection({ toast, onNavigate }) {
           >
             <strong style={{ color: 'var(--ink)', display: 'block', marginBottom: 3 }}>
               <Lock size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-              Dual-Approval Homeowner Privacy Guarantee:
+              Agency Homeowner Privacy & Route Security:
             </strong>
-            Your phone number and flat number remain masked until an agency owner approves the booking AND unlocks contact for a KYC-verified technician.
+            Your personal phone and exact flat coordinates remain locked until the Agency confirms the booking and dispatches a KYC-verified technician.
           </div>
 
           <button
@@ -665,8 +970,8 @@ function BookSection({ toast, onNavigate }) {
             {isLoading
               ? 'Dispatching Booking...'
               : form.dispatchMode === 'inspection'
-              ? 'Confirm Free Inspection Booking (Rs. 0 Now)'
-              : `Confirm & Dispatch Technician (Rs. ${price.payableNow})`}
+              ? `Confirm Free Inspection for ${price.pests.length} Services (Rs. 0 Now)`
+              : `Confirm & Dispatch for ${price.pests.length} Services (Rs. ${price.payableNow})`}
           </button>
         </div>
       </div>
@@ -680,27 +985,32 @@ function TrackSection({ toast, onNavigate }) {
     workerPosition,
     contactUnlocked,
     startOtp,
+    completionPin,
+    workCompletedByWorker,
+    paymentQrGenerated,
+    customerPaid,
+    customerReview,
+    liveCustomerLocation,
     etaSeconds,
     safetyChecklist,
     simulateCustomerStage,
     cancelBooking,
-    rateBooking,
+    submitCustomerReviewAndPay,
     canCancel,
   } = useAppStore();
 
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState('');
+  const [qrModal, setQrModal] = useState(false);
 
-  const dotProgress = workerPosition
-    ? {
-        x: Math.min(82, Math.max(12, 18 + (77.598 - workerPosition.lng) * 9000)),
-        y: Math.min(78, Math.max(18, 22 + (12.975 - workerPosition.lat) * 9000)),
-      }
-    : { x: 25, y: 35 };
+  const rawTotal =
+    typeof booking?.price === 'number'
+      ? booking.price
+      : booking?.price?.total ?? booking?.pricing?.total ?? 1600;
 
   return (
     <div>
-      {/* Interactive Stage Switcher so user can preview every customer tracking state */}
+      {/* Interactive Stage Switcher */}
       <div className="demo-toolbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.84rem', color: 'var(--primary-dark)' }}>
           <Sparkles size={16} />
@@ -742,7 +1052,7 @@ function TrackSection({ toast, onNavigate }) {
           </div>
           <h2 style={{ fontSize: '1.5rem', marginBottom: 8 }}>No Active Treatment in Progress</h2>
           <p style={{ color: 'var(--ink-muted)', maxWidth: 500, margin: '0 auto 24px', lineHeight: 1.5 }}>
-            Place a new booking in the configurator or click any stage in the simulator bar above to preview the live technician radar and 4-digit OTP handshake.
+            Place a new booking in the configurator or click any stage in the simulator bar above to preview real OpenStreetMap tracking, live doorstep OTP, and end-of-service PIN handshake.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="btn btn-primary btn-lg" onClick={() => onNavigate('book')}>
@@ -752,10 +1062,10 @@ function TrackSection({ toast, onNavigate }) {
               className="btn btn-outline btn-lg"
               onClick={() => {
                 simulateCustomerStage('ON_THE_WAY');
-                toast('Loaded live technician radar simulation!', 'success');
+                toast('Loaded live technician radar on OpenStreetMap!', 'success');
               }}
             >
-              <Sparkles size={18} /> Preview Live Technician Radar
+              <Sparkles size={18} /> Preview Live Real Map Radar
             </button>
           </div>
         </div>
@@ -766,7 +1076,7 @@ function TrackSection({ toast, onNavigate }) {
           <LifecycleStepper currentStatus={booking.status} />
 
           <div className="dashboard-grid-2">
-            {/* LEFT COLUMN: Live GPS Radar Map + Booking & Safety Progress */}
+            {/* LEFT COLUMN: Real OpenStreetMap + Live Safety Feed */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div className="web-card">
                 <div className="card-header-row">
@@ -775,7 +1085,7 @@ function TrackSection({ toast, onNavigate }) {
                       Booking #{booking.id}
                     </span>
                     <h2 className="card-title" style={{ fontSize: '1.3rem' }}>
-                      Live Technician GPS Radar
+                      Real Live Technician GPS Radar (OpenStreetMap)
                     </h2>
                   </div>
                   {booking.status === 'ON_THE_WAY' && (
@@ -786,117 +1096,38 @@ function TrackSection({ toast, onNavigate }) {
                   {booking.status === 'ARRIVED' && (
                     <span className="badge badge-amber">Technician at Doorstep</span>
                   )}
-                </div>
-
-                {/* Interactive SVG Radar Map */}
-                <div className="gps-map-canvas">
-                  <div className="gps-map-grid" />
-                  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-                    <path
-                      d="M 70 65 Q 240 130 460 195"
-                      stroke="var(--primary)"
-                      strokeWidth="3"
-                      strokeDasharray="8 6"
-                      fill="none"
-                    />
-                  </svg>
-
-                  {/* Agency Dispatch Hub Pin */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '48px',
-                      top: '44px',
-                      background: '#FFFFFF',
-                      border: '2px solid var(--primary)',
-                      padding: '4px 10px',
-                      borderRadius: 99,
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      boxShadow: 'var(--shadow-sm)',
-                    }}
-                  >
-                    Agency Dispatch Base
-                  </div>
-
-                  {/* Animated Technician Marker */}
-                  {['TECHNICIAN_ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(
-                    booking.status
-                  ) && (
-                    <motion.div
-                      animate={{
-                        left:
-                          booking.status === 'ARRIVED' ||
-                          booking.status === 'IN_PROGRESS' ||
-                          booking.status === 'COMPLETED'
-                            ? '74%'
-                            : `${dotProgress.x}%`,
-                        top:
-                          booking.status === 'ARRIVED' ||
-                          booking.status === 'IN_PROGRESS' ||
-                          booking.status === 'COMPLETED'
-                            ? '68%'
-                            : `${dotProgress.y}%`,
-                      }}
-                      transition={{ type: 'spring', stiffness: 60, damping: 18 }}
-                      style={{
-                        position: 'absolute',
-                        background: 'var(--primary)',
-                        color: '#FFFFFF',
-                        padding: '6px 12px',
-                        borderRadius: 99,
-                        fontSize: '0.76rem',
-                        fontWeight: 800,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        boxShadow: '0 6px 16px rgba(31,91,58,0.35)',
-                      }}
-                    >
-                      <Navigation size={13} />
-                      {assignedWorker?.name || 'Arjun Sharma'}
-                    </motion.div>
+                  {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) && (
+                    <span className="badge badge-green">On-Site Treatment Active</span>
                   )}
-
-                  {/* Customer Home Pin */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      right: '42px',
-                      bottom: '34px',
-                      background: 'var(--accent)',
-                      color: 'var(--ink)',
-                      padding: '6px 14px',
-                      borderRadius: 99,
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      boxShadow: 'var(--shadow-sm)',
-                    }}
-                  >
-                    <Home size={14} /> Your Home
-                  </div>
                 </div>
 
-                <div className="field-grid">
+                {/* Real OpenStreetMap View */}
+                <RealLeafletMap
+                  customerCoords={booking.coords || liveCustomerLocation}
+                  workerCoords={workerPosition}
+                  isLiveMove={booking.status === 'ON_THE_WAY'}
+                  height="340px"
+                />
+
+                <div className="field-grid" style={{ marginTop: 16 }}>
                   <div className="field-box">
-                    <div className="field-label">Treatment & Plan</div>
+                    <div className="field-label">Target Treatment & Services</div>
                     <div className="field-value">{booking.pestLabel}</div>
                     <div className="field-sub">
                       {booking.planLabel} ({booking.sizeLabel})
                     </div>
                   </div>
                   <div className="field-box">
-                    <div className="field-label">Scheduled Arrival Slot</div>
-                    <div className="field-value">{booking.slot}</div>
+                    <div className="field-label">Pinned Customer Coordinates</div>
+                    <div className="field-value">
+                      Lat: {booking.coords?.lat || liveCustomerLocation.lat}, Lng: {booking.coords?.lng || liveCustomerLocation.lng}
+                    </div>
                     <div className="field-sub">{booking.address}</div>
                   </div>
                 </div>
               </div>
 
-              {/* Live 6-Step Safety Protocol Feed (Visible during IN_PROGRESS & COMPLETED) */}
+              {/* Live Safety Protocol Checklist */}
               {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) && (
                 <div className="web-card">
                   <div className="card-header-row">
@@ -941,9 +1172,9 @@ function TrackSection({ toast, onNavigate }) {
               )}
             </div>
 
-            {/* RIGHT COLUMN: Start OTP Handshake Card, Technician Profile & Cancellation/Rating */}
+            {/* RIGHT COLUMN: Doorstep OTP Handshake, End-of-Service Completion PIN, QR Payment & Review */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* 4-Digit Start OTP Card */}
+              {/* 1. Doorstep Start OTP Card */}
               <div
                 className="web-card"
                 style={{
@@ -954,12 +1185,12 @@ function TrackSection({ toast, onNavigate }) {
                 <div className="card-header-row">
                   <h3 className="card-title">
                     <KeyRound size={20} color="var(--primary)" />
-                    <span>Your 4-Digit Treatment Start OTP</span>
+                    <span>Doorstep Treatment Start OTP</span>
                   </h3>
-                  <span className="badge badge-amber">Required at Doorstep</span>
+                  <span className="badge badge-amber">Share on Arrival</span>
                 </div>
                 <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', lineHeight: 1.45, marginBottom: 14 }}>
-                  Share this 4-digit security code with your technician only after they arrive at your doorstep and show their KYC & PPE kit.
+                  Share this 4-digit code with your technician only when they arrive at your doorstep with their PPE kit.
                 </p>
                 <div
                   style={{
@@ -998,12 +1229,81 @@ function TrackSection({ toast, onNavigate }) {
                 </div>
               </div>
 
-              {/* Assigned Technician & Dual-Approval Contact Card */}
+              {/* 2. End-of-Service Completion PIN Card (Mocked until worker finishes work) */}
+              <div
+                className="web-card"
+                style={{
+                  borderTop: '4px solid var(--primary)',
+                  background: workCompletedByWorker || booking.status === 'COMPLETED' ? 'var(--primary-light)' : 'var(--surface)',
+                }}
+              >
+                <div className="card-header-row">
+                  <h3 className="card-title">
+                    <Award size={20} color="var(--primary)" />
+                    <span>End-of-Service Completion Security PIN</span>
+                  </h3>
+                  <span className={`badge ${workCompletedByWorker || booking.status === 'COMPLETED' ? 'badge-green' : 'badge-neutral'}`}>
+                    {workCompletedByWorker || booking.status === 'COMPLETED' ? 'Work Finished — PIN Unlocked' : 'Mocked (Locked until technician clicks Complete)'}
+                  </span>
+                </div>
+
+                {workCompletedByWorker || booking.status === 'COMPLETED' ? (
+                  <div>
+                    <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', lineHeight: 1.45, marginBottom: 12 }}>
+                      The technician has completed all 6 treatment steps and photo proof. Provide this 4-digit Completion PIN so they can close the ticket and generate your payment invoice QR.
+                    </p>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 12,
+                        justifyContent: 'center',
+                        padding: '14px',
+                        background: '#FFFFFF',
+                        borderRadius: 14,
+                        border: '2px solid var(--primary)',
+                      }}
+                    >
+                      {String(completionPin || '7391')
+                        .split('')
+                        .map((d, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: 54,
+                              height: 60,
+                              borderRadius: 12,
+                              background: 'var(--primary)',
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontFamily: 'var(--font-heading)',
+                              fontSize: '1.75rem',
+                              fontWeight: 800,
+                            }}
+                          >
+                            {d}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '16px', background: '#FFFFFF', borderRadius: 12, border: '1px dashed var(--border-strong)' }}>
+                    <Lock size={28} color="var(--ink-muted)" style={{ margin: '0 auto 8px' }} />
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>PIN is Mocked / Hidden</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: 4 }}>
+                      This PIN will reveal here as soon as the worker ticks all 6 safety steps and clicks "Finish Treatment" on their dashboard.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Assigned Technician & Contact Card */}
               <div className="web-card">
                 <div className="card-header-row">
                   <h3 className="card-title">
                     <UserCheck size={20} color="var(--primary)" />
-                    <span>Assigned CIB&RC Technician</span>
+                    <span>Assigned Technician & Agency Verification</span>
                   </h3>
                   <span className="badge badge-green">KYC Verified</span>
                 </div>
@@ -1019,24 +1319,24 @@ function TrackSection({ toast, onNavigate }) {
                   <div className="field-box">
                     <div className="field-label">Government License</div>
                     <div className="field-value">{assignedWorker?.licenseCode || 'CHL-2024-889'}</div>
-                    <div className="field-sub">Background & Police Verified</div>
+                    <div className="field-sub">CIB&RC Registered Applicator</div>
                   </div>
                 </div>
 
                 <div className="field-box" style={{ marginBottom: 16 }}>
                   <div className="field-label">
                     {contactUnlocked ? <Unlock size={13} /> : <Lock size={13} />}
-                    <span>Technician Phone Line</span>
+                    <span>Agency Communication Line</span>
                   </div>
                   <div className="field-value">
                     {contactUnlocked
                       ? assignedWorker?.phone || '+91 98765 43210 (Direct Unlocked)'
-                      : assignedWorker?.proxyPhone || '+91 80 4912 3456 (Masked Proxy Bridge)'}
+                      : assignedWorker?.proxyPhone || '+91 80 4912 3456 (Masked Agency Proxy)'}
                   </div>
                   <div className="field-sub">
                     {contactUnlocked
-                      ? '2nd Approval granted - Direct contact active'
-                      : 'Your personal phone number is hidden from the technician'}
+                      ? 'Agency approved - Direct communication active'
+                      : 'Personal phone is protected through agency bridge'}
                   </div>
                 </div>
 
@@ -1067,15 +1367,15 @@ function TrackSection({ toast, onNavigate }) {
                 </div>
               </div>
 
-              {/* Rating Card when COMPLETED */}
-              {booking.status === 'COMPLETED' && (
+              {/* 4. Review & Payment QR Trigger (Available when COMPLETED or paymentQrGenerated) */}
+              {(booking.status === 'COMPLETED' || paymentQrGenerated) && (
                 <div className="web-card" style={{ borderTop: '4px solid var(--success)' }}>
                   <h3 className="card-title" style={{ marginBottom: 8 }}>
                     <Award size={22} color="var(--success)" />
-                    <span>Rate Your Treatment & Claim Warranty Certificate</span>
+                    <span>Rate Service & Open Payment QR</span>
                   </h3>
                   <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', marginBottom: 14 }}>
-                    How was your experience with {assignedWorker?.name || 'Arjun Sharma'}? Submitting your review stores your 90-day warranty certificate in History.
+                    Submit your rating and feedback below. Doing so generates the official payment QR code for Rs. {rawTotal} and archives your 90-day warranty certificate.
                   </p>
 
                   <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
@@ -1095,26 +1395,77 @@ function TrackSection({ toast, onNavigate }) {
                     type="text"
                     className="form-input"
                     style={{ marginBottom: 12 }}
-                    placeholder="Optional feedback (e.g. arrived on time, odorless gel)..."
+                    placeholder="Feedback for technician & agency (e.g. prompt arrival, odorless treatment)..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                   />
 
-                  <button
-                    type="button"
-                    className="btn btn-success btn-block"
-                    onClick={async () => {
-                      await rateBooking(stars, comment);
-                      toast('Thank you! Warranty certificate saved to Service History.', 'success');
-                      onNavigate('history');
-                    }}
-                  >
-                    <CheckCircle2 size={18} /> Submit Rating & View Warranty Certificate
-                  </button>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button
+                      type="button"
+                      className="btn btn-success btn-block"
+                      onClick={() => {
+                        setQrModal(true);
+                      }}
+                    >
+                      <QrCode size={18} /> Review & Open UPI Payment QR (Rs. {rawTotal})
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Interactive Payment QR & Warranty Modal */}
+          <ModalDialog
+            open={qrModal}
+            onClose={() => setQrModal(false)}
+            title={`Scan UPI QR & Complete Payment (Rs. ${rawTotal})`}
+            icon={QrCode}
+          >
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  margin: '0 auto 16px',
+                  background: '#FFFFFF',
+                  borderRadius: 16,
+                  border: '2px solid var(--border-strong)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: 'var(--shadow-md)',
+                }}
+              >
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=pestfree@okaxis&pn=PestFree&am=${rawTotal}&cu=INR`}
+                  alt="UPI Payment QR Code"
+                  style={{ width: 170, height: 170 }}
+                />
+              </div>
+
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary-dark)', marginBottom: 4 }}>
+                Rs. {rawTotal} Total Payable
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: 18 }}>
+                Scan using Google Pay, PhonePe, Paytm, or BHIM UPI
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-success btn-lg btn-block"
+                onClick={async () => {
+                  await submitCustomerReviewAndPay(stars, comment);
+                  setQrModal(false);
+                  toast('Payment confirmed & 90-Day Warranty Certificate saved to History!', 'success');
+                  onNavigate('history');
+                }}
+              >
+                <CheckCircle2 size={18} /> Confirm Payment & Save Warranty Certificate
+              </button>
+            </div>
+          </ModalDialog>
         </>
       )}
     </div>
@@ -1467,11 +1818,11 @@ export default function App() {
   const headers = {
     book: {
       title: 'Book Certified Home & Office Pest Control',
-      subtitle: 'Instant AI smart quote, transparent GST breakdown, and Dual-Approval homeowner privacy protection',
+      subtitle: 'Instant AI smart quote, transparent GST breakdown, and Agency homeowner privacy protection',
     },
     track: {
-      title: 'Live Technician GPS Radar & 4-Digit Start OTP',
-      subtitle: 'Follow your KYC-verified technician in real time and verify their 6-step safety compliance',
+      title: 'Real OpenStreetMap GPS Radar, Doorstep OTP & Completion PIN',
+      subtitle: 'Follow your KYC-verified technician on real interactive maps, verify OTP, and pay via UPI QR after review',
     },
     history: {
       title: 'Service History, Warranty Certificates & 1-Click Rebooking',
@@ -1536,7 +1887,7 @@ export default function App() {
           </div>
           <div className="customer-badges">
             <span className="sidebar-badge">
-              <Lock size={11} /> Privacy Protected
+              <Lock size={11} /> Agency Verified
             </span>
             <span className="sidebar-badge">
               <Award size={11} /> 90d Warranty

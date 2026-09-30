@@ -1,11 +1,12 @@
 /**
  * Customer-app Zustand store + interactive live simulation adapter.
- * Syncs across ports via /api/state (served by vite.config.js middleware).
+ * Synchronizes across ports via /api/state (served by vite.config.js middleware).
  */
 import { create } from 'zustand';
 import {
   transitionBooking,
-  calculatePrice, calculateMultiServicePrice,
+  calculatePrice,
+  calculateMultiServicePrice,
   scoreAndRankWorkers,
   PEST_TYPES,
   PROPERTY_SIZES,
@@ -36,8 +37,8 @@ const MOCK_WORKERS = [
     kycVerified: true,
     available: true,
     activeLoad: 1,
-    lat: 12.972,
-    lng: 77.594,
+    lat: 12.9720,
+    lng: 77.5940,
   },
   {
     id: 'WRK-102',
@@ -50,8 +51,8 @@ const MOCK_WORKERS = [
     kycVerified: true,
     available: true,
     activeLoad: 0,
-    lat: 12.975,
-    lng: 77.600,
+    lat: 12.9750,
+    lng: 77.6000,
   },
 ];
 
@@ -124,7 +125,13 @@ async function syncRemote(state) {
         contactUnlocked: state.contactUnlocked,
         incomingJob: state.incomingJob,
         startOtp: state.startOtp,
+        completionPin: state.completionPin,
+        workCompletedByWorker: state.workCompletedByWorker,
+        paymentQrGenerated: state.paymentQrGenerated,
+        customerPaid: state.customerPaid,
+        customerReview: state.customerReview,
         etaSeconds: state.etaSeconds,
+        liveCustomerLocation: state.liveCustomerLocation,
       }),
     });
   } catch (_) {}
@@ -143,7 +150,7 @@ let workerMoveInterval = null;
 
 const initialState = {
   booking: null,
-  workerPosition: { lat: 12.972, lng: 77.594 },
+  workerPosition: { lat: 12.9720, lng: 77.5940 },
   assignedWorker: MOCK_WORKERS[0],
   dutyStatus: 'ON_DUTY',
   incomingJob: null,
@@ -155,13 +162,24 @@ const initialState = {
   safetyChecklist: [false, false, false, false, false, false],
   afterPhotoTaken: false,
   startOtp: '4829',
+  completionPin: '7391',
+  workCompletedByWorker: false,
+  paymentQrGenerated: false,
+  customerPaid: false,
+  customerReview: null,
   etaSeconds: 20,
+  liveCustomerLocation: { lat: 12.9250, lng: 77.5938 }, // Jayanagar 4th Block
 };
 
 export const useAppStore = create((set, get) => ({
   ...initialState,
 
   clearRebookDraft: () => set({ rebookDraft: null }),
+
+  setCustomerLocation: (loc) => {
+    set({ liveCustomerLocation: loc });
+    syncRemote(get());
+  },
 
   placeBooking: async (formData) => {
     set({ isLoading: true, error: null });
@@ -179,9 +197,12 @@ export const useAppStore = create((set, get) => ({
         formData.dispatchMode
       );
       const otp = generateOtp();
+      const compPin = generateOtp();
 
-      const pestNames = priceCalc.pests.map(p => p.name).join(' + ');
-      const chemNames = priceCalc.pests.map(p => p.chemicalUsed).join(' | ');
+      const pestNames = priceCalc.pests.map((p) => p.name).join(' + ');
+      const chemNames = priceCalc.pests.map((p) => p.chemicalUsed).join(' | ');
+
+      const customerCoords = formData.coords || get().liveCustomerLocation || { lat: 12.9250, lng: 77.5938 };
 
       const booking = {
         id: generateBookingId(),
@@ -200,6 +221,7 @@ export const useAppStore = create((set, get) => ({
         note: formData.note ?? '',
         slot: formData.slot,
         day: formData.day,
+        coords: customerCoords,
         price: priceCalc,
         pricing: priceCalc,
         createdAt: new Date().toISOString(),
@@ -216,19 +238,26 @@ export const useAppStore = create((set, get) => ({
         maskedName: 'Aarav S.',
         maskedPhone: '+91-984-XXX-3210',
         slot: booking.slot,
-        payout: Math.round(price.total * 0.55),
+        coords: customerCoords,
+        payout: Math.round(priceCalc.total * 0.55),
       };
 
       set({
         booking,
         incomingJob,
         startOtp: otp,
-        workerPosition: { lat: 12.972, lng: 77.594 },
+        completionPin: compPin,
+        workCompletedByWorker: false,
+        paymentQrGenerated: false,
+        customerPaid: false,
+        customerReview: null,
+        workerPosition: { lat: 12.9720, lng: 77.5940 },
         assignedWorker: MOCK_WORKERS[0],
         contactUnlocked: false,
         safetyChecklist: [false, false, false, false, false, false],
         afterPhotoTaken: false,
         etaSeconds: 20,
+        liveCustomerLocation: customerCoords,
         isLoading: false,
         error: null,
       });
@@ -239,24 +268,24 @@ export const useAppStore = create((set, get) => ({
         if (get().booking?.status === 'BOOKING_PLACED') {
           get().simulateCustomerStage('AGENCY_APPROVED');
         }
-      }, 6000);
+      }, 5000);
     } catch (e) {
       set({ isLoading: false, error: e.message });
     }
   },
 
-  // Allows the user to jump to or test any of the 7 tracking stages immediately
   simulateCustomerStage: async (targetStatus) => {
     if (etaInterval) clearInterval(etaInterval);
     if (workerMoveInterval) clearInterval(workerMoveInterval);
 
     let currentBooking = get().booking;
     if (!currentBooking) {
-      const price = calculatePrice('termites', '3bhk', 'barrier', 'treat_on_arrival');
+      const priceCalc = calculateMultiServicePrice(['termites'], '3bhk', 'barrier', 'treat_on_arrival');
       currentBooking = {
         id: generateBookingId(),
         status: targetStatus,
         pestType: 'termites',
+        pestTypes: ['termites'],
         pestLabel: 'Termites & Woodborers',
         chemicalUsed: 'Imidacloprid 30.5% SC (CIB&RC Approved)',
         propertySize: '3bhk',
@@ -266,11 +295,12 @@ export const useAppStore = create((set, get) => ({
         warrantyDays: 90,
         dispatchMode: 'treat_on_arrival',
         address: 'Flat 402, Palm Grove Residency, 11th Main Rd, Jayanagar 4th Block, Bengaluru',
+        coords: { lat: 12.9250, lng: 77.5938 },
         note: 'Termite mud tubes behind kitchen woodwork.',
         slot: '01:00 - 03:00 PM',
         day: 'today',
-        price,
-        pricing: price,
+        price: priceCalc,
+        pricing: priceCalc,
         createdAt: new Date().toISOString(),
         rating: null,
       };
@@ -286,6 +316,8 @@ export const useAppStore = create((set, get) => ({
       booking: currentBooking,
       assignedWorker: MOCK_WORKERS[0],
       contactUnlocked: unlocked,
+      workCompletedByWorker: isCompleted,
+      paymentQrGenerated: isCompleted,
       etaSeconds: targetStatus === 'ON_THE_WAY' ? 15 : 0,
       safetyChecklist: isCompleted
         ? [true, true, true, true, true, true]
@@ -322,10 +354,9 @@ export const useAppStore = create((set, get) => ({
 
   _startWorkerMovement: () => {
     if (workerMoveInterval) clearInterval(workerMoveInterval);
-    const startLat = 12.975;
-    const startLng = 77.598;
-    const endLat = 12.971;
-    const endLng = 77.593;
+    const startLat = 12.9720;
+    const startLng = 77.5940;
+    const target = get().liveCustomerLocation || { lat: 12.9250, lng: 77.5938 };
     let step = 0;
     const totalSteps = 15;
     workerMoveInterval = setInterval(() => {
@@ -333,26 +364,29 @@ export const useAppStore = create((set, get) => ({
       const t = Math.min(step / totalSteps, 1);
       set({
         workerPosition: {
-          lat: startLat + (endLat - startLat) * t,
-          lng: startLng + (endLng - startLng) * t,
+          lat: startLat + (target.lat - startLat) * t,
+          lng: startLng + (target.lng - startLng) * t,
         },
       });
+      syncRemote(get());
       if (t >= 1) clearInterval(workerMoveInterval);
     }, 1000);
   },
 
-  rateBooking: async (stars, comment = '') => {
+  submitCustomerReviewAndPay: async (stars, comment = '') => {
     const { booking, history, assignedWorker } = get();
     if (!booking) return;
     const completedRecord = {
       ...booking,
       status: 'COMPLETED',
       rating: stars,
-      reviewComment: comment || 'Great service and thorough safety compliance.',
+      reviewComment: comment || 'Service completed thoroughly and verified.',
       technicianName: assignedWorker?.name || 'Arjun Sharma',
       licenseCode: assignedWorker?.licenseCode || 'CHL-2024-889',
     };
     set({
+      customerReview: { rating: stars, comment },
+      customerPaid: true,
       booking: null,
       history: [completedRecord, ...history],
     });
@@ -380,7 +414,7 @@ export const useAppStore = create((set, get) => ({
     set({
       booking: null,
       rebookDraft: {
-        pestType: historyItem.pestType || 'cockroaches',
+        pestTypes: historyItem.pestTypes || [historyItem.pestType || 'cockroaches'],
         propertySize: historyItem.propertySize || '2bhk',
         plan: historyItem.plan || 'barrier',
         day: 'today',
@@ -403,7 +437,13 @@ export const useAppStore = create((set, get) => ({
       contactUnlocked: remote.contactUnlocked ?? s.contactUnlocked,
       incomingJob: remote.incomingJob ?? s.incomingJob,
       startOtp: remote.startOtp ?? s.startOtp,
+      completionPin: remote.completionPin ?? s.completionPin ?? '7391',
+      workCompletedByWorker: remote.workCompletedByWorker ?? s.workCompletedByWorker,
+      paymentQrGenerated: remote.paymentQrGenerated ?? s.paymentQrGenerated,
+      customerPaid: remote.customerPaid ?? s.customerPaid,
+      customerReview: remote.customerReview ?? s.customerReview,
       etaSeconds: remote.etaSeconds ?? s.etaSeconds,
+      liveCustomerLocation: remote.liveCustomerLocation ?? s.liveCustomerLocation,
     }));
   },
 

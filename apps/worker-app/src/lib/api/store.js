@@ -1,12 +1,12 @@
 /**
- * Worker-app Zustand store. Reads remote state from its own /api/state
- * (served by vite.config.js middleware on port 5176) which reads/writes
- * the shared .pest-free-live-state.json file.
+ * Worker-app Zustand store. Reads & writes remote state from /api/state
+ * Synchronizes completionPin, paymentQrGenerated, customerReview, and liveCustomerLocation.
  */
 import { create } from 'zustand';
 import {
   transitionBooking,
   calculatePrice,
+  calculateMultiServicePrice,
   PEST_TYPES,
   PROPERTY_SIZES,
   PLANS,
@@ -36,7 +36,13 @@ async function syncRemote(state) {
         contactUnlocked: state.contactUnlocked,
         incomingJob: state.incomingJob,
         startOtp: state.startOtp,
+        completionPin: state.completionPin,
+        workCompletedByWorker: state.workCompletedByWorker,
+        paymentQrGenerated: state.paymentQrGenerated,
+        customerPaid: state.customerPaid,
+        customerReview: state.customerReview,
         etaSeconds: state.etaSeconds,
+        liveCustomerLocation: state.liveCustomerLocation,
       }),
     });
   } catch (_) {}
@@ -103,7 +109,7 @@ let etaTimerId = null;
 
 const initialState = {
   booking: null,
-  workerPosition: { lat: 12.972, lng: 77.594 },
+  workerPosition: { lat: 12.9720, lng: 77.5940 },
   assignedWorker: {
     id: 'WRK-101',
     name: 'Arjun Sharma',
@@ -117,6 +123,12 @@ const initialState = {
   incomingJob: null,
   contactUnlocked: false,
   startOtp: '4829',
+  completionPin: '7391',
+  workCompletedByWorker: false,
+  paymentQrGenerated: false,
+  customerPaid: false,
+  customerReview: null,
+  liveCustomerLocation: { lat: 12.9250, lng: 77.5938 },
   etaSeconds: 15,
   safetyChecklist: [false, false, false, false, false, false],
   afterPhotoTaken: false,
@@ -143,12 +155,13 @@ export const useAppStore = create((set, get) => ({
   updateUpiId: (newUpi) =>
     set((s) => ({ earnings: { ...s.earnings, upiId: newUpi } })),
 
-  // Simulate / load a realistic incoming job so worker can test all 7 states immediately
   simulateIncomingJob: async (presetStatus = 'AGENCY_APPROVED') => {
     if (etaTimerId) clearInterval(etaTimerId);
-    const price = calculatePrice('termites', '3bhk', 'barrier', 'treat_on_arrival');
+    const price = calculateMultiServicePrice(['termites'], '3bhk', 'barrier', 'treat_on_arrival');
     const payout = Math.round(price.total * 0.55);
     const otp = '4829';
+    const compPin = '7391';
+    const custLoc = { lat: 12.9250, lng: 77.5938 };
 
     const booking = {
       id: 'PF-' + Math.floor(1000 + Math.random() * 9000),
@@ -162,13 +175,14 @@ export const useAppStore = create((set, get) => ({
       dispatchMode: 'treat_on_arrival',
       address: 'Flat 402, Palm Grove Residency, 11th Main Rd, Jayanagar 4th Block, Bengaluru 560011',
       areaOnly: 'Jayanagar 4th Block',
+      coords: custLoc,
       note: 'Heavy termite mud tubes noticed behind kitchen cabinets and master bedroom wooden wardrobe.',
       slot: '01:00 - 03:00 PM',
       day: 'today',
       price,
       pricing: price,
-      customerMaskedName: 'Ravi K.',
-      customerFullName: 'Ravi Kumar',
+      customerMaskedName: 'Aarav S.',
+      customerFullName: 'Aarav Sharma',
       customerProxyPhone: '+91 80 4912 3400 (Ext 81)',
       customerRealPhone: '+91 98450 67890',
       createdAt: new Date().toISOString(),
@@ -181,24 +195,31 @@ export const useAppStore = create((set, get) => ({
       pestLabel: booking.pestLabel,
       sizeLabel: booking.sizeLabel,
       planLabel: booking.planLabel,
-      maskedName: 'Ravi K.',
+      maskedName: 'Aarav S.',
       maskedPhone: '+91-984-XXX-7890',
       slot: booking.slot,
+      coords: custLoc,
       payout,
     };
 
     const unlocked = ['ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(presetStatus);
-    const eta = presetStatus === 'ON_THE_WAY' ? 12 : 0;
+    const isComp = presetStatus === 'COMPLETED';
 
     set({
       booking,
       incomingJob,
       startOtp: otp,
+      completionPin: compPin,
+      workCompletedByWorker: isComp,
+      paymentQrGenerated: isComp,
+      customerPaid: isComp,
+      customerReview: isComp ? { rating: 5, comment: 'Punctual & thorough' } : null,
       contactUnlocked: unlocked,
-      etaSeconds: eta,
-      dutyStatus: presetStatus === 'COMPLETED' ? 'ON_DUTY' : 'ON_JOB',
-      safetyChecklist: presetStatus === 'COMPLETED' ? [true, true, true, true, true, true] : [false, false, false, false, false, false],
-      afterPhotoTaken: presetStatus === 'COMPLETED',
+      etaSeconds: presetStatus === 'ON_THE_WAY' ? 12 : 0,
+      liveCustomerLocation: custLoc,
+      dutyStatus: isComp ? 'ON_DUTY' : 'ON_JOB',
+      safetyChecklist: isComp ? [true, true, true, true, true, true] : [false, false, false, false, false, false],
+      afterPhotoTaken: isComp,
       whatsappPings: 0,
     });
 
@@ -226,19 +247,18 @@ export const useAppStore = create((set, get) => ({
     set({ booking: next, dutyStatus: 'ON_JOB' });
     await syncRemote(get());
 
-    // Automatically unlock after 6 seconds if owner hasn't unlocked yet
     setTimeout(async () => {
       const b = get().booking;
       if (!b || b.status !== 'TECHNICIAN_ACCEPTED') return;
-      get().forceOwnerUnlock();
-    }, 6000);
+      get().forceAgencyUnlock();
+    }, 5000);
   },
 
-  pingOwnerWhatsApp: () => {
+  pingAgencyWhatsApp: () => {
     set((s) => ({ whatsappPings: s.whatsappPings + 1 }));
   },
 
-  forceOwnerUnlock: async () => {
+  forceAgencyUnlock: async () => {
     const { booking } = get();
     if (!booking) return;
     const next = safeTransition(booking, 'ON_THE_WAY');
@@ -283,7 +303,7 @@ export const useAppStore = create((set, get) => ({
     if (!booking) return { ok: false, error: 'No active booking found.' };
     const expected = startOtp || booking.startOtp || '4829';
     if (enteredOtp.trim() !== expected) {
-      return { ok: false, error: `Incorrect 4-digit OTP. (Customer OTP is ${expected})` };
+      return { ok: false, error: `Incorrect 4-digit Start OTP. (Customer OTP is ${expected})` };
     }
     const next = safeTransition(booking, 'IN_PROGRESS');
     set({ booking: next });
@@ -304,24 +324,34 @@ export const useAppStore = create((set, get) => ({
 
   captureAfterPhoto: () => set({ afterPhotoTaken: true }),
 
-  workerCompleteBooking: async () => {
-    const { booking, safetyChecklist, afterPhotoTaken, routeStops } = get();
-    if (!booking) return;
-    if (!safetyChecklist.every(Boolean) || !afterPhotoTaken) return;
+  workerMarkWorkFinished: async () => {
+    const { booking, safetyChecklist, afterPhotoTaken } = get();
+    if (!booking) return { ok: false, error: 'No active booking.' };
+    if (!safetyChecklist.every(Boolean) || !afterPhotoTaken) {
+      return { ok: false, error: 'Complete all 6 safety checklist steps and capture proof photo first.' };
+    }
+    set({ workCompletedByWorker: true });
+    await syncRemote(get());
+    return { ok: true };
+  },
+
+  workerVerifyCustomerCompletionPin: async (enteredPin) => {
+    const { booking, completionPin } = get();
+    if (!booking) return { ok: false, error: 'No active booking.' };
+    const expected = completionPin || '7391';
+    if (enteredPin.trim() !== expected) {
+      return { ok: false, error: `Incorrect Completion PIN. Customer screen displays PIN: ${expected}` };
+    }
     const next = safeTransition(booking, 'COMPLETED');
     const rawTotal = typeof booking.price === 'number' ? booking.price : (booking.price?.total ?? booking.pricing?.total ?? 1600);
     const jobPayout = Math.round(rawTotal * 0.55);
 
-    const updatedStops = routeStops.map((st) =>
-      st.status === 'Active' ? { ...st, status: 'Completed' } : st
-    );
-
     set({
       booking: next,
+      paymentQrGenerated: true,
       dutyStatus: 'ON_DUTY',
       incomingJob: null,
       contactUnlocked: false,
-      routeStops: updatedStops,
       earnings: {
         ...get().earnings,
         today: get().earnings.today + jobPayout,
@@ -331,6 +361,7 @@ export const useAppStore = create((set, get) => ({
       },
     });
     await syncRemote(get());
+    return { ok: true, payout: jobPayout };
   },
 
   requestInstantPayout: () => {
@@ -366,22 +397,23 @@ export const useAppStore = create((set, get) => ({
         contactUnlocked: remote.contactUnlocked ?? s.contactUnlocked,
         incomingJob: remote.incomingJob ?? s.incomingJob,
         startOtp: remote.startOtp ?? s.startOtp ?? '4829',
+        completionPin: remote.completionPin ?? s.completionPin ?? '7391',
+        workCompletedByWorker: remote.workCompletedByWorker ?? s.workCompletedByWorker,
+        paymentQrGenerated: remote.paymentQrGenerated ?? s.paymentQrGenerated,
+        customerPaid: remote.customerPaid ?? s.customerPaid,
+        customerReview: remote.customerReview ?? s.customerReview,
+        liveCustomerLocation: remote.liveCustomerLocation ?? s.liveCustomerLocation,
         etaSeconds: statusChanged ? (remote.etaSeconds ?? s.etaSeconds) : s.etaSeconds,
       };
     });
   },
 
-  canCancel: () => {
-    const { booking } = get();
-    if (!booking) return false;
-    return ['BOOKING_PLACED', 'AGENCY_APPROVED', 'TECHNICIAN_ACCEPTED'].includes(booking.status);
-  },
   canWorkerMarkArrived: () => {
     const { booking, etaSeconds } = get();
     return booking?.status === 'ON_THE_WAY' && etaSeconds === 0;
   },
   canWorkerStart: () => get().booking?.status === 'ARRIVED',
-  canWorkerComplete: () => {
+  canWorkerMarkFinished: () => {
     const { safetyChecklist, afterPhotoTaken } = get();
     return safetyChecklist.every(Boolean) && afterPhotoTaken;
   },
