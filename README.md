@@ -1,115 +1,173 @@
-# Pest_Fast (Pest Free Monorepo)
+# 🌿 Pest Free — Rapido-style Pest Control Marketplace
 
-A comprehensive, production-oriented platform connecting a pest-control agency, its field workers, and customers — single-agency booking, dispatch, KYC-verified workers, and live tracking.
-
----
-
-## 👥 Team & Ownership Boundaries
-
-| Role / Person | Owns | Responsibilities |
-|---|---|---|
-| **Person A** | `apps/admin-dashboard`, `apps/agency-dashboard` | Super-admin & agency owner dashboards (Web, React + Vite) |
-| **Person B** | `apps/worker-app`, `apps/customer-app` | Worker portal & customer booking app (React / Expo) |
-| **Person C** | `apps/api`, `packages/db`, `packages/shared-types` | NestJS backend, PostgreSQL/Prisma schemas, contracts |
+A full-stack, mobile-first PWA marketplace connecting customers, agency owners, and field technicians for certified pest control.
 
 ---
 
-## 🌐 Running Applications & Ports
-
-All four applications are independently hosted on distinct local ports to enable simultaneous local development and cross-role workflow testing:
-
-| Application | URL | Port | Default Role / Notes |
-| :--- | :--- | :--- | :--- |
-| **Customer App** | [http://localhost:3000/](http://localhost:3000/) | `3000` | Customer service browsing, card flipping & booking |
-| **Admin Dashboard** | [http://localhost:5174/](http://localhost:5174/) | `5174` | Hidden developer & super-admin metrics |
-| **Agency Dashboard** | [http://localhost:5175/](http://localhost:5175/) | `5175` | Agency dispatch, worker approvals & booking management |
-| **Worker App** | [http://localhost:5176/](http://localhost:5176/) | `5176` | Worker registration, KYC submission & job dispatch |
-
----
-
-## 🔑 Login Credentials
-
-The frontend currently uses mock authentication suitable for offline development and UI verification:
-
-### 1. 🛡️ Admin Dashboard (Port 5174)
-- **Super-Admin Mode**:
-  - **Email**: `admin@pestfast.com`
-  - **Password**: Any password (e.g. `admin123`)
-- **Agency Simulation Mode**:
-  - **Email**: Any other email (e.g. `agency@pestfast.com`)
-  - **Password**: Any password
-
-### 2. 🏢 Agency Dashboard (Port 5175)
-- **Email**: Any valid agency email (e.g. `ecopest@pestfast.com` or `agency@test.com`)
-- **Password**: Any password (e.g. `agency123`)
-
-### 3. 👷 Worker App (Port 5176)
-- **Step 1 (Basic Details)**:
-  - **Full Name**: Any worker name (e.g. `Ramesh Kumar`)
-  - **Mobile Number**: Any 10-digit number (e.g. `9876543210`)
-- **Step 2 (KYC Document IDs)**:
-  - **PAN Card**: `ABCDE1234F`
-  - **Aadhaar Card**: `123456789012`
-  - **Voter ID**: `VOTER12345`
-  - Click **Verify & Access Portal**
-
-### 4. 🛒 Customer App (Port 3000)
-- **Step 1**: Name + Mobile Number ➔ Click **Send OTP**
-- **Step 2**: Enter any 4-digit OTP (e.g. `1234`) ➔ Click **Verify & Login**
-
----
-
-## 🏗️ Monorepo Architecture & Evolution
+## 🏗️ Architecture
 
 ```
-pest-free/ (Pest_Fast1)
+Pest_Fast1-main/
 ├── apps/
-│   ├── admin-dashboard/     # Person A — Super-admin & platform metrics (Port 5174)
-│   ├── agency-dashboard/    # Person A — Agency operations & worker dispatch (Port 5175)
-│   ├── customer-app/        # Person B — Customer booking experience (Port 3000)
-│   ├── worker-app/          # Person B — Worker onboarding, KYC & active jobs (Port 5176)
-│   └── api/                 # Person C — NestJS backend API
+│   ├── customer-app/     → Port 3000  (Customer PWA: Book · Track · History)
+│   ├── worker-app/       → Port 5176  (Worker PWA: Job · Route · Earnings · Safety)
+│   ├── agency-dashboard/ → Port 5175  (Agency owner: Approve · Dispatch)
+│   └── admin-dashboard/  → Port 5174  (Platform admin)
 ├── packages/
-│   ├── shared-types/        # Person C — Type contracts (booking, agency, worker, customer, mock)
-│   ├── ui-kit/              # Person A + B — Shared buttons, alerts, theme tokens
-│   ├── db/                  # Person C — Prisma/PostgreSQL schema & migrations
-│   └── config/              # Shared tooling configs (oxlint, tsconfig)
-├── docs/                    # PRD, TRD, workflow, UI-UX, backend schema
-├── dev.mjs                  # Multi-app process runner with dedicated ports
-├── AGENTS.md                # Agent directives, ownership rules & full migration ledger
-├── instructions.md          # Project instructions & feature checklist
-├── turbo.json               # Turborepo task pipeline
-└── package.json             # Root workspace definitions & unified scripts
+│   ├── shared-types/     → Shared TypeScript types
+│   └── ui-kit/           → Shared React component primitives
+└── docs/                 → PRD, RD, workflow, UI-UX, backend-schema docs
 ```
+
+## 🎨 Design System
+
+| Token | Value | Use |
+|---|---|---|
+| `--canvas` | `#FFF4C2` | Page background |
+| `--surface` | `#FFFBE6` | App shell |
+| `--card` | `#FFFFFF` | Cards |
+| `--primary` | `#1F5B3A` | Brand green |
+| `--accent` | `#E8A317` | Amber CTA |
+| `--success` | `#2E9E5B` | Positive state |
+| `--danger` | `#C93B2B` | Destructive |
+
+Fonts: **Bricolage Grotesque** (headings/prices) + **Figtree** (body)
 
 ---
 
-## 💻 Development Commands
-
-From the monorepo root:
+## 🚀 Quick Start
 
 ```bash
-# 1. Install all dependencies across all apps & packages
-npm install   # or: pnpm install
+# Install all deps
+npm install
 
-# 2. Run all 4 applications concurrently
-npm run dev
+# Start all 4 apps simultaneously
+node dev.mjs all
 
-# 3. Run individual apps
-npm run dev:customer   # Customer App on http://localhost:3000
-npm run dev:admin      # Admin Dashboard on http://localhost:5174
-npm run dev:agency     # Agency Dashboard on http://localhost:5175
-npm run dev:worker     # Worker App on http://localhost:5176
-
-# 4. Build all apps for production
-npm run build
+# Or start individually
+cd apps/customer-app && npm run dev   # :3000
+cd apps/worker-app && npm run dev     # :5176
 ```
 
 ---
 
-## 🚀 Path to Production
+## 🛤️ Complete User Flow
 
-1. **Backend Integration**: Replace front-end mock data in `packages/shared-types/mock.ts` with HTTP/WebSocket calls to `apps/api` (NestJS).
-2. **Real-time Geo-Tracking**: Connect Redis GEO + BullMQ + Socket.IO for live worker dispatch and location updates.
-3. **KYC Verification**: Integrate third-party e-KYC API (storing only provider verification tokens, never raw Aadhaar numbers).
-4. **Payments**: Wire up UPI / payment gateway on booking confirmation.
+```
+Customer places booking (Book tab)
+  ↓ 8 seconds (mock) — Agency owner approves
+Worker sees MASKED name+phone+area only (Job tab)
+  ↓ Worker accepts job
+  ↓ 6 seconds (mock) — Owner unlocks full contact
+Worker sees real address + phone (ON_THE_WAY)
+  ↓ ETA countdown (90s → 0)
+Worker marks ARRIVED (only when ETA = 0)
+  ↓ Customer sees 4-digit OTP
+Worker enters OTP → Treatment starts (IN_PROGRESS)
+  ↓ Worker ticks all 6 safety steps + captures photo
+Worker marks COMPLETED
+  ↓ Customer rates 1–5 stars → History
+  ↓ Worker payout added to Earnings
+```
+
+---
+
+## 📱 Customer App (`apps/customer-app` — :3000)
+
+### Tabs
+- **Book** — 5-step wizard: pest type → size+plan → schedule → address → confirm
+  - 6 pest types with real base prices
+  - 3 plans: Standard / Barrier / Shield (×1, ×1.5, ×2)
+  - 5 property sizes (1BHK→Commercial)
+  - 🤖 AI smart plan suggestion on step 2
+  - Inspection mode (₹0 advance) vs Treat-on-arrival (price shown live with GST)
+- **Track** — 7-state live timeline with animated technician dot on map
+  - Technician card with KYC badge
+  - 4-digit OTP shown only when ARRIVED
+  - Cancel button only before ON_THE_WAY
+- **History** — Past bookings with rating and Rebook button
+
+---
+
+## 👷 Worker App (`apps/worker-app` — :5176)
+
+### Header
+- Duty toggle: **On duty / Off duty** (auto "On job" when active)
+- 🚨 Emergency SOS button with confirmation sheet
+
+### Tabs
+- **Job** — Full state-gated flow:
+  1. `BOOKING_PLACED` → spinning "awaiting agency approval"
+  2. `AGENCY_APPROVED` → masked customer info, Accept button
+  3. `TECHNICIAN_ACCEPTED` → waiting for owner to unlock
+  4. `ON_THE_WAY` → full address, mini-map, ETA countdown, Mark Arrived (disabled until ETA=0)
+  5. `ARRIVED` → 4-input OTP entry, Verify → Start
+  6. `IN_PROGRESS` → 6-step safety checklist + after-photo → Complete
+  7. `COMPLETED` → payout confirmation
+- **Route** — Today's stops with status and payout
+- **Earnings** — Today/week stats, safety bonus, UPI link, instant payout with confirmation sheet
+- **Safety** — CSDS sheets, emergency protocol, AI chat assistant
+
+---
+
+## 🤖 AI Features
+
+| Feature | Where | How |
+|---|---|---|
+| Smart quote | Customer Book tab step 2 | `generateSmartQuoteRecommendation()` from bundled logic |
+| Safety assistant | Worker Safety tab | `answerWorkerSafetyQuestion()` from bundled CSDS data |
+| Dispatch scoring | Store/mock | `scoreAndRankWorkers()` pure function |
+
+---
+
+## 🧪 Tests
+
+```bash
+cd apps/customer-app
+npx vitest run
+
+# Tests cover:
+# - calculatePrice() with all size/plan combos
+# - scoreAndRankWorkers() KYC/duty filtering + ranking
+# - transitionBooking() ALL legal + illegal state transitions
+# - generateSmartQuoteRecommendation()
+# - answerWorkerSafetyQuestion() including unknown chemicals
+```
+
+---
+
+## 🔄 Cross-Port State Sync
+
+The customer app (`:3000`) and worker app (`:5176`) share state via a file-based API:
+
+```
+POST/GET http://localhost:3000/api/state
+→ reads/writes .pest-free-live-state.json at project root
+→ both Vite servers expose this endpoint
+→ worker-app polls every 3s via syncFromRemote()
+```
+
+In production, replace with **Socket.IO** or **Supabase Realtime**.
+
+---
+
+## 📋 State Machine
+
+```
+BOOKING_PLACED → AGENCY_APPROVED → TECHNICIAN_ACCEPTED → ON_THE_WAY → ARRIVED → IN_PROGRESS → COMPLETED
+                                ↘                      ↗
+                                       CANCELLED (allowed before ON_THE_WAY)
+```
+
+---
+
+## 📦 Key Dependencies
+
+| Package | Purpose |
+|---|---|
+| `react` 19 | UI framework |
+| `framer-motion` | Tab transitions, sheet animations |
+| `zustand` | Global state management |
+| `zod` | Form validation (BookingInputSchema) |
+| `vite` 8 | Dev server + build |
+| `vitest` | Unit tests |
