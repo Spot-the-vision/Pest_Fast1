@@ -141,7 +141,10 @@ async function syncRemote(state) {
 async function fetchRemote() {
   try {
     const r = await fetch('/api/state');
-    if (r.ok) return r.json();
+    if (r.ok) {
+      const text = await r.text();
+      return text ? JSON.parse(text) : null;
+    }
   } catch (_) {}
   return null;
 }
@@ -490,3 +493,4 @@ export const useAppStore = create((set, get) => ({
     return ['BOOKING_PLACED', 'AGENCY_APPROVED', 'TECHNICIAN_ACCEPTED'].includes(booking.status);
   },
 }));
+if (typeof window !== 'undefined') { window.__CUSTOMER_STORE__ = useAppStore; }

@@ -1005,7 +1005,7 @@ function ActiveJobSection({ toast, onNavigate }) {
                 </View>
 
                 {/* 2B. Official Payment QR Code (Generated in Worker UI after Completion PIN is verified) */}
-                {(pinVerifiedByWorker || paymentQrGenerated || booking.status === 'COMPLETED') && (
+                {(pinVerifiedByWorker || paymentQrGenerated || Boolean(customerReview) || booking.status === 'COMPLETED') && (
                   <View className="web-card" style={{ borderTop: '4px solid var(--success)', background: '#FFFFFF' }}>
                     <View className="card-header-row">
                       <h3 className="card-title">

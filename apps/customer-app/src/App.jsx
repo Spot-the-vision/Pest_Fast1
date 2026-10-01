@@ -1243,12 +1243,12 @@ function TrackSection({ toast, onNavigate }) {
 
             {/* RIGHT COLUMN: Doorstep OTP Handshake, End-of-Service Completion PIN, QR Payment & Review */}
             <View className="sticky-summary" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* 1. Doorstep Start OTP Card */}
+              {/* 1. Doorstep Start OTP Card (Mocked until worker clicks Arrived) */}
               <View
                 className="web-card"
                 style={{
                   borderTop: '4px solid var(--accent)',
-                  background: booking.status === 'ARRIVED' ? 'var(--accent-light)' : 'var(--card)',
+                  background: booking.status === 'ARRIVED' ? 'rgba(232, 163, 23, 0.12)' : 'var(--card)',
                 }}
               >
                 <View className="card-header-row">
@@ -1256,50 +1256,94 @@ function TrackSection({ toast, onNavigate }) {
                     <KeyRound size={20} color="var(--primary)" />
                     <Text>Doorstep Treatment Start OTP</Text>
                   </h3>
-                  <Text className={`badge ${['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'badge-green' : 'badge-amber'}`}>
-                    {['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? '✓ Verified by Tech' : 'Share on Arrival'}
+                  <Text className={`badge ${['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'badge-green' : booking.status === 'ARRIVED' ? 'badge-amber' : 'badge-neutral'}`}>
+                    {['IN_PROGRESS', 'COMPLETED'].includes(booking.status)
+                      ? '✓ Verified by Tech'
+                      : booking.status === 'ARRIVED'
+                      ? '✓ Tech at Doorstep'
+                      : 'Mocked • Tech En Route'}
                   </Text>
                 </View>
                 <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', lineHeight: 1.45, marginBottom: 14 }}>
                   {['IN_PROGRESS', 'COMPLETED'].includes(booking.status)
                     ? 'Technician verified this OTP upon doorstep arrival. Chemical treatment is active.'
-                    : 'Share this 4-digit code with your technician only when they arrive at your doorstep with their PPE kit.'}
+                    : booking.status === 'ARRIVED'
+                    ? 'Technician Arjun Sharma has arrived at your doorstep! Share this 4-digit OTP with the technician to begin treatment:'
+                    : 'Technician is en route. This Start OTP is mocked/locked and will automatically reveal on your screen when technician clicks "I Have Arrived" at your doorstep.'}
                 </p>
-                <View
-                  style={{
-                    display: 'flex',
-                    gap: 12,
-                    justifyContent: 'center',
-                    padding: '14px',
-                    background: '#FFFFFF',
-                    borderRadius: 14,
-                    border: ['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? '2px solid var(--success)' : '2px dashed var(--border-strong)',
-                  }}
-                >
-                  {String(startOtp || booking?.startOtp || '4829')
-                    .split('')
-                    .map((d, i) => (
+
+                {/* Live digits shown ONLY when worker has arrived or verified */}
+                {['ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? (
+                  <View
+                    style={{
+                      display: 'flex',
+                      gap: 12,
+                      justifyContent: 'center',
+                      padding: '14px',
+                      background: '#FFFFFF',
+                      borderRadius: 14,
+                      border: ['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? '2px solid var(--success)' : '2.5px solid var(--accent)',
+                    }}
+                  >
+                    {String(startOtp || booking?.startOtp || '4829')
+                      .split('')
+                      .map((d, i) => (
+                        <View
+                          key={i}
+                          style={{
+                            width: 54,
+                            height: 60,
+                            borderRadius: 12,
+                            background: ['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'var(--primary-light)' : 'rgba(232, 163, 23, 0.15)',
+                            border: '1.5px solid var(--border-strong)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontFamily: 'var(--font-heading)',
+                            fontSize: '1.75rem',
+                            fontWeight: 800,
+                            color: 'var(--primary-dark)',
+                          }}
+                        >
+                          {d}
+                        </View>
+                      ))}
+                  </View>
+                ) : (
+                  /* Mocked dots before arrival */
+                  <View
+                    style={{
+                      display: 'flex',
+                      gap: 12,
+                      justifyContent: 'center',
+                      padding: '14px',
+                      background: 'var(--surface)',
+                      borderRadius: 14,
+                      border: '2px dashed var(--border-strong)',
+                    }}
+                  >
+                    {['•', '•', '•', '•'].map((dot, i) => (
                       <View
                         key={i}
                         style={{
                           width: 54,
                           height: 60,
                           borderRadius: 12,
-                          background: ['IN_PROGRESS', 'COMPLETED'].includes(booking.status) ? 'var(--primary-light)' : 'var(--surface)',
+                          background: '#FFFFFF',
                           border: '1px solid var(--border-strong)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontFamily: 'var(--font-heading)',
-                          fontSize: '1.75rem',
+                          fontSize: '1.8rem',
+                          color: 'var(--ink-muted)',
                           fontWeight: 800,
-                          color: 'var(--primary-dark)',
                         }}
                       >
-                        {d}
+                        {dot}
                       </View>
                     ))}
-                </View>
+                  </View>
+                )}
               </View>
 
               {/* 2. End-of-Service Completion Security PIN Card */}
@@ -1493,13 +1537,18 @@ function TrackSection({ toast, onNavigate }) {
                         ))}
                     </View>
 
-                    <TouchableOpacity
-                      type="button"
-                      className="btn btn-success btn-block btn-lg"
-                      onClick={() => setQrModal(true)}
-                    >
-                      <QrCode size={18} /> Proceed to Pay Online / View QR (Rs. {rawTotal})
-                    </TouchableOpacity>
+                    <View style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <TouchableOpacity
+                        type="button"
+                        className="btn btn-success btn-block btn-lg"
+                        onClick={() => setQrModal(true)}
+                      >
+                        <QrCode size={18} /> Open Payment Scanner Link / Pay UPI (Rs. {rawTotal})
+                      </TouchableOpacity>
+                      <View style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
+                        Scan the official UPI QR code on technician's phone or click above to pay online
+                      </View>
+                    </View>
                   </View>
                 )}
               </View>
@@ -1982,6 +2031,13 @@ export default function App() {
     const id = setInterval(() => syncFromRemote(), 3000);
     return () => clearInterval(id);
   }, [syncFromRemote]);
+
+  // If active booking exists, auto-route to live tracking on refresh/mount
+  useEffect(() => {
+    if (booking && activeSection === 'book' && ['CONFIRMED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(booking.status)) {
+      setActiveSection('track');
+    }
+  }, [booking?.status]);
 
   const navItems = [
     {
