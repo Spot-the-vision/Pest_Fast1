@@ -2023,6 +2023,8 @@ function SafetyGuideSection() {
 export default function App() {
   const [activeSection, setActiveSection] = useState('book');
   const [helpOpen, setHelpOpen] = useState(false);
+  const [hasStartedBooking, setHasStartedBooking] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { booking, history, syncFromRemote } = useAppStore();
   const { toasts, show: toast } = useToast();
 
@@ -2032,10 +2034,13 @@ export default function App() {
     return () => clearInterval(id);
   }, [syncFromRemote]);
 
-  // If active booking exists, auto-route to live tracking on refresh/mount
+  // If active booking exists, auto-route to live tracking on refresh/mount and enable portal mode
   useEffect(() => {
-    if (booking && activeSection === 'book' && ['CONFIRMED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(booking.status)) {
-      setActiveSection('track');
+    if (booking && booking.status !== 'CANCELLED') {
+      setHasStartedBooking(true);
+      if (['CONFIRMED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(booking.status)) {
+        setActiveSection('track');
+      }
     }
   }, [booking?.status]);
 
@@ -2085,8 +2090,10 @@ export default function App() {
     },
   };
 
+  const isLandingView = !hasStartedBooking && (!booking || booking.status === 'CANCELLED');
+
   return (
-    <View className="web-layout">
+    <View style={{ minHeight: '100vh', background: 'var(--canvas)' }}>
       <ToastStack toasts={toasts} />
 
       <ModalDialog
@@ -2102,7 +2109,7 @@ export default function App() {
           <a
             href="tel:18001239999"
             className="btn btn-primary btn-lg btn-block"
-            onClick={() => toast('Calling Pest Free 24x7 Concierge Desk...', 'info')}
+            onClick={() => toast('Calling Easy HiCare 24x7 Concierge Desk...', 'info')}
           >
             <Phone size={18} /> Call Customer Support (1800-123-9999)
           </a>
@@ -2116,108 +2123,292 @@ export default function App() {
         </View>
       </ModalDialog>
 
-      {/* Left Sidebar Navigation (React Native Primitives) */}
-      <View className="web-sidebar" accessibilityRole="navigation" aria-label="Customer Website Navigation">
-        <View className="sidebar-brand">
-          <View className="brand-logo-box">
-            <ShieldCheck size={24} />
-          </View>
-          <View>
-            <Text className="brand-title">Pest Free</Text>
-            <Text className="brand-subtitle">Customer Web Portal</Text>
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* 1. HERO LANDING PAGE (When Not Booked & Not In Booking Mode) - NO NAVBAR   */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {isLandingView ? (
+        <View style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          {/* Top Brand Header */}
+          <nav
+            style={{
+              padding: '16px 28px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid var(--border)',
+              background: 'var(--surface)',
+            }}
+          >
+            <View style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <Image
+                src="/easyhicare-logo.png"
+                alt="Easy HiCare Logo"
+                style={{ width: 46, height: 46, borderRadius: 12, objectFit: 'contain', background: '#FFFFFF', padding: 3, border: '1px solid var(--border)' }}
+              />
+              <View>
+                <Text style={{ fontFamily: 'var(--font-heading)', fontSize: '1.35rem', fontWeight: 900, color: 'var(--ink)' }}>
+                  Easy HiCare
+                </Text>
+                <Text style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', fontWeight: 600 }}>
+                  Pest Solutions &bull; Official Customer Portal
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Text className="badge badge-green" style={{ fontSize: '0.78rem', padding: '6px 12px' }}>
+                <ShieldCheck size={14} /> Govt Approved CIB&RC &bull; ISO 9001:2015
+              </Text>
+              <TouchableOpacity
+                className="btn btn-outline btn-sm"
+                onClick={() => setHelpOpen(true)}
+              >
+                <Phone size={14} /> 24x7 Helpline
+              </TouchableOpacity>
+            </View>
+          </nav>
+
+          {/* Hero Content Section */}
+          <View className="hero-landing-wrap">
+            <View className="hero-badge-pill">
+              <Sparkles size={16} color="var(--accent)" />
+              <Text>100% Odorless & Eco-Safe &bull; Safe for Children & Pets</Text>
+            </View>
+
+            <h1 className="hero-title">
+              India's Most Trusted Certified Pest Solutions
+            </h1>
+
+            <p className="hero-subtitle">
+              Guaranteed eradication with 60-minute doorstep arrival, background-checked certified applicators, government-approved CIB&RC odorless formulations, and an unconditional 90-day warranty.
+            </p>
+
+            {/* 4 Agency Stats Cards */}
+            <View className="hero-stats-grid">
+              <View className="kpi-card" style={{ borderLeft: '4px solid var(--primary)', textAlign: 'center', padding: '20px' }}>
+                <View style={{ fontSize: '2.1rem', fontWeight: 900, color: 'var(--primary)', fontFamily: 'var(--font-heading)' }}>
+                  50,000+
+                </View>
+                <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>Homes & Offices Treated</View>
+                <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>Across Bengaluru South & Central</View>
+              </View>
+
+              <View className="kpi-card" style={{ borderLeft: '4px solid #E8A317', textAlign: 'center', padding: '20px' }}>
+                <View style={{ fontSize: '2.1rem', fontWeight: 900, color: '#B87F0D', fontFamily: 'var(--font-heading)' }}>
+                  99.4%
+                </View>
+                <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>Customer Satisfaction</View>
+                <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>Over 4.9★ Average Rating</View>
+              </View>
+
+              <View className="kpi-card" style={{ borderLeft: '4px solid var(--success)', textAlign: 'center', padding: '20px' }}>
+                <View style={{ fontSize: '2.1rem', fontWeight: 900, color: 'var(--success)', fontFamily: 'var(--font-heading)' }}>
+                  120+
+                </View>
+                <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>Licensed Applicators</View>
+                <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>100% Police & KYC Verified</View>
+              </View>
+
+              <View className="kpi-card" style={{ borderLeft: '4px solid var(--primary-dark)', textAlign: 'center', padding: '20px' }}>
+                <View style={{ fontSize: '2.1rem', fontWeight: 900, color: 'var(--primary-dark)', fontFamily: 'var(--font-heading)' }}>
+                  100%
+                </View>
+                <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>CIB&RC Registered</View>
+                <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>Non-toxic, low odor formulations</View>
+              </View>
+            </View>
+
+            {/* Popular Treatments Showcase */}
+            <View style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, width: '100%', marginBottom: 36 }}>
+              {[
+                { name: 'Cockroach Herbal Gel', tag: 'Top Seller', price: '₹1,199', desc: 'Dual-layer odorless baiting & crevice shield' },
+                { name: 'Termite Drill & Inject', tag: 'Heavy Duty', price: '₹2,499', desc: 'Subterranean barrier with 3-year warranty' },
+                { name: 'Bedbug Thermal Fogging', tag: 'Intensive', price: '₹1,699', desc: 'Double-coat mattress & seam deep steam' },
+                { name: 'Mosquito Mist & Fogging', tag: 'Fast Action', price: '₹899', desc: 'Outdoor perimeter & drain larvicide spray' },
+              ].map((svc, idx) => (
+                <View
+                  key={idx}
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1.5px solid var(--border)',
+                    borderRadius: 14,
+                    padding: 16,
+                    textAlign: 'left',
+                  }}
+                >
+                  <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <Text className="badge badge-neutral" style={{ fontSize: '0.72rem' }}>{svc.tag}</Text>
+                    <Text style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>{svc.price}</Text>
+                  </View>
+                  <View style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--ink)' }}>{svc.name}</View>
+                  <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 4 }}>{svc.desc}</View>
+                </View>
+              ))}
+            </View>
+
+            {/* Central Call to Action */}
+            <TouchableOpacity
+              className="hero-cta-btn"
+              testID="hero-book-demo-btn"
+              onPress={() => {
+                setHasStartedBooking(true);
+                setActiveSection('book');
+              }}
+              onClick={() => {
+                setHasStartedBooking(true);
+                setActiveSection('book');
+              }}
+            >
+              <Bug size={22} />
+              <Text style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '1.2rem' }}>
+                Book a Demo / Book Treatment →
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
+      ) : (
+        /* ────────────────────────────────────────────────────────────────────────── */
+        /* 2. CUSTOMER PORTAL / BOOKING & LIVE TRACKING WORKSPACE (WITH SIDEBAR)      */
+        /* ────────────────────────────────────────────────────────────────────────── */
+        <View className="web-layout">
+          {/* Left Sidebar Navigation */}
+          <View className={`web-sidebar ${mobileNavOpen ? 'mobile-open' : ''}`} accessibilityRole="navigation" aria-label="Customer Website Navigation">
+            <View className="sidebar-brand">
+              <Image
+                src="/easyhicare-logo.png"
+                alt="Easy HiCare Logo"
+                style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'contain', background: '#FFFFFF', padding: 3 }}
+              />
+              <View>
+                <Text className="brand-title" style={{ fontSize: '1.15rem', fontWeight: 800 }}>Easy HiCare</Text>
+                <Text className="brand-subtitle" style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.75)' }}>Pest Solutions &bull; Customer</Text>
+              </View>
+            </View>
 
-        <View className="sidebar-customer-card">
-          <View className="customer-avatar-row">
-            <View className="customer-avatar">AK</View>
-            <View>
-              <Text className="customer-name">Aarav Sharma</Text>
-              <Text className="customer-meta">Jayanagar 4th Block, BLR</Text>
+            <View className="sidebar-customer-card">
+              <View className="customer-avatar-row">
+                <View className="customer-avatar">AK</View>
+                <View>
+                  <Text className="customer-name">Aarav Sharma</Text>
+                  <Text className="customer-meta">Jayanagar 4th Block, BLR</Text>
+                </View>
+              </View>
+              <View className="customer-badges">
+                <Text className="sidebar-badge">
+                  <Lock size={11} /> Agency Verified
+                </Text>
+                <Text className="sidebar-badge">
+                  <Award size={11} /> 90d Warranty
+                </Text>
+              </View>
+            </View>
+
+            <View className="sidebar-nav">
+              <Text className="nav-section-label">Customer Portal</Text>
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeSection === item.id;
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
+                    onPress={() => {
+                      setActiveSection(item.id);
+                      setMobileNavOpen(false);
+                    }}
+                    onClick={() => {
+                      setActiveSection(item.id);
+                      setMobileNavOpen(false);
+                    }}
+                    accessibilityRole="button"
+                  >
+                    <Icon size={19} />
+                    <Text style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.label}</Text>
+                    <Text className="nav-pill-count">{item.badge}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={{ padding: '0 14px 14px' }}>
+              <TouchableOpacity
+                className="btn btn-outline btn-block"
+                style={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.2)', marginBottom: 8 }}
+                onClick={() => setHasStartedBooking(false)}
+              >
+                ← Back to Home
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="btn btn-accent btn-block"
+                onPress={() => setHelpOpen(true)}
+                onClick={() => setHelpOpen(true)}
+                accessibilityRole="button"
+              >
+                <Phone size={16} /> <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>24x7 Customer Helpline</Text>
+              </TouchableOpacity>
             </View>
           </View>
-          <View className="customer-badges">
-            <Text className="sidebar-badge">
-              <Lock size={11} /> Agency Verified
-            </Text>
-            <Text className="sidebar-badge">
-              <Award size={11} /> 90d Warranty
-            </Text>
+
+          {/* Main Content */}
+          <View className="web-main">
+            <View className="web-topbar">
+              <View style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <TouchableOpacity
+                  className="btn btn-outline btn-sm mobile-menu-btn"
+                  style={{ display: 'none', padding: '6px 10px' }}
+                  onClick={() => setMobileNavOpen(!mobileNavOpen)}
+                >
+                  <Menu size={18} />
+                </TouchableOpacity>
+                <View>
+                  <View style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
+                    <Text className="topbar-title" style={{ fontSize: '1.45rem', fontWeight: 800 }}>
+                      {headers[activeSection]?.title || 'Customer Portal'}
+                    </Text>
+                    <Text className="badge badge-green" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
+                      Govt Approved CIB&RC &bull; 100% Eco-Safe Formulations
+                    </Text>
+                  </View>
+                  <Text className="topbar-subtitle">
+                    {headers[activeSection]?.subtitle || 'Certified Pest Solutions'}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="topbar-right">
+                {booking && booking.status !== 'CANCELLED' ? (
+                  <TouchableOpacity
+                    className="btn btn-primary btn-sm"
+                    onPress={() => setActiveSection('track')}
+                    onClick={() => setActiveSection('track')}
+                    accessibilityRole="button"
+                  >
+                    <Navigation size={14} /> <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Active Booking #{booking.id} &bull; {booking.status.replace(/_/g, ' ')}</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text className="badge badge-green">
+                    <ShieldCheck size={14} /> 100% CIB&RC Certified Technicians
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            <View className="web-page">
+              {activeSection === 'book' && (
+                <BookSection toast={toast} onNavigate={setActiveSection} />
+              )}
+              {activeSection === 'track' && (
+                <TrackSection toast={toast} onNavigate={setActiveSection} />
+              )}
+              {activeSection === 'history' && (
+                <HistorySection toast={toast} onNavigate={setActiveSection} />
+              )}
+              {activeSection === 'safety' && <SafetyGuideSection />}
+            </View>
           </View>
         </View>
-
-        <View className="sidebar-nav">
-          <Text className="nav-section-label">Customer Portal</Text>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <TouchableOpacity
-                key={item.id}
-                className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
-                onPress={() => setActiveSection(item.id)}
-                onClick={() => setActiveSection(item.id)}
-                accessibilityRole="button"
-              >
-                <Icon size={19} />
-                <Text style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.label}</Text>
-                <Text className="nav-pill-count">{item.badge}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <View className="sidebar-footer">
-          <TouchableOpacity
-            className="btn btn-accent btn-block"
-            onPress={() => setHelpOpen(true)}
-            onClick={() => setHelpOpen(true)}
-            accessibilityRole="button"
-          >
-            <Phone size={16} /> <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>24x7 Customer Helpline</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Main Content (React Native Primitives) */}
-      <View className="web-main">
-        <View className="web-topbar">
-          <View>
-            <Text className="topbar-title" style={{ fontSize: '1.45rem', fontWeight: 800 }}>{headers[activeSection].title}</Text>
-            <Text className="topbar-subtitle">{headers[activeSection].subtitle}</Text>
-          </View>
-
-          <View className="topbar-right">
-            {booking && booking.status !== 'CANCELLED' ? (
-              <TouchableOpacity
-                className="btn btn-primary btn-sm"
-                onPress={() => setActiveSection('track')}
-                onClick={() => setActiveSection('track')}
-                accessibilityRole="button"
-              >
-                <Navigation size={14} /> <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Active Booking #{booking.id} &bull; {booking.status.replace(/_/g, ' ')}</Text>
-              </TouchableOpacity>
-            ) : (
-              <Text className="badge badge-green">
-                <ShieldCheck size={14} /> 100% CIB&RC Certified Technicians
-              </Text>
-            )}
-          </View>
-        </View>
-
-        <View className="web-page">
-          {activeSection === 'book' && (
-            <BookSection toast={toast} onNavigate={setActiveSection} />
-          )}
-          {activeSection === 'track' && (
-            <TrackSection toast={toast} onNavigate={setActiveSection} />
-          )}
-          {activeSection === 'history' && (
-            <HistorySection toast={toast} onNavigate={setActiveSection} />
-          )}
-          {activeSection === 'safety' && <SafetyGuideSection />}
-        </View>
-      </View>
+      )}
     </View>
   );
 }
+

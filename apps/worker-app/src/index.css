@@ -1173,3 +1173,83 @@ button, input, select, textarea {
     position: static;
   }
 }
+
+/* ─── 50/50 Dual Card Layout ─────────────────────────────────────────────── */
+.dual-card-50 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .dual-card-50 {
+    grid-template-columns: 1fr !important;
+  }
+  .dual-card-50 > div:first-child {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+/* ─── AI Floating Bubble & Pulse ─────────────────────────────────────────── */
+@keyframes aiPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.22); opacity: 0; }
+  100% { transform: scale(0.95); opacity: 0; }
+}
+
+.floating-ai-bubble:hover {
+  transform: scale(1.08) translateY(-3px) !important;
+  box-shadow: 0 14px 30px rgba(31, 91, 58, 0.45) !important;
+}
+
+/* ─── Responsive Layout for Tablet & Mobile ──────────────────────────────── */
+@media (max-width: 900px) {
+  .web-layout {
+    flex-direction: column !important;
+  }
+  .web-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    position: relative !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  }
+  .sidebar-nav {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    padding: 8px 12px !important;
+  }
+  .sidebar-nav-btn {
+    flex: 1 1 calc(50% - 8px) !important;
+    font-size: 0.82rem !important;
+    padding: 8px 10px !important;
+  }
+  .web-topbar {
+    padding: 14px 16px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .web-page {
+    padding: 16px !important;
+  }
+  .dashboard-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .mobile-menu-btn {
+    display: inline-flex !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .sidebar-nav-btn {
+    flex: 1 1 100% !important;
+  }
+  .field-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
