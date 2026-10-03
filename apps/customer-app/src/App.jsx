@@ -535,7 +535,7 @@ function BookSection({ toast, onNavigate }) {
                     toast('Selected Full Home Protection Combo (15% bundle discount applied)', 'success');
                   }}
                 >
-                  <CheckCircle2 size={14} /> Select All (6 Pests)
+                  <CheckCircle2 size={14} /> Select All ({PEST_TYPES.length} Services)
                 </TouchableOpacity>
                 {form.pestTypes?.length > 1 && (
                   <TouchableOpacity
@@ -555,45 +555,55 @@ function BookSection({ toast, onNavigate }) {
             <View className="select-grid-3">
               {PEST_TYPES.map((p) => {
                 const isSel = (form.pestTypes || []).includes(p.id);
+                const serviceImg = p.image || {
+                  cockroaches: '/images/ants.jpeg',
+                  termites: '/images/termites.jpeg',
+                  bedbugs: '/images/bedbugs.jpeg',
+                  rodents: '/images/rodents.jpeg',
+                  mosquitoes: '/images/mosquitoes.jpeg',
+                }[p.id];
+
                 return (
                   <TouchableOpacity
                     key={p.id}
                     type="button"
-                    className={`select-card ${isSel ? 'selected' : ''}`}
+                    className={`pest-service-card ${isSel ? 'selected' : ''}`}
                     onClick={() => togglePest(p.id)}
-                    style={{ position: 'relative' }}
                   >
-                    <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <View className="select-card-title">{p.name}</View>
-                      <View
-                        style={{
-                          width: 22,
-                          height: 22,
-                          borderRadius: 6,
-                          border: isSel ? '2px solid var(--primary)' : '2px solid var(--border-strong)',
-                          background: isSel ? 'var(--primary)' : '#FFFFFF',
-                          color: '#FFFFFF',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          fontWeight: 900,
-                          flexShrink: 0,
-                          marginLeft: 6,
-                        }}
-                      >
-                        {isSel ? '✓' : ''}
-                      </View>
-                    </View>
-                    <View className="select-card-desc" style={{ marginTop: 4 }}>
-                      {p.tagline}
-                    </View>
-                    <View style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-                      <View className="select-card-price">Rs. {p.basePrice} base</View>
-                      <View style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2 }}>
-                        {p.chemicalUsed}
-                      </View>
-                    </View>
+                    {serviceImg && (
+                      <div className="pest-card-media">
+                        <img
+                          src={serviceImg}
+                          alt={p.name}
+                          className="pest-card-img"
+                          loading="lazy"
+                        />
+                        <div className={`pest-check-badge ${isSel ? 'checked' : 'unchecked'}`}>
+                          {isSel ? '✓' : '+'}
+                        </div>
+                      </div>
+                    )}
+                    <div className="pest-card-body">
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span className="select-card-title">{p.name}</span>
+                          {!serviceImg && (
+                            <span className={`pest-check-badge ${isSel ? 'checked' : 'unchecked'}`} style={{ position: 'static' }}>
+                              {isSel ? '✓' : '+'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="select-card-desc" style={{ marginTop: 4 }}>
+                          {p.tagline}
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+                        <div className="select-card-price">Rs. {p.basePrice} base</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: 2 }}>
+                          {p.chemicalUsed}
+                        </div>
+                      </div>
+                    </div>
                   </TouchableOpacity>
                 );
               })}
@@ -926,13 +936,32 @@ function BookSection({ toast, onNavigate }) {
               )}
             </View>
 
-            <View style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {price.pests.map((p) => (
-                <View key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                  <Text style={{ fontWeight: 700 }}>• {p.name}</Text>
-                  <Text style={{ color: 'var(--ink-muted)' }}>Rs. {p.basePrice}</Text>
-                </View>
-              ))}
+            <View style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {price.pests.map((p) => {
+                const serviceImg = p.image || {
+                  cockroaches: '/images/ants.jpeg',
+                  termites: '/images/termites.jpeg',
+                  bedbugs: '/images/bedbugs.jpeg',
+                  rodents: '/images/rodents.jpeg',
+                  mosquitoes: '/images/mosquitoes.jpeg',
+                }[p.id];
+
+                return (
+                  <View key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {serviceImg && (
+                        <img
+                          src={serviceImg}
+                          alt={p.name}
+                          style={{ width: 24, height: 24, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--border)' }}
+                        />
+                      )}
+                      <Text style={{ fontWeight: 700 }}>{p.name}</Text>
+                    </div>
+                    <Text style={{ color: 'var(--ink-muted)', fontWeight: 600 }}>Rs. {p.basePrice}</Text>
+                  </View>
+                );
+              })}
             </View>
 
             <View style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
@@ -2079,33 +2108,6 @@ function UniversalNavbar({ onBookClick, onOpenHelp, activeRoute = 'home' }) {
             <span>Book Treatment</span>
           </button>
 
-          <a
-            href="/worker/"
-            className={`universal-nav-item role-worker ${activeRoute === 'worker' ? 'active' : ''}`}
-          >
-            <UserCheck size={15} />
-            <span>Worker login</span>
-            <span className="nav-tag" style={{ background: '#E6F7ED', color: '#143F28' }}>Console</span>
-          </a>
-
-          <a
-            href="/agency/"
-            className={`universal-nav-item role-agency ${activeRoute === 'agency' ? 'active' : ''}`}
-          >
-            <Building2 size={15} />
-            <span>Agency login</span>
-            <span className="nav-tag" style={{ background: '#FFF3D1', color: '#855300' }}>Dispatch</span>
-          </a>
-
-          <a
-            href="/admin/"
-            className={`universal-nav-item role-admin ${activeRoute === 'admin' ? 'active' : ''}`}
-          >
-            <Lock size={15} />
-            <span>Admin login</span>
-            <span className="nav-tag" style={{ background: '#E0F2E9', color: '#064E3B' }}>Kernel</span>
-          </a>
-
           <button
             type="button"
             className="btn btn-outline btn-sm"
@@ -2159,45 +2161,6 @@ function UniversalNavbar({ onBookClick, onOpenHelp, activeRoute = 'home' }) {
               <Sparkles size={18} color="var(--primary)" />
               <span>Book Pest Treatment</span>
             </button>
-
-            <a
-              href="/worker/"
-              className="universal-nav-item role-worker"
-              style={{ padding: '12px 14px', fontSize: '1rem', width: '100%', justifyContent: 'space-between' }}
-              onClick={closeMenu}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <UserCheck size={18} />
-                <span>Worker login</span>
-              </span>
-              <span className="nav-tag" style={{ background: '#E6F7ED', color: '#143F28' }}>Field Console</span>
-            </a>
-
-            <a
-              href="/agency/"
-              className="universal-nav-item role-agency"
-              style={{ padding: '12px 14px', fontSize: '1rem', width: '100%', justifyContent: 'space-between' }}
-              onClick={closeMenu}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Building2 size={18} />
-                <span>Agency login</span>
-              </span>
-              <span className="nav-tag" style={{ background: '#FFF3D1', color: '#855300' }}>Dispatch Hub</span>
-            </a>
-
-            <a
-              href="/admin/"
-              className="universal-nav-item role-admin"
-              style={{ padding: '12px 14px', fontSize: '1rem', width: '100%', justifyContent: 'space-between' }}
-              onClick={closeMenu}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Lock size={18} />
-                <span>Admin login</span>
-              </span>
-              <span className="nav-tag" style={{ background: '#E0F2E9', color: '#064E3B' }}>Root Kernel</span>
-            </a>
 
             <button
               type="button"
@@ -2636,34 +2599,6 @@ function MainHomeView({ helpOpen, setHelpOpen }) {
                 <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>CIB&amp;RC Registered</View>
                 <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>Non-toxic, low odor formulations</View>
               </View>
-            </View>
-
-            {/* Popular Treatments Showcase */}
-            <View style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, width: '100%', marginBottom: 36 }}>
-              {[
-                { name: 'Cockroach Herbal Gel', tag: 'Top Seller', price: '₹1,199', desc: 'Dual-layer odorless baiting & crevice shield' },
-                { name: 'Termite Drill & Inject', tag: 'Heavy Duty', price: '₹2,499', desc: 'Subterranean barrier with 3-year warranty' },
-                { name: 'Bedbug Thermal Fogging', tag: 'Intensive', price: '₹1,699', desc: 'Double-coat mattress & seam deep steam' },
-                { name: 'Mosquito Mist & Fogging', tag: 'Fast Action', price: '₹899', desc: 'Outdoor perimeter & drain larvicide spray' },
-              ].map((svc, idx) => (
-                <View
-                  key={idx}
-                  style={{
-                    background: 'var(--surface)',
-                    border: '1.5px solid var(--border)',
-                    borderRadius: 14,
-                    padding: 16,
-                    textAlign: 'left',
-                  }}
-                >
-                  <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <Text className="badge badge-neutral" style={{ fontSize: '0.72rem' }}>{svc.tag}</Text>
-                    <Text style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>{svc.price}</Text>
-                  </View>
-                  <View style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--ink)' }}>{svc.name}</View>
-                  <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 4 }}>{svc.desc}</View>
-                </View>
-              ))}
             </View>
 
             {/* Central Call to Action */}

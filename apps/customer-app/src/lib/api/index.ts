@@ -39,6 +39,7 @@ export interface PestTypeOption {
   basePrice: number;
   tagline: string;
   chemicalUsed: string;
+  image?: string;
 }
 
 export interface PropertySizeOption {
@@ -64,6 +65,7 @@ export const PEST_TYPES: PestTypeOption[] = [
     basePrice: 799,
     tagline: 'Odorless gel baiting + crevice spray',
     chemicalUsed: 'Fipronil 0.05% Gel & Deltamethrin 2.5% EC',
+    image: '/images/ants.jpeg',
   },
   {
     id: 'termites',
@@ -71,6 +73,7 @@ export const PEST_TYPES: PestTypeOption[] = [
     basePrice: 1499,
     tagline: 'Drill-inject-seal sub-floor & woodwork barrier',
     chemicalUsed: 'Imidacloprid 30.5% SC (CIB&RC Approved)',
+    image: '/images/termites.jpeg',
   },
   {
     id: 'bedbugs',
@@ -78,6 +81,7 @@ export const PEST_TYPES: PestTypeOption[] = [
     basePrice: 1699,
     tagline: '180°C dry steam + dual-contact seam treatment',
     chemicalUsed: 'Deltamethrin 2.5% EC + Thermal Steam',
+    image: '/images/bedbugs.jpeg',
   },
   {
     id: 'rodents',
@@ -85,6 +89,7 @@ export const PEST_TYPES: PestTypeOption[] = [
     basePrice: 999,
     tagline: 'Tamper-proof bait stations + copper mesh sealing',
     chemicalUsed: 'Bromadiolone 0.005% Wax Blocks (Locked Stations)',
+    image: '/images/rodents.jpeg',
   },
   {
     id: 'mosquitoes',
@@ -92,13 +97,7 @@ export const PEST_TYPES: PestTypeOption[] = [
     basePrice: 699,
     tagline: 'Cold ULV misting + balcony drain larvicide',
     chemicalUsed: 'Cypermethrin 10% EC Water-Emulsion',
-  },
-  {
-    id: 'sanitization',
-    name: 'Full home sanitization',
-    basePrice: 1199,
-    tagline: 'Food-safe hospital-grade surface & air misting',
-    chemicalUsed: 'Quaternary Ammonium Compound (Eco-Bio Grade)',
+    image: '/images/mosquitoes.jpeg',
   },
 ];
 
