@@ -561,6 +561,7 @@ function BookSection({ toast, onNavigate }) {
                   bedbugs: '/images/bedbugs.jpeg',
                   rodents: '/images/rodents.jpeg',
                   mosquitoes: '/images/mosquitoes.jpeg',
+                  sanitization: '/images/inspection.jpeg',
                 }[p.id];
 
                 return (
@@ -944,6 +945,7 @@ function BookSection({ toast, onNavigate }) {
                   bedbugs: '/images/bedbugs.jpeg',
                   rodents: '/images/rodents.jpeg',
                   mosquitoes: '/images/mosquitoes.jpeg',
+                  sanitization: '/images/inspection.jpeg',
                 }[p.id];
 
                 return (
@@ -2775,15 +2777,6 @@ function MainHomeView({ helpOpen, setHelpOpen }) {
               </View>
 
               <View className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <a href="/worker/" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem', padding: '5px 10px', textDecoration: 'none', color: '#143F28', borderColor: '#A3D9B8', background: '#E6F7ED' }}>
-                  <UserCheck size={13} /> Worker login
-                </a>
-                <a href="/agency/" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem', padding: '5px 10px', textDecoration: 'none', color: '#855300', borderColor: '#FED780', background: '#FFF3D1' }}>
-                  <Building2 size={13} /> Agency login
-                </a>
-                <a href="/admin/" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem', padding: '5px 10px', textDecoration: 'none', color: '#064E3B', borderColor: '#8FD1AE', background: '#E0F2E9' }}>
-                  <Lock size={13} /> Admin login
-                </a>
                 {booking && booking.status !== 'CANCELLED' ? (
                   <TouchableOpacity
                     className="btn btn-primary btn-sm"

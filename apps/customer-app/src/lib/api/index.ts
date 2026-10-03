@@ -99,6 +99,14 @@ export const PEST_TYPES: PestTypeOption[] = [
     chemicalUsed: 'Cypermethrin 10% EC Water-Emulsion',
     image: '/images/mosquitoes.jpeg',
   },
+  {
+    id: 'sanitization',
+    name: 'Full home inspection',
+    basePrice: 1199,
+    tagline: 'Comprehensive 40-point premise audit & chemical barrier inspection',
+    chemicalUsed: 'Quaternary Ammonium Compound (Eco-Bio Grade)',
+    image: '/images/inspection.jpeg',
+  },
 ];
 
 export const PROPERTY_SIZES: PropertySizeOption[] = [
