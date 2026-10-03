@@ -691,7 +691,7 @@ function BookSection({ toast, onNavigate }) {
                     type="button"
                     className={`select-card ${isSel ? 'selected' : ''}`}
                     onClick={() => setForm((f) => ({ ...f, plan: f.plan === pl.id ? '' : pl.id }))}
-                    
+
                   >
                     <View>
                       <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
@@ -740,7 +740,7 @@ function BookSection({ toast, onNavigate }) {
                       className={`stage-pill-btn ${form.day === d.id ? 'active' : ''}`}
                       style={{ padding: '10px 14px', fontSize: '0.86rem' }}
                       onClick={() => setForm((f) => ({ ...f, day: f.day === d.id ? '' : d.id }))}
-                      
+
                     >
                       {d.label}
                     </TouchableOpacity>
@@ -759,7 +759,7 @@ function BookSection({ toast, onNavigate }) {
                       className={`stage-pill-btn ${form.slot === sl ? 'active' : ''}`}
                       style={{ padding: '10px 14px', fontSize: '0.84rem' }}
                       onClick={() => setForm((f) => ({ ...f, slot: f.slot === sl ? '' : sl }))}
-                      
+
                     >
                       {sl}
                     </TouchableOpacity>
@@ -775,7 +775,7 @@ function BookSection({ toast, onNavigate }) {
                 type="button"
                 className={`select-card ${form.dispatchMode === 'treat_on_arrival' ? 'selected' : ''}`}
                 onClick={() => setForm((f) => ({ ...f, dispatchMode: f.dispatchMode === 'treat_on_arrival' ? '' : 'treat_on_arrival' }))}
-                
+
               >
                 <View className="select-card-title">Treat on Arrival (Instant Dispatch)</View>
                 <View className="select-card-desc">
@@ -787,7 +787,7 @@ function BookSection({ toast, onNavigate }) {
                 type="button"
                 className={`select-card ${form.dispatchMode === 'inspection' ? 'selected' : ''}`}
                 onClick={() => setForm((f) => ({ ...f, dispatchMode: f.dispatchMode === 'inspection' ? '' : 'inspection' }))}
-                
+
               >
                 <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text className="select-card-title">Inspection First</Text>
@@ -1034,8 +1034,8 @@ function BookSection({ toast, onNavigate }) {
             {isLoading
               ? 'Dispatching Booking...'
               : form.dispatchMode === 'inspection'
-              ? `Confirm Free Inspection for ${price.pests.length} Services (Rs. 0 Now)`
-              : `Confirm & Dispatch for ${price.pests.length} Services (Rs. ${price.payableNow})`}
+                ? `Confirm Free Inspection for ${price.pests.length} Services (Rs. 0 Now)`
+                : `Confirm & Dispatch for ${price.pests.length} Services (Rs. ${price.payableNow})`}
           </TouchableOpacity>
         </View>
       </View>
@@ -1263,16 +1263,16 @@ function TrackSection({ toast, onNavigate }) {
                     {['IN_PROGRESS', 'COMPLETED'].includes(booking.status)
                       ? '✓ Verified by Tech'
                       : booking.status === 'ARRIVED'
-                      ? '✓ Tech at Doorstep'
-                      : 'Mocked • Tech En Route'}
+                        ? '✓ Tech at Doorstep'
+                        : 'Mocked • Tech En Route'}
                   </Text>
                 </View>
                 <p style={{ fontSize: '0.86rem', color: 'var(--ink-muted)', lineHeight: 1.45, marginBottom: 14 }}>
                   {['IN_PROGRESS', 'COMPLETED'].includes(booking.status)
                     ? 'Technician verified this OTP upon doorstep arrival. Chemical treatment is active.'
                     : booking.status === 'ARRIVED'
-                    ? 'Technician Arjun Sharma has arrived at your doorstep! Share this 4-digit OTP with the technician to begin treatment:'
-                    : 'Technician is en route. This Start OTP is mocked/locked and will automatically reveal on your screen when technician clicks "I Have Arrived" at your doorstep.'}
+                      ? 'Technician Arjun Sharma has arrived at your doorstep! Share this 4-digit OTP with the technician to begin treatment:'
+                      : 'Technician is en route. This Start OTP is mocked/locked and will automatically reveal on your screen when technician clicks "I Have Arrived" at your doorstep.'}
                 </p>
 
                 {/* Live digits shown ONLY when worker has arrived or verified */}
@@ -1357,8 +1357,8 @@ function TrackSection({ toast, onNavigate }) {
                   background: (customerReview || booking.status === 'COMPLETED')
                     ? 'var(--primary-light)'
                     : workCompletedByWorker
-                    ? 'rgba(232, 163, 23, 0.08)'
-                    : 'var(--surface)',
+                      ? 'rgba(232, 163, 23, 0.08)'
+                      : 'var(--surface)',
                 }}
               >
                 <View className="card-header-row">
@@ -1370,8 +1370,8 @@ function TrackSection({ toast, onNavigate }) {
                     {(customerReview || booking.status === 'COMPLETED')
                       ? '✓ Review Submitted — PIN Unlocked'
                       : workCompletedByWorker
-                      ? 'Work Finished — Review Required'
-                      : 'Mocked (Locked)'}
+                        ? 'Work Finished — Review Required'
+                        : 'Mocked (Locked)'}
                   </Text>
                 </View>
 
@@ -1805,9 +1805,8 @@ function HistorySection({ toast, onNavigate }) {
                     <td style={{ fontWeight: 800, color: 'var(--primary)' }}>Rs. {amt}</td>
                     <td>
                       <Text
-                        className={`badge ${
-                          item.status === 'COMPLETED' ? 'badge-green' : 'badge-red'
-                        }`}
+                        className={`badge ${item.status === 'COMPLETED' ? 'badge-green' : 'badge-red'
+                          }`}
                       >
                         {item.status}
                       </Text>

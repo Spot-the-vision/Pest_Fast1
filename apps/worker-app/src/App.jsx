@@ -2479,7 +2479,7 @@ export default function App() {
           <Image
             src="/easyhicare-logo.png"
             alt="Easy HiCare Logo"
-            style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'contain', background: '#FFFFFF', padding: 3 }}
+            style={{ height: 42, width: 'auto', maxWidth: 88, borderRadius: 8, objectFit: 'contain', background: '#FFFFFF', padding: '2px 4px' }}
           />
           <View>
             <Text className="brand-title" style={{ fontSize: '1.15rem', fontWeight: 800 }}>Easy HiCare</Text>
@@ -2628,6 +2628,11 @@ export default function App() {
             >
               <Menu size={18} />
             </TouchableOpacity>
+            <Image
+              src="/easyhicare-logo.png"
+              alt="Easy HiCare Logo"
+              style={{ height: 34, width: 'auto', maxWidth: 74, borderRadius: 6, objectFit: 'contain', background: '#FFFFFF', padding: '2px 4px', border: '1px solid var(--border)' }}
+            />
             <View>
               <View style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
                 <Text className="topbar-title" style={{ fontSize: '1.45rem', fontWeight: 800 }}>

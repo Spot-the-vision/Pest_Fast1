@@ -1973,9 +1973,11 @@ export default function App() {
       <div className="flex items-center justify-center min-h-screen bg-[#fcf9f4] p-4">
         <form onSubmit={e => { e.preventDefault(); setIsAuthenticated(true); }} className="bg-[#ffffff] border border-[#ebe8e3] p-8 rounded-3xl shadow-xl w-full max-w-sm flex flex-col gap-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#003527] flex items-center justify-center text-white shadow-md">
-              <span className="material-symbols-outlined text-[28px]">admin_panel_settings</span>
-            </div>
+            <img
+              src="/easyhicare-logo.png"
+              alt="Easy HiCare Logo"
+              className="h-12 w-auto max-w-[96px] rounded-xl bg-white p-1.5 object-contain border border-[#ebe8e3] shadow-md"
+            />
             <div>
               <h2 className="font-bold text-base text-[#003527]">Super-Admin Console</h2>
               <p className="text-[11px] text-[#707974]">Kernel &amp; Marketplace Control</p>
@@ -2029,11 +2031,13 @@ export default function App() {
         {/* Brand Header */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#064e3b] border border-white/10 flex items-center justify-center text-[#fea619] shadow-xs">
-              <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
-            </div>
+            <img
+              src="/easyhicare-logo.png"
+              alt="Easy HiCare Logo"
+              className="h-9 w-auto max-w-[76px] rounded-lg bg-white p-1 object-contain shadow-xs border border-white/20"
+            />
             <div>
-              <div className="text-[13px] font-bold text-white tracking-tight leading-none">Pest Free OS</div>
+              <div className="text-[13px] font-bold text-white tracking-tight leading-none">Easy HiCare OS</div>
               <div className="text-[10px] text-[#80bea6] font-semibold mt-0.5">Admin Dispatch Core</div>
             </div>
           </div>

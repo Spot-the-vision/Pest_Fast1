@@ -65,13 +65,15 @@ function Login({ onLogin }) {
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#fcf9f4] p-4">
       <form onSubmit={handleLogin} className="bg-white border border-[#ebe8e3] p-8 rounded-3xl shadow-xl w-full max-w-sm space-y-4">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#003527] flex items-center justify-center text-white shadow-xs">
-            <span className="material-symbols-outlined text-[24px]">nature_people</span>
-          </div>
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <img
+            src="/easyhicare-logo.png"
+            alt="Easy HiCare Logo"
+            className="h-10 w-auto max-w-[80px] rounded-xl bg-white p-1 object-contain border border-[#ebe8e3] shadow-xs"
+          />
           <div>
-            <h2 className="font-black text-lg text-[#003527]">Pest Free Agency</h2>
-            <p className="text-[11px] text-[#707974]">Operations & Fleet Dispatch Portal</p>
+            <h2 className="font-black text-lg text-[#003527]">Easy HiCare Agency</h2>
+            <p className="text-[11px] text-[#707974]">Operations &amp; Fleet Dispatch Portal</p>
           </div>
         </div>
 

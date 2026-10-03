@@ -226,11 +226,13 @@ function Sidebar({ onToast, onOpenProfile, profile, mobileOpen = false, onClose 
       {/* Brand Header */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#064e3b] border border-white/10 flex items-center justify-center text-[#fea619] shadow-xs">
-            <span className="material-symbols-outlined text-[20px]">nature_people</span>
-          </div>
+          <img
+            src="/easyhicare-logo.png"
+            alt="Easy HiCare Logo"
+            className="h-9 w-auto max-w-[76px] rounded-lg bg-white p-1 object-contain shadow-xs border border-white/20"
+          />
           <div className="flex flex-col leading-tight">
-            <span className="font-bold text-white text-sm tracking-tight">Pest Free</span>
+            <span className="font-bold text-white text-sm tracking-tight">Easy HiCare</span>
             <span className="text-[10px] text-[#80bea6] uppercase tracking-widest font-semibold">Agency Ops OS</span>
           </div>
         </div>
@@ -582,9 +584,11 @@ export default function WorkerFleet() {
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-[#f6f3ee] border border-[#ebe8e3] transition-colors shadow-xs cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#003527] flex items-center justify-center text-white shadow-xs">
-                  <span className="material-symbols-outlined text-[16px]">pest_control</span>
-                </div>
+                <img
+                  src="/easyhicare-logo.png"
+                  alt="Easy HiCare Logo"
+                  className="h-8 w-auto max-w-[50px] object-contain rounded-lg p-0.5 bg-white border border-[#ebe8e3]"
+                />
                 <div className="flex flex-col leading-tight">
                   <span className="text-xs sm:text-sm font-bold text-[#003527]">EcoPest Solutions</span>
                   <span className="text-[10px] text-[#707974]">Metropolitan Division #4</span>
