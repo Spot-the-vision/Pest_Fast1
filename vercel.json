@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "buildCommand": "node build-single.mjs",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/worker/assets/(.*)", "destination": "/worker/assets/$1" },
+    { "source": "/worker/(.*)", "destination": "/worker/index.html" },
+    { "source": "/worker", "destination": "/worker/index.html" },
+    { "source": "/agency/assets/(.*)", "destination": "/agency/assets/$1" },
+    { "source": "/agency/(.*)", "destination": "/agency/index.html" },
+    { "source": "/agency", "destination": "/agency/index.html" },
+    { "source": "/admin/assets/(.*)", "destination": "/admin/assets/$1" },
+    { "source": "/admin/(.*)", "destination": "/admin/index.html" },
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

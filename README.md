@@ -7,16 +7,16 @@ A full-stack, mobile-first PWA marketplace connecting customers, agency owners, 
 ## 🏗️ Architecture
 
 ```
-Pest_Fast1-main/
+Pest_Portal/
 ├── apps/
 │   ├── customer-app/     → Port 3000  (Customer PWA: Book · Track · History)
 │   ├── worker-app/       → Port 5176  (Worker PWA: Job · Route · Earnings · Safety)
-│   ├── agency-dashboard/ → Port 5175  (Agency owner: Approve · Dispatch)
-│   └── admin-dashboard/  → Port 5174  (Platform admin)
+│   ├── agency-dashboard/ → Port 5175  (Agency owner: Approve · Dispatch · Fleet)
+│   └── admin-dashboard/  → Port 5174  (Super-Admin: Core · KYC · Disputes · Financials)
 ├── packages/
-│   ├── shared-types/     → Shared TypeScript types
-│   └── ui-kit/           → Shared React component primitives
-└── docs/                 → PRD, RD, workflow, UI-UX, backend-schema docs
+│   ├── shared-types/     → Shared TypeScript contracts
+│   └── ui-kit/           → Shared design components
+└── docs/                 → PRD, TRD, workflow, UI-UX, backend-schema docs
 ```
 
 ## 🎨 Design System
@@ -35,18 +35,42 @@ Fonts: **Bricolage Grotesque** (headings/prices) + **Figtree** (body)
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Single-Port Prototype Deployment (Turnkey)
+
+This project can run **all 4 portals on a single port** (`PORT=3000` or hosting provider default port) for effortless demo and prototype deployment:
 
 ```bash
-# Install all deps
-npm install
+# 1. Build the consolidated single-port bundle (dist/)
+npm run build
 
-# Start all 4 apps simultaneously
-node dev.mjs all
+# 2. Start the single-port production server (Render, Railway, Heroku, Docker, or Local)
+npm start
+# -> Access all portals on http://localhost:3000
+```
 
-# Or start individually
-cd apps/customer-app && npm run dev   # :3000
-cd apps/worker-app && npm run dev     # :5176
+### 🌐 Single-Port Unified Routes
+
+| Route | Dashboard / Portal | Key Capabilities |
+|---|---|---|
+| `/` | **Universal Home & Customer Portal** | Multi-role gateway, 5-step booking, live radar tracking |
+| `/worker/` | **Worker Execution Console** | Technician check-in, OTP verification, safety checklist, wallet |
+| `/agency/` | **Agency Dispatch Hub** | Indiranagar & Whitefield operations map, fleet rosters |
+| `/admin/` | **Super-Admin Platform Kernel** | Multi-agency KYC dossier, disputes, PostGIS, settlements |
+| `/api/state` | **Live State Synchronization** | Real-time cross-portal updates between Customer & Technician |
+
+---
+
+## 💻 Local Development
+
+```bash
+# Run all 4 portals on a SINGLE port with Live HMR (default: http://localhost:3000)
+npm run dev
+
+# Or run in multi-port mode (Customer:3000, Admin:5174, Agency:5175, Worker:5176)
+npm run dev:all
+
+# Run unit tests
+npm test
 ```
 
 ---

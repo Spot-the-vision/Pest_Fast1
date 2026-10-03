@@ -41,6 +41,7 @@ import {
   LogOut,
   HelpCircle,
   Menu,
+  Home,
 } from 'lucide-react';
 import { useAppStore } from './lib/api/store.js';
 import {
@@ -2424,8 +2425,55 @@ export default function App() {
         />
       </View>
 
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* LEFT SIDEBAR NAVIGATION */}
       <View className={`web-sidebar ${sidebarOpen ? 'mobile-open' : ''}`} accessibilityRole="navigation" aria-label="Technician Operations Navigation">
+        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 4px', gap: 8 }}>
+          <a
+            href="/"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'rgba(255,255,255,0.08)',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255,255,255,0.2)',
+              fontWeight: 700,
+              padding: '8px 12px',
+              borderRadius: 10,
+              textDecoration: 'none',
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            <Home size={15} />
+            <span>&larr; Universal Home</span>
+          </a>
+          <button
+            type="button"
+            className="sidebar-close-btn"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
+            style={{
+              background: 'rgba(255,255,255,0.12)',
+              border: 'none',
+              color: '#FFFFFF',
+              padding: '7px 8px',
+              borderRadius: 8,
+              cursor: 'pointer'
+            }}
+          >
+            <X size={18} />
+          </button>
+        </View>
+
         {/* Brand Header with Easy HiCare Logo */}
         <View className="sidebar-brand">
           <Image
@@ -2575,7 +2623,7 @@ export default function App() {
           <View style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <TouchableOpacity
               className="btn btn-outline btn-sm mobile-menu-btn"
-              style={{ display: 'none', padding: '6px 10px' }}
+              style={{ padding: '6px 10px' }}
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               <Menu size={18} />

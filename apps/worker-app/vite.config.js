@@ -8,6 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const STATE_FILE = path.join(__dirname, '../../.pest-free-live-state.json');
 
 export default defineConfig({
+  base: process.env.VITE_BASE || '/worker/',
   plugins: [
     react(),
     {

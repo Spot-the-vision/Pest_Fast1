@@ -30,7 +30,10 @@ import {
   HelpCircle,
   QrCode,
   Check,
+  Menu,
+  ExternalLink,
 } from 'lucide-react';
+import { Link, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAppStore } from './lib/api/store.js';
 import {
   PEST_TYPES,
@@ -2020,9 +2023,367 @@ function SafetyGuideSection() {
   );
 }
 
-export default function App() {
+function UniversalNavbar({ onBookClick, onOpenHelp, activeRoute = 'home' }) {
+  const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const closeMenu = () => setMobileMenuOpen(false);
+
+  return (
+    <>
+      <nav className="universal-nav">
+        <Link
+          to="/"
+          className="universal-brand"
+          onClick={() => {
+            closeMenu();
+            if (onBookClick) onBookClick(false);
+          }}
+        >
+          <Image
+            src="/easyhicare-logo.png"
+            alt="Easy HiCare Logo"
+            style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'contain', background: '#FFFFFF', padding: 2, border: '1.5px solid var(--border)' }}
+          />
+          <View style={{ minWidth: 0 }}>
+            <Text style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 900, color: 'var(--ink)' }}>
+              Easy HiCare &bull; Pest Free
+            </Text>
+            <Text style={{ fontSize: '0.7rem', color: 'var(--ink-muted)', fontWeight: 600 }}>
+              Universal Operations &amp; Marketplace Portal
+            </Text>
+          </View>
+        </Link>
+
+        {/* Desktop Navigation Links */}
+        <div className="universal-nav-links">
+          <Link
+            to="/"
+            className={`universal-nav-item ${activeRoute === 'home' ? 'active' : ''}`}
+            onClick={() => {
+              if (onBookClick) onBookClick(false);
+            }}
+          >
+            <Home size={15} />
+            <span>Home</span>
+          </Link>
+
+          <button
+            type="button"
+            className={`universal-nav-item ${activeRoute === 'book' ? 'active' : ''}`}
+            onClick={() => {
+              if (onBookClick) onBookClick(true);
+              else navigate('/');
+            }}
+          >
+            <Sparkles size={15} color="var(--primary)" />
+            <span>Book Treatment</span>
+          </button>
+
+          <a
+            href="/worker/"
+            className={`universal-nav-item role-worker ${activeRoute === 'worker' ? 'active' : ''}`}
+          >
+            <UserCheck size={15} />
+            <span>Worker login</span>
+            <span className="nav-tag" style={{ background: '#E6F7ED', color: '#143F28' }}>Console</span>
+          </a>
+
+          <a
+            href="/agency/"
+            className={`universal-nav-item role-agency ${activeRoute === 'agency' ? 'active' : ''}`}
+          >
+            <Building2 size={15} />
+            <span>Agency login</span>
+            <span className="nav-tag" style={{ background: '#FFF3D1', color: '#855300' }}>Dispatch</span>
+          </a>
+
+          <a
+            href="/admin/"
+            className={`universal-nav-item role-admin ${activeRoute === 'admin' ? 'active' : ''}`}
+          >
+            <Lock size={15} />
+            <span>Admin login</span>
+            <span className="nav-tag" style={{ background: '#E0F2E9', color: '#064E3B' }}>Kernel</span>
+          </a>
+
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            onClick={onOpenHelp}
+          >
+            <Phone size={13} />
+            <span>24x7 Helpline</span>
+          </button>
+        </div>
+
+        {/* Mobile & Tablet Hamburger Toggle */}
+        <button
+          type="button"
+          className="universal-mobile-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </nav>
+
+      {/* Mobile Drawer Dropdown */}
+      {mobileMenuOpen && (
+        <>
+          <div className="universal-mobile-backdrop" onClick={closeMenu} />
+          <div className="universal-mobile-menu">
+            <Link
+              to="/"
+              className={`universal-nav-item ${activeRoute === 'home' ? 'active' : ''}`}
+              style={{ padding: '12px 14px', fontSize: '1rem', width: '100%' }}
+              onClick={() => {
+                closeMenu();
+                if (onBookClick) onBookClick(false);
+              }}
+            >
+              <Home size={18} />
+              <span>Universal Home</span>
+            </Link>
+
+            <button
+              type="button"
+              className={`universal-nav-item ${activeRoute === 'book' ? 'active' : ''}`}
+              style={{ padding: '12px 14px', fontSize: '1rem', width: '100%', justifyContent: 'flex-start' }}
+              onClick={() => {
+                closeMenu();
+                if (onBookClick) onBookClick(true);
+                else navigate('/');
+              }}
+            >
+              <Sparkles size={18} color="var(--primary)" />
+              <span>Book Pest Treatment</span>
+            </button>
+
+            <a
+              href="/worker/"
+              className="universal-nav-item role-worker"
+              style={{ padding: '12px 14px', fontSize: '1rem', width: '100%', justifyContent: 'space-between' }}
+              onClick={closeMenu}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <UserCheck size={18} />
+                <span>Worker login</span>
+              </span>
+              <span className="nav-tag" style={{ background: '#E6F7ED', color: '#143F28' }}>Field Console</span>
+            </a>
+
+            <a
+              href="/agency/"
+              className="universal-nav-item role-agency"
+              style={{ padding: '12px 14px', fontSize: '1rem', width: '100%', justifyContent: 'space-between' }}
+              onClick={closeMenu}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Building2 size={18} />
+                <span>Agency login</span>
+              </span>
+              <span className="nav-tag" style={{ background: '#FFF3D1', color: '#855300' }}>Dispatch Hub</span>
+            </a>
+
+            <a
+              href="/admin/"
+              className="universal-nav-item role-admin"
+              style={{ padding: '12px 14px', fontSize: '1rem', width: '100%', justifyContent: 'space-between' }}
+              onClick={closeMenu}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Lock size={18} />
+                <span>Admin login</span>
+              </span>
+              <span className="nav-tag" style={{ background: '#E0F2E9', color: '#064E3B' }}>Root Kernel</span>
+            </a>
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: 6 }}
+              onClick={() => {
+                closeMenu();
+                onOpenHelp && onOpenHelp();
+              }}
+            >
+              <Phone size={16} />
+              <span>Call 24x7 Customer Helpline</span>
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function WorkerLoginGateway({ onOpenHelp }) {
+  const navigate = useNavigate();
+  return (
+    <View style={{ minHeight: '100vh', background: 'var(--canvas)' }}>
+      <UniversalNavbar activeRoute="worker" onOpenHelp={onOpenHelp} />
+      <View className="login-gateway-wrap">
+        <div className="login-gateway-card">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: '#E6F7ED', color: '#143F28', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <UserCheck size={24} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--ink)' }}>Worker Login</h2>
+                <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>Field Technician Execution Console</p>
+              </div>
+            </div>
+            <span className="badge badge-green" style={{ fontSize: '0.75rem' }}>Port 5176</span>
+          </div>
+
+          <div style={{ background: '#FFFFFF', padding: '16px', borderRadius: 14, border: '1.5px solid var(--border)', display: 'grid', gap: 10 }}>
+            <div style={{ fontSize: '0.86rem', color: 'var(--ink)', lineHeight: 1.5 }}>
+              Dedicated mobile-first field console for certified applicators. Features real-time GPS arrival detection, doorstep start OTP verification, mandatory safety checklist, and IMPS payout wallet.
+            </div>
+            <div style={{ display: 'flex', gap: 16, fontSize: '0.78rem', color: 'var(--ink-muted)', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+              <div><strong>Active Roster ID:</strong> #TECH-9401</div>
+              <div><strong>Default Phone:</strong> +91 98450 18239</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <a
+              href="/worker/"
+              className="btn btn-primary btn-lg"
+              style={{ width: '100%', justifyContent: 'center', textDecoration: 'none', background: '#143F28', display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              <Navigation size={18} /> Launch Worker Execution Console (/worker) &rarr;
+            </a>
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => navigate('/')}
+            >
+              &larr; Return to Universal Home
+            </button>
+          </div>
+        </div>
+      </View>
+    </View>
+  );
+}
+
+function AgencyLoginGateway({ onOpenHelp }) {
+  const navigate = useNavigate();
+  return (
+    <View style={{ minHeight: '100vh', background: 'var(--canvas)' }}>
+      <UniversalNavbar activeRoute="agency" onOpenHelp={onOpenHelp} />
+      <View className="login-gateway-wrap">
+        <div className="login-gateway-card">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: '#FFF3D1', color: '#855300', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Building2 size={24} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--ink)' }}>Agency Login</h2>
+                <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>Operations Dispatch &amp; Fleet Hub</p>
+              </div>
+            </div>
+            <span className="badge badge-amber" style={{ fontSize: '0.75rem' }}>Dispatch Hub</span>
+          </div>
+
+          <div style={{ background: '#FFFFFF', padding: '16px', borderRadius: 14, border: '1.5px solid var(--border)', display: 'grid', gap: 10 }}>
+            <div style={{ fontSize: '0.86rem', color: 'var(--ink)', lineHeight: 1.5 }}>
+              Central operations portal for agency partners. Monitor real-time technician routes across Bangalore Indiranagar and Whitefield, approve client orders, and manage field rosters.
+            </div>
+            <div style={{ display: 'flex', gap: 16, fontSize: '0.78rem', color: 'var(--ink-muted)', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+              <div><strong>Agency Hub:</strong> EcoPest Bangalore #PF-8821</div>
+              <div><strong>Default Login:</strong> agency@ecopest.com</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <a
+              href="/agency/"
+              className="btn btn-primary btn-lg"
+              style={{ width: '100%', justifyContent: 'center', textDecoration: 'none', background: '#855300', borderColor: '#855300', display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              <Building2 size={18} /> Launch Agency Dispatch Hub (/agency) &rarr;
+            </a>
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => navigate('/')}
+            >
+              &larr; Return to Universal Home
+            </button>
+          </div>
+        </div>
+      </View>
+    </View>
+  );
+}
+
+function AdminLoginGateway({ onOpenHelp }) {
+  const navigate = useNavigate();
+  return (
+    <View style={{ minHeight: '100vh', background: 'var(--canvas)' }}>
+      <UniversalNavbar activeRoute="admin" onOpenHelp={onOpenHelp} />
+      <View className="login-gateway-wrap">
+        <div className="login-gateway-card">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: '#E0F2E9', color: '#064E3B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Lock size={24} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--ink)' }}>Admin Login</h2>
+                <p style={{ fontSize: '0.82rem', color: 'var(--ink-muted)' }}>Super-Admin Platform Kernel</p>
+              </div>
+            </div>
+            <span className="badge badge-green" style={{ fontSize: '0.75rem' }}>Admin Kernel</span>
+          </div>
+
+          <div style={{ background: '#FFFFFF', padding: '16px', borderRadius: 14, border: '1.5px solid var(--border)', display: 'grid', gap: 10 }}>
+            <div style={{ fontSize: '0.86rem', color: 'var(--ink)', lineHeight: 1.5 }}>
+              Level-3 Global Root Kernel console. Inspect and verify multi-agency KYC trade licenses, resolve customer escalations, monitor PostGIS spatial queries, and audit 15% platform take-rate settlements.
+            </div>
+            <div style={{ display: 'flex', gap: 16, fontSize: '0.78rem', color: 'var(--ink-muted)', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+              <div><strong>Role:</strong> Super Administrator (Root)</div>
+              <div><strong>Default Login:</strong> admin@pestfast.com</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <a
+              href="/admin/"
+              className="btn btn-primary btn-lg"
+              style={{ width: '100%', justifyContent: 'center', textDecoration: 'none', background: '#064E3B', borderColor: '#064E3B', display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              <Lock size={18} /> Launch Super-Admin Console (/admin) &rarr;
+            </a>
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => navigate('/')}
+            >
+              &larr; Return to Universal Home
+            </button>
+          </div>
+        </div>
+      </View>
+    </View>
+  );
+}
+
+function MainHomeView({ helpOpen, setHelpOpen }) {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('book');
-  const [helpOpen, setHelpOpen] = useState(false);
   const [hasStartedBooking, setHasStartedBooking] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { booking, history, syncFromRemote } = useAppStore();
@@ -2073,8 +2434,8 @@ export default function App() {
 
   const headers = {
     book: {
-      title: 'Book Certified Home & Office Pest Control',
-      subtitle: 'Instant AI smart quote, transparent GST breakdown, and Agency homeowner privacy protection',
+      title: 'Certified Doorstep Pest Control Dispatch',
+      subtitle: 'Schedule verified applicators, configure multi-pest treatment, and review itemized GST quotes',
     },
     track: {
       title: 'Real OpenStreetMap GPS Radar, Doorstep OTP & Completion PIN',
@@ -2124,64 +2485,124 @@ export default function App() {
       </ModalDialog>
 
       {/* ────────────────────────────────────────────────────────────────────────── */}
-      {/* 1. HERO LANDING PAGE (When Not Booked & Not In Booking Mode) - NO NAVBAR   */}
+      {/* 1. UNIVERSAL HOME PAGE                                                     */}
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {isLandingView ? (
         <View style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          {/* Top Brand Header */}
-          <nav
-            style={{
-              padding: '16px 28px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderBottom: '1px solid var(--border)',
-              background: 'var(--surface)',
+          {/* Universal Sticky Top Navigation Bar with Routes */}
+          <UniversalNavbar
+            activeRoute={hasStartedBooking ? 'book' : 'home'}
+            onBookClick={(startBooking) => {
+              setHasStartedBooking(startBooking);
+              if (startBooking) setActiveSection('book');
             }}
-          >
-            <View style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <Image
-                src="/easyhicare-logo.png"
-                alt="Easy HiCare Logo"
-                style={{ width: 46, height: 46, borderRadius: 12, objectFit: 'contain', background: '#FFFFFF', padding: 3, border: '1px solid var(--border)' }}
-              />
-              <View>
-                <Text style={{ fontFamily: 'var(--font-heading)', fontSize: '1.35rem', fontWeight: 900, color: 'var(--ink)' }}>
-                  Easy HiCare
-                </Text>
-                <Text style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', fontWeight: 600 }}>
-                  Pest Solutions &bull; Official Customer Portal
-                </Text>
-              </View>
-            </View>
-
-            <View style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Text className="badge badge-green" style={{ fontSize: '0.78rem', padding: '6px 12px' }}>
-                <ShieldCheck size={14} /> Govt Approved CIB&RC &bull; ISO 9001:2015
-              </Text>
-              <TouchableOpacity
-                className="btn btn-outline btn-sm"
-                onClick={() => setHelpOpen(true)}
-              >
-                <Phone size={14} /> 24x7 Helpline
-              </TouchableOpacity>
-            </View>
-          </nav>
+            onOpenHelp={() => setHelpOpen(true)}
+          />
 
           {/* Hero Content Section */}
           <View className="hero-landing-wrap">
             <View className="hero-badge-pill">
               <Sparkles size={16} color="var(--accent)" />
-              <Text>100% Odorless & Eco-Safe &bull; Safe for Children & Pets</Text>
+              <Text>Universal Multi-Agency Marketplace &amp; Operations Platform</Text>
             </View>
 
             <h1 className="hero-title">
-              India's Most Trusted Certified Pest Solutions
+              India's Most Trusted Certified Pest Solutions &amp; Operations OS
             </h1>
 
             <p className="hero-subtitle">
-              Guaranteed eradication with 60-minute doorstep arrival, background-checked certified applicators, government-approved CIB&RC odorless formulations, and an unconditional 90-day warranty.
+              Unified marketplace platform with 60-minute doorstep arrival, background-checked certified applicators, government-approved CIB&amp;RC odorless formulations, and dedicated operational consoles for Customers, Field Technicians, Agency Dispatchers, and Super-Admins.
             </p>
+
+            {/* 4 Role Portal Gateway Tiles */}
+            <View className="portal-gateway-grid">
+              {/* Customer Booking Card */}
+              <div
+                className="portal-gateway-card"
+                style={{ borderLeft: '4px solid var(--primary)' }}
+                onClick={() => {
+                  setHasStartedBooking(true);
+                  setActiveSection('book');
+                }}
+              >
+                <div>
+                  <div className="icon-box" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                    <Sparkles size={20} />
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)' }}>Customer Booking</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.4 }}>
+                    5-step smart wizard, transparent pricing, live technician GPS radar, and doorstep start OTP.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                  <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Customer Portal</span>
+                  <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.85rem' }}>Book Now &rarr;</span>
+                </div>
+              </div>
+
+              {/* Worker login Card */}
+              <a
+                href="/worker/"
+                className="portal-gateway-card"
+                style={{ borderLeft: '4px solid #143F28', textDecoration: 'none' }}
+              >
+                <div>
+                  <div className="icon-box" style={{ background: '#E6F7ED', color: '#143F28' }}>
+                    <UserCheck size={20} />
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)' }}>Worker login</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.4 }}>
+                    Field technician execution console, arrival OTP handshake, safety CSDS, and payout wallet.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                  <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Field Console</span>
+                  <span style={{ fontWeight: 800, color: '#143F28', fontSize: '0.85rem' }}>Tech Portal &rarr;</span>
+                </div>
+              </a>
+
+              {/* Agency login Card */}
+              <a
+                href="/agency/"
+                className="portal-gateway-card"
+                style={{ borderLeft: '4px solid #855300', textDecoration: 'none' }}
+              >
+                <div>
+                  <div className="icon-box" style={{ background: '#FFF3D1', color: '#855300' }}>
+                    <Building2 size={20} />
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)' }}>Agency login</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.4 }}>
+                    Bangalore &amp; Gurgaon hub dispatch, live fleet ops map, route optimization, and rosters.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                  <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>Dispatch Hub</span>
+                  <span style={{ fontWeight: 800, color: '#855300', fontSize: '0.85rem' }}>Dispatch Hub &rarr;</span>
+                </div>
+              </a>
+
+              {/* Admin login Card */}
+              <a
+                href="/admin/"
+                className="portal-gateway-card"
+                style={{ borderLeft: '4px solid #064E3B', textDecoration: 'none' }}
+              >
+                <div>
+                  <div className="icon-box" style={{ background: '#E0F2E9', color: '#064E3B' }}>
+                    <Lock size={20} />
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)' }}>Admin login</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.4 }}>
+                    Super-Admin kernel, agency KYC compliance dossier, customer disputes, and settlements.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                  <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Admin Kernel</span>
+                  <span style={{ fontWeight: 800, color: '#064E3B', fontSize: '0.85rem' }}>Kernel Console &rarr;</span>
+                </div>
+              </a>
+            </View>
 
             {/* 4 Agency Stats Cards */}
             <View className="hero-stats-grid">
@@ -2189,8 +2610,8 @@ export default function App() {
                 <View style={{ fontSize: '2.1rem', fontWeight: 900, color: 'var(--primary)', fontFamily: 'var(--font-heading)' }}>
                   50,000+
                 </View>
-                <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>Homes & Offices Treated</View>
-                <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>Across Bengaluru South & Central</View>
+                <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>Homes &amp; Offices Treated</View>
+                <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>Across Bengaluru South &amp; Central</View>
               </View>
 
               <View className="kpi-card" style={{ borderLeft: '4px solid #E8A317', textAlign: 'center', padding: '20px' }}>
@@ -2206,14 +2627,14 @@ export default function App() {
                   120+
                 </View>
                 <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>Licensed Applicators</View>
-                <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>100% Police & KYC Verified</View>
+                <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>100% Police &amp; KYC Verified</View>
               </View>
 
               <View className="kpi-card" style={{ borderLeft: '4px solid var(--primary-dark)', textAlign: 'center', padding: '20px' }}>
                 <View style={{ fontSize: '2.1rem', fontWeight: 900, color: 'var(--primary-dark)', fontFamily: 'var(--font-heading)' }}>
                   100%
                 </View>
-                <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>CIB&RC Registered</View>
+                <View style={{ fontWeight: 800, fontSize: '0.95rem', marginTop: 4 }}>CIB&amp;RC Registered</View>
                 <View style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', marginTop: 2 }}>Non-toxic, low odor formulations</View>
               </View>
             </View>
@@ -2271,8 +2692,60 @@ export default function App() {
         /* 2. CUSTOMER PORTAL / BOOKING & LIVE TRACKING WORKSPACE (WITH SIDEBAR)      */
         /* ────────────────────────────────────────────────────────────────────────── */
         <View className="web-layout">
+          {mobileNavOpen && (
+            <div
+              className="sidebar-backdrop"
+              onClick={() => setMobileNavOpen(false)}
+            />
+          )}
           {/* Left Sidebar Navigation */}
           <View className={`web-sidebar ${mobileNavOpen ? 'mobile-open' : ''}`} accessibilityRole="navigation" aria-label="Customer Website Navigation">
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 4px', gap: 8 }}>
+              <TouchableOpacity
+                className="btn btn-outline btn-sm"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#FFFFFF',
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  fontWeight: 700,
+                  padding: '8px 12px',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  flex: 1
+                }}
+                onPress={() => {
+                  setHasStartedBooking(false);
+                  navigate('/');
+                }}
+                onClick={() => {
+                  setHasStartedBooking(false);
+                  navigate('/');
+                }}
+              >
+                <Home size={15} />
+                <span>&larr; Universal Home</span>
+              </TouchableOpacity>
+              <button
+                type="button"
+                className="sidebar-close-btn"
+                onClick={() => setMobileNavOpen(false)}
+                aria-label="Close sidebar"
+                style={{
+                  background: 'rgba(255,255,255,0.12)',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  padding: '7px 8px',
+                  borderRadius: 8,
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </View>
+
             <View className="sidebar-brand">
               <Image
                 src="/easyhicare-logo.png"
@@ -2320,42 +2793,34 @@ export default function App() {
                       setActiveSection(item.id);
                       setMobileNavOpen(false);
                     }}
-                    accessibilityRole="button"
                   >
-                    <Icon size={19} />
-                    <Text style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.label}</Text>
-                    <Text className="nav-pill-count">{item.badge}</Text>
+                    <Icon size={18} />
+                    <View style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: 'inherit', fontWeight: 'inherit', fontSize: '0.9rem' }}>{item.label}</Text>
+                      <Text className="sidebar-tag">{item.badge}</Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            <View style={{ padding: '0 14px 14px' }}>
+            <View className="sidebar-footer">
               <TouchableOpacity
-                className="btn btn-outline btn-block"
-                style={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.2)', marginBottom: 8 }}
-                onClick={() => setHasStartedBooking(false)}
-              >
-                ← Back to Home
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="btn btn-accent btn-block"
-                onPress={() => setHelpOpen(true)}
+                className="btn btn-outline btn-block btn-sm"
                 onClick={() => setHelpOpen(true)}
-                accessibilityRole="button"
               >
-                <Phone size={16} /> <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>24x7 Customer Helpline</Text>
+                <Phone size={14} /> 24x7 Support
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Main Content */}
-          <View className="web-main">
+          {/* Right Main Content Area */}
+          <View className="web-content">
             <View className="web-topbar">
               <View style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <TouchableOpacity
                   className="btn btn-outline btn-sm mobile-menu-btn"
-                  style={{ display: 'none', padding: '6px 10px' }}
+                  style={{ padding: '6px 10px' }}
                   onClick={() => setMobileNavOpen(!mobileNavOpen)}
                 >
                   <Menu size={18} />
@@ -2375,7 +2840,16 @@ export default function App() {
                 </View>
               </View>
 
-              <View className="topbar-right">
+              <View className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <a href="/worker/" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem', padding: '5px 10px', textDecoration: 'none', color: '#143F28', borderColor: '#A3D9B8', background: '#E6F7ED' }}>
+                  <UserCheck size={13} /> Worker login
+                </a>
+                <a href="/agency/" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem', padding: '5px 10px', textDecoration: 'none', color: '#855300', borderColor: '#FED780', background: '#FFF3D1' }}>
+                  <Building2 size={13} /> Agency login
+                </a>
+                <a href="/admin/" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem', padding: '5px 10px', textDecoration: 'none', color: '#064E3B', borderColor: '#8FD1AE', background: '#E0F2E9' }}>
+                  <Lock size={13} /> Admin login
+                </a>
                 {booking && booking.status !== 'CANCELLED' ? (
                   <TouchableOpacity
                     className="btn btn-primary btn-sm"
@@ -2387,7 +2861,7 @@ export default function App() {
                   </TouchableOpacity>
                 ) : (
                   <Text className="badge badge-green">
-                    <ShieldCheck size={14} /> 100% CIB&RC Certified Technicians
+                    <ShieldCheck size={14} /> 100% CIB&RC Certified
                   </Text>
                 )}
               </View>
@@ -2412,3 +2886,16 @@ export default function App() {
   );
 }
 
+export default function App() {
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  return (
+    <Routes>
+      <Route path="/" element={<MainHomeView helpOpen={helpOpen} setHelpOpen={setHelpOpen} />} />
+      <Route path="/worker-login" element={<WorkerLoginGateway onOpenHelp={() => setHelpOpen(true)} />} />
+      <Route path="/agency-login" element={<AgencyLoginGateway onOpenHelp={() => setHelpOpen(true)} />} />
+      <Route path="/admin-login" element={<AdminLoginGateway onOpenHelp={() => setHelpOpen(true)} />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}

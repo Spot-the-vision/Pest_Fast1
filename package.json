@@ -7,17 +7,24 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "node dev.mjs all",
-    "dev:turbo": "turbo run dev",
+    "start": "node server.mjs",
+    "serve": "node server.mjs",
+    "build": "node build-single.mjs",
+    "build:single": "node build-single.mjs",
+    "build:turbo": "turbo run build",
+    "dev": "node dev.mjs single",
+    "dev:single": "node dev.mjs single",
     "dev:all": "node dev.mjs all",
+    "dev:turbo": "turbo run dev",
     "dev:customer": "node dev.mjs customer",
     "dev:admin": "node dev.mjs admin",
     "dev:agency": "node dev.mjs agency",
     "dev:worker": "node dev.mjs worker",
-    "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test"
+    "test": "npm --prefix apps/customer-app test",
+    "test:unit": "npm --prefix apps/customer-app test",
+    "clean": "node -e \"const fs=require('fs'); ['dist','apps/admin-dashboard/dist','apps/agency-dashboard/dist','apps/customer-app/dist','apps/worker-app/dist','.turbo'].forEach(p => fs.rmSync(p, {recursive:true, force:true}));\""
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

@@ -37,6 +37,16 @@ Scope: **Workday only** for the bot. **Pest Free customer-app + worker-app** for
 - **Header**: Duty toggle (On duty / On job / Off duty) + Emergency SOS confirmation sheet
 - **State sync**: Polls `/api/state` every 3 s for customer-app cross-port sync
 
+### ✅ Completed — Admin Dashboard (`apps/admin-dashboard` — Port 5174)
+- **Multi-Desk Operations Console**: System Core, Agency KYC Audit Desk, Customer Dispute Desk, and Platform Financials & Take-Rate Settlements
+- **Platform Overview Engine**: Live telemetry, cluster node latency, PostGIS queries, worker telemetry modal, masked PII inspector, and dynamic Voronoi mesh routing calculator
+- **Security & Hub Controls**: Super-Admin modal, Hubs management, Two-Step Security Audit modal, API & Socket.IO streams, and Redis cache flusher
+
+### ✅ Completed — Agency Dashboard (`apps/agency-dashboard` — Port 5175)
+- **Live Ops Map & Dispatch**: Real-time worker position tracking, target focus, dynamic rerouting, and booking assignment
+- **Worker Fleet & Rosters**: Active technician roster, shift management, license compliance, and safety equipment verification
+- **Interactive Controls**: Dispatcher profile modal, toast notifications, and client service history view
+
 ### ✅ Completed — Shared Business Logic (`apps/customer-app/src/lib/api/index.ts`)
 - `calculatePrice()` — base × size × plan + 18% GST, ₹0 for inspection
 - `scoreAndRankWorkers()` — filters non-KYC/OFF_DUTY, scores distance 50% + rating 35% + load 15%
@@ -119,4 +129,4 @@ Checkpoint must pass on a real Workday URL before commit. No mocks.
 
 ---
 
-*Last updated: 2026-09-30 — Customer + Worker apps complete, both build clean, unit tests written.*
+*Last updated: 2026-10-03 — Admin + Agency dashboards integrated, monorepo refactored to Turborepo 2.x standards, unused boilerplate & dead screens purged, 28/28 unit tests passing.*
