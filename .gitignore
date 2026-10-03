@@ -8,5 +8,7 @@ build
 *.log
 .DS_Store
 coverage
+.vercel
 
 .pest-free-live-state.json
+
