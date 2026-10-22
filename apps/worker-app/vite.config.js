@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+﻿import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -101,12 +101,16 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      'react-native': path.resolve(__dirname, 'src/lib/rn.jsx'),
-      'react-native-web': path.resolve(__dirname, 'src/lib/rn.jsx'),
+      'react-native': path.resolve(__dirname, '../../packages/ui-kit/primitives.jsx'),
+      'react-native-web': path.resolve(__dirname, '../../packages/ui-kit/primitives.jsx'),
       'ui-kit': path.resolve(__dirname, '../../packages/ui-kit/index.jsx'),
       '@pest-free/ui-kit': path.resolve(__dirname, '../../packages/ui-kit/index.jsx'),
-      'shared-types': path.resolve(__dirname, '../../packages/shared-types/index.ts'),
-      '@pest-free/shared-types': path.resolve(__dirname, '../../packages/shared-types/index.ts'),
+      'shared-types': path.resolve(__dirname, '../../packages/shared-types/index.js'),
+      '@pest-free/shared-types': path.resolve(__dirname, '../../packages/shared-types/index.js'),
+      '@pest-free/shared-config': path.resolve(__dirname, '../../packages/shared-config/index.js'),
+      '@pest-free/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/index.js'),
+      '@pest-free/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/index.js'),
+      '@pest-free/api-client': path.resolve(__dirname, '../../packages/api-client/index.js'),
     },
   },
 });

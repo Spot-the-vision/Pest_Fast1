@@ -9,7 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@pest-free/api-client": "*",
+    "@pest-free/shared-config": "*",
+    "@pest-free/shared-hooks": "*",
     "@pest-free/shared-types": "*",
+    "@pest-free/shared-utils": "*",
     "@pest-free/ui-kit": "*",
     "lucide-react": "^0.400.0",
     "react": "^19.2.8",

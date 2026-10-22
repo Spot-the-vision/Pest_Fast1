@@ -51,14 +51,15 @@ async function run() {
   console.log('\n--- 3. Placing Booking in Customer App ---');
   const addressInput = await custPage.locator('textarea, input[type="text"]').last();
   await addressInput.fill('Flat 402, Green Glen Layout, Jayanagar 4th Block, Bengaluru');
-  const confirmBtn = await custPage.locator('text=Confirm & Book Doorstep Dispatch');
+  const confirmBtn = await custPage.locator('button, [role="button"], .btn-primary').filter({ hasText: 'Confirm &' }).first();
   await confirmBtn.click();
   await custPage.waitForTimeout(1000);
   console.log('✓ Booking placed!');
 
   // 4. Test Worker App
-  console.log('\n--- 4. Testing Worker App UI & Options ---');
-  await workerPage.goto('http://localhost:5176');
+  const workerBase = await fetch('http://localhost:5176').then(() => 'http://localhost:5176').catch(() => 'http://localhost:3000/technician');
+  console.log(`Connecting to worker at: ${workerBase}`);
+  await workerPage.goto(workerBase);
   await workerPage.waitForTimeout(1000);
 
   // Take screenshot of Worker Overview (Option 1)
@@ -104,7 +105,7 @@ async function run() {
   if (skipBtn) await skipBtn.click();
   await workerPage.waitForTimeout(500);
 
-  const arriveBtn = await workerPage.locator('text=I Have Arrived');
+  const arriveBtn = await workerPage.locator('button, [role="button"], .btn-primary').filter({ hasText: 'I Have Arrived' }).first();
   await arriveBtn.click();
   console.log('✓ Worker clicked "I Have Arrived"');
   await workerPage.waitForTimeout(1000);

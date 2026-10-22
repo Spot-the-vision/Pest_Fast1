@@ -81,7 +81,7 @@ export default defineConfig({
           res.end();
         });
 
-        // AI: Smart quote (mock — replace with Gemini key on server)
+        // AI: Smart quote (mock â€” replace with Gemini key on server)
         server.middlewares.use('/api/ai/quote', (req, res) => {
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.setHeader('Content-Type', 'application/json');
@@ -105,14 +105,28 @@ export default defineConfig({
       },
     },
   ],
+  server: {
+    fs: {
+      allow: [
+        path.resolve(__dirname, '../../'),
+      ],
+    },
+  },
   resolve: {
     alias: {
-      'react-native': path.resolve(__dirname, 'src/lib/rn.jsx'),
-      'react-native-web': path.resolve(__dirname, 'src/lib/rn.jsx'),
+      '@pest-free/admin-dashboard': path.resolve(__dirname, '../admin-dashboard/src/App.jsx'),
+      '@pest-free/agency-dashboard': path.resolve(__dirname, '../agency-dashboard/src/App.jsx'),
+      '@pest-free/worker-app': path.resolve(__dirname, '../worker-app/src/App.jsx'),
+      'react-native': path.resolve(__dirname, '../../packages/ui-kit/primitives.jsx'),
+      'react-native-web': path.resolve(__dirname, '../../packages/ui-kit/primitives.jsx'),
       'ui-kit': path.resolve(__dirname, '../../packages/ui-kit/index.jsx'),
       '@pest-free/ui-kit': path.resolve(__dirname, '../../packages/ui-kit/index.jsx'),
-      'shared-types': path.resolve(__dirname, '../../packages/shared-types/index.ts'),
-      '@pest-free/shared-types': path.resolve(__dirname, '../../packages/shared-types/index.ts'),
+      'shared-types': path.resolve(__dirname, '../../packages/shared-types/index.js'),
+      '@pest-free/shared-types': path.resolve(__dirname, '../../packages/shared-types/index.js'),
+      '@pest-free/shared-config': path.resolve(__dirname, '../../packages/shared-config/index.js'),
+      '@pest-free/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/index.js'),
+      '@pest-free/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/index.js'),
+      '@pest-free/api-client': path.resolve(__dirname, '../../packages/api-client/index.js'),
     },
   },
 });

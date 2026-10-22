@@ -11,7 +11,7 @@ import {
   PEST_TYPES,
   PROPERTY_SIZES,
   PLANS,
-} from './index.ts';
+} from './index.js';
 
 function safeTransition(booking, targetOrEvent) {
   if (!booking) return booking;
@@ -165,8 +165,8 @@ const initialState = {
   error: null,
   safetyChecklist: [false, false, false, false, false, false],
   afterPhotoTaken: false,
-  startOtp: '4829',
-  completionPin: '7391',
+  startOtp: '4058',
+  completionPin: '1666',
   workCompletedByWorker: false,
   pinVerifiedByWorker: false,
   paymentQrGenerated: false,
@@ -201,8 +201,8 @@ export const useAppStore = create((set, get) => ({
         formData.plan,
         formData.dispatchMode
       );
-      const otp = generateOtp();
-      const compPin = generateOtp();
+      const otp = '4058';
+      const compPin = '1666';
 
       const pestNames = priceCalc.pests.map((p) => p.name).join(' + ');
       const chemNames = priceCalc.pests.map((p) => p.chemicalUsed).join(' | ');

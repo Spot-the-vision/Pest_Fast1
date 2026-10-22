@@ -1,5 +1,124 @@
-body {
-  margin: 0;
-  padding: 0;
+:root {
+  --canvas: #FFF4C2;
+  --surface: #FFFBE6;
+  --surface-bright: #FFFBE6;
+  --surface-container: #FFF8D6;
+  --card: #FFFBE6;
+  --card-elevated: #FFFDF5;
+  --border: #EFE3A6;
+  --border-strong: #DEC978;
+  --primary: #003527;
+  --primary-dark: #143F28;
+  --primary-light: #E9F5EE;
+  --accent: #E8A317;
+  --accent-light: #FFF3D1;
+  --success: #2E9E5B;
+  --success-light: #E6F7ED;
+  --danger: #C93B2B;
+  --danger-light: #FDECE9;
+  --ink: #1D2B1A;
+  --ink-muted: #5A6B56;
+  --font-heading: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Figtree', 'Inter', system-ui, sans-serif;
+  --shadow-sm: 0 2px 8px rgba(29, 43, 26, 0.05);
+  --shadow-md: 0 8px 24px rgba(29, 43, 26, 0.08);
+  --shadow-lg: 0 20px 48px rgba(29, 43, 26, 0.16);
+}
+
+*, *::before, *::after {
   box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #FFF4C2 !important;
+  color: #1D2B1A !important;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .heading-font {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  color: #1D2B1A;
+}
+
+/* ─── Seamless Pale Yellow Canvas & Surface Rules ─── */
+main, .min-h-screen, [class*="min-h-screen"] {
+  background-color: #FFF4C2 !important;
+}
+
+/* Headers, Subheaders, and Topbars */
+header, [class*="sticky top-0"], [class*="fixed top-0"], [class*="sticky top-16"], .bg-white\/95 {
+  background-color: rgba(255, 251, 230, 0.96) !important;
+  border-color: #EFE3A6 !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Cards & Surfaces: soft creamy pale yellow #FFFBE6 with warm golden borders */
+.bg-white, .bg-\[\#ffffff\], .bg-surface, .bg-surface-bright {
+  background-color: #FFFBE6 !important;
+  border-color: #EFE3A6 !important;
+}
+
+/* Off-whites -> Pale Yellow #FFF4C2 Canvas or #FFF8D6 Container */
+.bg-\[\#fcf9f4\], .bg-\[\#f6f3ee\], .bg-\[\#fbf7ee\], .bg-background {
+  background-color: #FFF4C2 !important;
+  border-color: #EFE3A6 !important;
+}
+
+.bg-\[\#f0ede9\], .bg-\[\#e5e2dd\], .bg-surface-container {
+  background-color: #FFF8D6 !important;
+  border-color: #DEC978 !important;
+}
+
+/* Table styling */
+table thead, thead tr, tr.bg-\[\#fcf9f4\] {
+  background-color: #FFF4C2 !important;
+  border-color: #EFE3A6 !important;
+}
+
+table tbody tr {
+  background-color: #FFFBE6;
+  border-color: #EFE3A6 !important;
+}
+
+table tbody tr:hover, tr:hover, .hover\:bg-\[\#fcf9f4\]:hover, .hover\:bg-white:hover {
+  background-color: #FFF8D6 !important;
+}
+
+/* Borders */
+.border-\[\#ebe8e3\], .border-\[\#e5e2dd\], .border {
+  border-color: #EFE3A6 !important;
+}
+
+/* Inputs, Selects, and Textareas */
+input, select, textarea {
+  background-color: #FFFDF5 !important;
+  border-color: #EFE3A6 !important;
+  color: #1D2B1A !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #003527 !important;
+  box-shadow: 0 0 0 2px rgba(0, 53, 39, 0.15) !important;
+}
+
+/* Modals */
+.fixed.inset-0 > div:not(.bg-black\/50):not(.bg-black\/60) {
+  background-color: #FFFBE6 !important;
+  border-color: #DEC978 !important;
+}
+
+/* Button & interactive element wrapping guards */
+button, .btn {
+  white-space: nowrap;
+}
+
+.truncate-safe {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

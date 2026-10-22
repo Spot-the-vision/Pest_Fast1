@@ -1,0 +1,10 @@
+{"name": "@pest-free/shared-utils",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "module": "index.js",
+  "dependencies": {
+    "@pest-free/shared-config": "*"
+  }
+}

@@ -1,62 +1,171 @@
+const easyHiCareLogo = '/easyhicare-logo.png';
 import React, { useState } from 'react';
 import PlatformOverview from './pages/PlatformOverview';
+import KycTab from './pages/KycTab';
+import DisputesTab from './pages/DisputesTab';
+import FinancialsTab from './pages/FinancialsTab';
+import {
+  SystemConfigModal,
+  AdminProfileModal,
+  HubsModal,
+  PiiVaultModal,
+  StreamsModal,
+  PostGisModal,
+  AgencyJobsModal
+} from './components/modals/AdminModals';
 import './index.css';
 
+// ─── Toast ──────────────────────────────────────────────────────────────────
+function Toast({ message, onClose }) {
+  if (!message) return null;
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl bg-[#003527] text-white font-semibold text-sm min-w-[320px] border border-[#064e3b] animate-in fade-in slide-in-from-bottom-4 duration-200">
+      <span className="material-symbols-outlined text-[#fea619] text-[20px]">check_circle</span>
+      <span className="flex-1">{message}</span>
+      <button type="button" onClick={onClose} className="text-white/70 hover:text-white transition-colors ml-2 cursor-pointer">
+        <span className="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+  );
+}
+
+// ─── Main Admin Application ──────────────────────────────────────────────────
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [activeTab, setActiveTab] = useState('telemetry'); // telemetry, kyc, disputes, financials
+  const [activeTab, setActiveTab] = useState('telemetry');
   const [toastMessage, setToastMessage] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedDossier, setSelectedDossier] = useState(null);
+  const [activeModal, setActiveModal] = useState(null); // 'settings' | 'profile' | 'agencies' | 'vault' | 'socket' | 'postgis'
+  const [selectedAgencyForJobs, setSelectedAgencyForJobs] = useState(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Interactive state for KYC approvals
   const [pendingAgencies, setPendingAgencies] = useState([
     { id: 'AGY-104', name: 'Apex Pest Bangalore', owner: 'Ramesh Naidu', license: 'CIB-KA-2024-419', gstin: '29AABCU9603R1ZM', status: 'Pending Review', city: 'Bangalore' },
     { id: 'AGY-105', name: 'CleanShield NCR', owner: 'Deepak Sharma', license: 'CIB-HR-2023-882', gstin: '06AABCC1234F1Z8', status: 'Pending Review', city: 'Gurgaon' },
   ]);
 
-  // Interactive state for Disputes
-  const [disputes, setDisputes] = useState([
-    { id: 'DSP-882', client: 'Rohit Verma', agency: 'EcoPest Solutions', issue: 'Termite reappeared in kitchen baseboards after 2 weeks', claim: 'Free Re-treatment', status: 'Open Escalation' },
-    { id: 'DSP-884', client: 'Meera Iyer', agency: 'Apex Pest Bangalore', issue: 'Technician arrived 40 mins late due to rain', claim: '₹300 Courtesy Refund', status: 'Pending Review' }
+  const [approvedAgencies, setApprovedAgencies] = useState([
+    {
+      id: 'PF-HUB-8821',
+      name: 'EcoPest Solutions',
+      city: 'Bangalore (Whitefield & Indiranagar)',
+      owner: 'Vikramaditya Roy',
+      license: 'CIB-KA-2021-9921',
+      gstin: '29AAECE8821M1Z5',
+      techs: 18,
+      jobsCompleted: 184,
+      sla: '98.4%',
+      approvedDate: '12 Jan 2024',
+      status: 'Approved & Active',
+    },
+    {
+      id: 'PF-HUB-4402',
+      name: 'Apex Pest Bangalore',
+      city: 'Bangalore (Bellandur & ORR)',
+      owner: 'Ramesh Naidu',
+      license: 'CIB-KA-2022-7731',
+      gstin: '29AABCU9603R1ZM',
+      techs: 12,
+      jobsCompleted: 92,
+      sla: '97.1%',
+      approvedDate: '28 Mar 2024',
+      status: 'Approved & Active',
+    },
+    {
+      id: 'PF-HUB-1109',
+      name: 'CleanShield NCR',
+      city: 'Gurgaon (Cyber City & DLF)',
+      owner: 'Deepak Sharma',
+      license: 'CIB-HR-2023-5510',
+      gstin: '06AABCC1234F1Z8',
+      techs: 9,
+      jobsCompleted: 64,
+      sla: '99.0%',
+      approvedDate: '15 Jul 2024',
+      status: 'Approved & Active',
+    },
   ]);
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
+  const [disputes, setDisputes] = useState([
+    {
+      id: 'DSP-882',
+      client: 'Rohit Verma',
+      customerType: 'Old Customer',
+      customerDetails: 'Returning Client · 4th Service Contract (High LTV)',
+      agency: 'EcoPest Solutions',
+      issue: 'Termite reappeared in kitchen baseboards after 2 weeks',
+      claim: 'Free Re-treatment',
+      date: '24 Oct 2024'
+    },
+    {
+      id: 'DSP-884',
+      client: 'Meera Iyer',
+      customerType: 'New Customer',
+      customerDetails: 'First-time Customer · Onboarding Booking #BK-9104',
+      agency: 'Apex Pest Bangalore',
+      issue: 'Technician arrived 40 mins late due to rain',
+      claim: '₹300 Courtesy Refund',
+      date: '23 Oct 2024'
+    },
+    {
+      id: 'DSP-886',
+      client: 'Kavita Sundaram',
+      customerType: 'Old Customer',
+      customerDetails: 'Returning Client · Annual AMC Subscriber',
+      agency: 'CleanShield NCR',
+      issue: 'Cockroach odor spray requested odorless bio-treatment',
+      claim: 'Odorless Bio Re-spray',
+      date: '22 Oct 2024'
+    },
+    {
+      id: 'DSP-889',
+      client: 'Arjun Nambiar',
+      customerType: 'New Customer',
+      customerDetails: 'First-time Customer · App Promo Discount User',
+      agency: 'EcoPest Solutions',
+      issue: 'Balcony netting anchor came loose after storm',
+      claim: 'Free Anchor Re-tightening',
+      date: '21 Oct 2024'
+    }
+  ]);
 
-  const handleApproveAgency = (id, name) => {
-    setPendingAgencies(prev => prev.filter(a => a.id !== id));
-    showToast(`✅ Agency ${name} (${id}) KYC Approved & Activated in Platform Registry!`);
-  };
+  const showToast = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(null), 3500); };
 
-  const handleResolveDispute = (id, resolution) => {
-    setDisputes(prev => prev.filter(d => d.id !== id));
-    showToast(`⚖️ Dispute ${id} Resolved: ${resolution}`);
-  };
+  const navItems = [
+    { id: 'telemetry', label: 'System Core', icon: 'analytics' },
+    { id: 'kyc', label: `Agency KYC (${pendingAgencies.length})`, icon: 'how_to_reg', count: pendingAgencies.length },
+    { id: 'disputes', label: `Disputes (${disputes.length})`, icon: 'gavel', count: disputes.length },
+    { id: 'financials', label: 'Settlements & GMV', icon: 'payments' },
+  ];
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-surface p-4">
-        <form onSubmit={() => setIsAuthenticated(true)} className="bg-surface-container-lowest border border-surface-container-high p-8 rounded-2xl shadow-xl w-full max-w-sm space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
-              <span className="material-symbols-outlined text-[24px]">terminal</span>
-            </div>
+      <div className="flex items-center justify-center min-h-screen bg-[#fcf9f4] p-4">
+        <form onSubmit={e => { e.preventDefault(); setIsAuthenticated(true); }} className="bg-[#ffffff] border border-[#ebe8e3] p-8 rounded-3xl shadow-xl w-full max-w-sm flex flex-col gap-5">
+          <div className="flex items-center gap-3">
+            <img
+              src={easyHiCareLogo}
+              alt="Easy HiCare Logo"
+              className="h-12 w-auto max-w-[96px] rounded-xl bg-white p-1.5 object-contain border border-[#ebe8e3] shadow-md"
+            />
             <div>
-              <h2 className="font-headline font-bold text-base text-primary">Super-Admin Console</h2>
-              <p className="text-[11px] text-on-surface-variant">Kernel & Marketplace Control</p>
+              <h2 className="font-bold text-base text-[#003527]">Super-Admin Console</h2>
+              <p className="text-[11px] text-[#707974]">Kernel &amp; Marketplace Control</p>
             </div>
           </div>
-          <div className="bg-surface-container-low p-2.5 rounded-xl text-xs text-on-surface-variant">
-            Developer / Super-Admin Access Only (Strictly isolated per AGENTS.md)
+          <div className="bg-[#fbf7ee] p-3 rounded-xl text-[12px] text-[#707974] border border-[#ebe8e3] flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-[#003527]">lock</span>
+            Developer &amp; Super-Admin Root Access
           </div>
-          <div>
-            <label className="text-xs font-bold text-on-surface-variant block mb-1">Root Admin Email</label>
-            <input defaultValue="admin@pestfast.com" type="email" className="w-full px-3 py-2 text-xs rounded-lg border border-surface-container-high bg-surface-container-low" />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-bold text-[#707974]">Root Admin Email</label>
+            <input defaultValue="admin@pestfast.com" type="email" className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#ebe8e3] bg-[#fcf9f4] focus:outline-none focus:ring-2 focus:ring-[#003527]/30" />
           </div>
-          <button type="submit" className="w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-primary-container transition-colors shadow-sm cursor-pointer">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-bold text-[#707974]">Password</label>
+            <input defaultValue="••••••••" type="password" className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#ebe8e3] bg-[#fcf9f4] focus:outline-none focus:ring-2 focus:ring-[#003527]/30" />
+          </div>
+          <button type="submit" className="w-full py-3 bg-[#003527] text-white rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-[#064e3b] transition-all shadow-xs cursor-pointer">
             Access Core Console
           </button>
         </form>
@@ -65,330 +174,306 @@ export default function App() {
   }
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen font-body flex flex-col">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-4 inset-x-4 max-w-md mx-auto z-50 bg-primary text-on-primary px-4 py-3 rounded-xl shadow-lg flex items-center justify-between text-xs animate-bounce">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">verified</span>
-            <span>{toastMessage}</span>
+    <div className="bg-[#fcf9f4] text-[#1c1c19] min-h-screen flex text-sm selection:bg-[#fea619]/30">
+      <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+
+      {/* ── Modals for Management & Core ── */}
+      <SystemConfigModal open={activeModal === 'settings'} onClose={() => setActiveModal(null)} showToast={showToast} />
+      <AdminProfileModal open={activeModal === 'profile'} onClose={() => setActiveModal(null)} showToast={showToast} onLogout={() => setIsAuthenticated(false)} />
+      <HubsModal open={activeModal === 'agencies'} onClose={() => setActiveModal(null)} showToast={showToast} />
+      <PiiVaultModal open={activeModal === 'vault'} onClose={() => setActiveModal(null)} showToast={showToast} />
+      <StreamsModal open={activeModal === 'socket'} onClose={() => setActiveModal(null)} showToast={showToast} />
+      <PostGisModal open={activeModal === 'postgis'} onClose={() => setActiveModal(null)} showToast={showToast} />
+      <AgencyJobsModal agencyName={selectedAgencyForJobs} onClose={() => setSelectedAgencyForJobs(null)} showToast={showToast} />
+
+      {/* ── Mobile Sidebar Backdrop ── */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Left Side Menubar (Responsive Slide Drawer on Mobile/Tablet) ── */}
+      <aside className={`fixed left-0 top-0 h-full w-64 lg:w-72 bg-[#003527] text-white z-50 flex flex-col border-r border-[#064e3b] shadow-2xl transition-transform duration-200 ease-in-out box-border overflow-x-hidden ${
+        mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
+        {/* Brand Header with Easy HiCare Logo */}
+        <div style={{ padding: '18px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottom: '1px solid rgba(255, 255, 255, 0.1)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img
+              src={easyHiCareLogo}
+              alt="Easy HiCare Logo"
+              style={{
+                height: 44,
+                width: 'auto',
+                maxWidth: 96,
+                borderRadius: 8,
+                objectFit: 'contain',
+                background: '#FFFFFF',
+                padding: '2px 6px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.15 }}>Easy HiCare</span>
+              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>Pest Solutions &bull; Admin Console</span>
+            </div>
           </div>
-          <button onClick={() => setToastMessage(null)} className="text-on-primary/70 hover:text-on-primary">
-            <span className="material-symbols-outlined text-[16px]">close</span>
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden p-1.5 text-white/70 hover:text-white rounded-lg hover:bg-white/10 cursor-pointer"
+            aria-label="Close sidebar"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
-      )}
 
-      {/* Super-Admin Top Navigation Bar */}
-      <header className="bg-surface-container-lowest border-b border-surface-container-high sticky top-0 z-40 px-4 py-2.5 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
-              <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-headline font-bold text-sm text-primary tracking-tight">Pest Free Global OS</span>
-                <span className="px-2 py-0.5 rounded-full bg-primary-fixed text-primary text-[10px] font-bold">Kernel v4.2</span>
+        {/* Menu Bar Navigation Items */}
+        <nav className="flex-1 px-3 py-3 flex flex-col gap-1.5 overflow-y-auto overflow-x-hidden min-w-0">
+          <p className="text-[10px] uppercase tracking-widest text-[#80bea6] font-bold px-3 mb-1 flex items-center gap-1.5 truncate">
+            <span className="material-symbols-outlined text-[13px] text-[#fea619] shrink-0">dashboard</span>
+            <span className="truncate">Operations Menu</span>
+          </p>
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(item.id);
+                setMobileSidebarOpen(false);
+              }}
+              title={item.label}
+              className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl font-medium text-[13px] transition-all text-left cursor-pointer min-w-0 box-border overflow-hidden ${
+                activeTab === item.id
+                  ? 'bg-[#064e3b] text-white shadow-xs font-bold border border-white/15'
+                  : 'text-[#c2ebdc]/80 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
+                <span className={`material-symbols-outlined text-[19px] shrink-0 ${activeTab === item.id ? 'text-[#fea619]' : 'text-[#80bea6]'}`}>{item.icon}</span>
+                <span className="truncate leading-tight min-w-0 flex-1">{item.label}</span>
               </div>
-              <p className="text-[10px] text-on-surface-variant">Isolated Super-Admin Console • Multi-Agency Operations</p>
+              {item.count !== undefined && item.count > 0 && (
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ml-auto whitespace-nowrap ${activeTab === item.id ? 'bg-[#fea619] text-[#1c1c19]' : 'bg-white/20 text-white'}`}>
+                  {item.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* Bottom of Sidebar: 24x7 Helpline + Root Admin Profile */}
+        <div className="p-3 border-t border-white/10 flex flex-col gap-2.5 shrink-0 bg-[#00291e]">
+          <button
+            type="button"
+            onClick={() => showToast('📞 Operations Helpline: Connecting to Regional Dispatch Command...')}
+            className="w-full py-2.5 px-3 rounded-xl bg-[#fea619] hover:bg-[#e09110] text-[#1c1c19] font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
+          >
+            <span className="material-symbols-outlined text-[16px]">call</span>
+            <span>24x7 Operations Helpline</span>
+          </button>
+
+          {/* Profile Card */}
+          <button
+            type="button"
+            onClick={() => setActiveModal('profile')}
+            className="w-full p-2.5 rounded-2xl bg-[#064e3b]/80 hover:bg-[#064e3b] border border-white/10 transition-all text-left cursor-pointer shadow-xs group"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#003527] border border-white/15 flex items-center justify-center text-[#fea619] shadow-xs font-bold text-xs">
+                RA
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-white text-xs truncate group-hover:text-[#fea619] transition-colors">Root Administrator</div>
+                <div className="text-[10px] text-[#80bea6] truncate">admin@pestfast.com</div>
+              </div>
+              <span className="material-symbols-outlined text-white/50 text-[16px]">chevron_right</span>
+            </div>
+            <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between text-[9px]">
+              <span className="text-[#c2ebdc] flex items-center gap-1 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Level-3 Root
+              </span>
+              <span className="bg-[#fea619] text-[#1c1c19] px-1.5 py-0.2 rounded font-black">ROOT</span>
+            </div>
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main Application Content (Responsive pl-0 lg:pl-72) ── */}
+      <div className="w-full pl-0 lg:pl-72 flex flex-col min-h-screen">
+        {/* ── Top Header with Management & Core ── */}
+        <header className="bg-[#fcf9f4]/95 backdrop-blur-md border-b border-[#ebe8e3] sticky top-0 z-40 px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          {/* Active section title with mobile menu toggle */}
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-xl bg-white border border-[#ebe8e3] text-[#003527] flex items-center justify-center cursor-pointer shadow-xs hover:bg-[#f6f3ee]"
+                aria-label="Open sidebar navigation"
+              >
+                <span className="material-symbols-outlined text-[20px]">menu</span>
+              </button>
+            <img
+              src={easyHiCareLogo}
+              alt="Easy HiCare Logo"
+              style={{
+                height: 44,
+                width: 'auto',
+                maxWidth: 96,
+                borderRadius: 8,
+                objectFit: 'contain',
+                background: '#FFFFFF',
+                padding: '2px 6px',
+                border: '1.5px solid #ebe8e3',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+              }}
+            />
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-black text-[#003527]">Easy HiCare Pest Solutions</span>
+              <span className="text-[11px] text-[#707974] font-semibold">Central Master Administration &bull; Kernel v4.2</span>
             </div>
           </div>
 
-          {/* Navigation Desks */}
-          <div className="flex flex-wrap items-center gap-1.5 bg-surface-container-low p-1 rounded-xl">
+          {/* Management & Core Controls */}
+          <div className="hidden lg:flex items-center gap-1.5 bg-[#ffffff] p-1 rounded-2xl border border-[#ebe8e3] shadow-xs">
+            <div className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-[#003527] bg-[#f0ede9] rounded-xl border border-[#ebe8e3]">
+              <span className="material-symbols-outlined text-[15px] text-[#fea619]">admin_panel_settings</span>
+              <span className="text-[11px] uppercase tracking-wider">Management &amp; Core:</span>
+            </div>
+
             <button
-              onClick={() => setActiveTab('telemetry')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'telemetry' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              type="button"
+              onClick={() => setActiveModal('agencies')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeModal === 'agencies'
+                  ? 'bg-[#003527] text-white shadow-xs'
+                  : 'text-[#404944] hover:text-[#003527] hover:bg-[#f6f3ee]'
               }`}
+              title="Partner Agency Hubs"
             >
-              <span className="material-symbols-outlined text-[16px]">analytics</span>
-              <span>System Core</span>
+              <span className={`material-symbols-outlined text-[17px] ${activeModal === 'agencies' ? 'text-[#fea619]' : 'text-[#003527]'}`}>apartment</span>
+              <span>Hubs</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('kyc')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'kyc' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              type="button"
+              onClick={() => setActiveModal('vault')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeModal === 'vault'
+                  ? 'bg-[#003527] text-white shadow-xs'
+                  : 'text-[#404944] hover:text-[#003527] hover:bg-[#f6f3ee]'
               }`}
+              title="Cryptographic PII Vault"
             >
-              <span className="material-symbols-outlined text-[16px]">how_to_reg</span>
-              <span>Agency KYC ({pendingAgencies.length})</span>
+              <span className={`material-symbols-outlined text-[17px] ${activeModal === 'vault' ? 'text-[#fea619]' : 'text-[#003527]'}`}>security</span>
+              <span>PII Vault</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('disputes')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'disputes' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              type="button"
+              onClick={() => setActiveModal('socket')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeModal === 'socket'
+                  ? 'bg-[#003527] text-white shadow-xs'
+                  : 'text-[#404944] hover:text-[#003527] hover:bg-[#f6f3ee]'
               }`}
+              title="Socket.IO Live Streams"
             >
-              <span className="material-symbols-outlined text-[16px]">gavel</span>
-              <span>Disputes Desk ({disputes.length})</span>
+              <span className={`material-symbols-outlined text-[17px] ${activeModal === 'socket' ? 'text-[#fea619]' : 'text-[#855300]'}`}>stream</span>
+              <span>Streams</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('financials')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'financials' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              type="button"
+              onClick={() => setActiveModal('postgis')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeModal === 'postgis'
+                  ? 'bg-[#003527] text-white shadow-xs'
+                  : 'text-[#404944] hover:text-[#003527] hover:bg-[#f6f3ee]'
               }`}
+              title="PostGIS Spatial Engine"
             >
-              <span className="material-symbols-outlined text-[16px]">payments</span>
-              <span>Settlements & GMV</span>
+              <span className={`material-symbols-outlined text-[17px] ${activeModal === 'postgis' ? 'text-[#fea619]' : 'text-[#003527]'}`}>dataset</span>
+              <span>PostGIS</span>
+            </button>
+
+            <a
+              href="/"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#003527] bg-[#fbf7ee] hover:bg-[#f0ede9] border border-[#ebe8e3] transition-all shadow-2xs"
+              title="Return to Universal Home"
+            >
+              <span className="material-symbols-outlined text-[17px] text-[#003527]">home</span>
+              <span>Universal Home</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => setActiveModal('settings')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                activeModal === 'settings'
+                  ? 'bg-[#003527] text-white shadow-xs'
+                  : 'text-[#003527] bg-[#fbf7ee] hover:bg-[#f0ede9] border border-[#ebe8e3]'
+              }`}
+              title="System Configuration (Live Kernel)"
+            >
+              <span className={`material-symbols-outlined text-[17px] ${activeModal === 'settings' ? 'text-[#fea619]' : 'text-[#003527]'}`}>settings_input_component</span>
+              <span>System Configuration</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-semibold border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
-              <span>APIs 99.98% Healthy</span>
+          {/* Right Status Pill & Actions */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#003527] text-white text-xs font-bold shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>System Core · Production Live</span>
             </div>
+
             <button
+              type="button"
+              onClick={() => setActiveModal('settings')}
+              className="lg:hidden w-10 h-10 rounded-xl bg-white border border-[#ebe8e3] flex items-center justify-center text-[#003527] shadow-xs cursor-pointer"
+              title="System Configuration"
+            >
+              <span className="material-symbols-outlined text-[20px]">settings_input_component</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setIsAuthenticated(false)}
-              className="px-2.5 py-1 text-xs text-error hover:bg-error-container/40 rounded-lg font-bold transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-xl font-bold transition-colors border border-red-200 cursor-pointer shadow-xs"
             >
-              Lock Terminal
+              Lock
             </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Container */}
-      <main className="flex-1">
-        {/* Tab 1: System Telemetry */}
-        {activeTab === 'telemetry' && <PlatformOverview />}
-
-        {/* Tab 2: Agency KYC Approvals Desk */}
-        {activeTab === 'kyc' && (
-          <div className="max-w-6xl mx-auto p-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-headline font-bold text-lg text-primary">Agency Onboarding & KYC Audit Desk</h2>
-                <p className="text-xs text-on-surface-variant">Review Trade Licenses and CIB&RC Chemical Permits before granting agency dispatch rights.</p>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-secondary-container text-on-surface text-xs font-bold">
-                {pendingAgencies.length} Applications Awaiting Review
-              </span>
-            </div>
-
-            {pendingAgencies.length === 0 ? (
-              <div className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-12 text-center text-on-surface-variant">
-                <span className="material-symbols-outlined text-[48px] text-emerald-600 mb-2">task_alt</span>
-                <h3 className="font-headline font-bold text-base text-primary">All Agency Applications Vetted!</h3>
-                <p className="text-xs mt-1">Zero pending KYC audits in the queue.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pendingAgencies.map(agency => (
-                  <div key={agency.id} className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded bg-surface-container text-primary text-[10px] font-bold">{agency.id}</span>
-                        <h3 className="font-headline font-bold text-base text-primary">{agency.name}</h3>
-                        <span className="text-xs font-semibold text-on-surface-variant">({agency.city})</span>
-                      </div>
-                      <p className="text-xs text-on-surface-variant">
-                        Managing Director: <strong>{agency.owner}</strong> • GSTIN: <code className="bg-surface-container px-1 py-0.5 rounded text-[11px]">{agency.gstin}</code>
-                      </p>
-                      <p className="text-xs text-emerald-700 font-medium flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[15px]">verified</span>
-                        Central Insecticides Board License: {agency.license}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button 
-                        onClick={() => setSelectedDossier(agency)}
-                        className="px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-bold text-xs cursor-pointer"
-                      >
-                        Inspect Dossier
-                      </button>
-                      <button 
-                        onClick={() => handleApproveAgency(agency.id, agency.name)}
-                        className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-xs flex items-center gap-1 shadow-sm cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                        Approve Agency
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab 3: Disputes Desk */}
-        {activeTab === 'disputes' && (
-          <div className="max-w-6xl mx-auto p-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-headline font-bold text-lg text-primary">Customer Dispute & Escalation Desk</h2>
-                <p className="text-xs text-on-surface-variant">Manage 90-day warranty claims, pest recurrence reports, and refund requests.</p>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-error-container text-error text-xs font-bold">
-                {disputes.length} Active Escalations
-              </span>
-            </div>
-
-            {disputes.length === 0 ? (
-              <div className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-12 text-center text-on-surface-variant">
-                <span className="material-symbols-outlined text-[48px] text-emerald-600 mb-2">thumb_up</span>
-                <h3 className="font-headline font-bold text-base text-primary">Zero Unresolved Disputes!</h3>
-                <p className="text-xs mt-1">Platform customer satisfaction score: 99.4% CSAT.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {disputes.map(d => (
-                  <div key={d.id} className="bg-surface-container-lowest border border-surface-container-high rounded-2xl p-5 shadow-sm space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-0.5 rounded-full bg-error-container text-error font-bold text-[10px]">{d.id}</span>
-                          <span className="font-bold text-xs text-primary">{d.client}</span>
-                          <span className="text-outline">vs</span>
-                          <span className="font-semibold text-xs text-on-surface">{d.agency}</span>
-                        </div>
-                        <p className="text-xs text-on-surface-variant mt-1"><strong>Complaint:</strong> {d.issue}</p>
-                        <p className="text-xs text-secondary font-semibold mt-0.5">Demanded Remedy: {d.claim}</p>
-                      </div>
-                      <span className="text-[10px] uppercase font-bold text-error bg-error-container/40 px-2.5 py-1 rounded-full">
-                        {d.status}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-container-high">
-                      <button 
-                        onClick={() => handleResolveDispute(d.id, 'Ordered Free Re-service by Agency under 90-day guarantee')}
-                        className="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-bold hover:bg-primary-container cursor-pointer"
-                      >
-                        Enforce Free Re-Treatment
-                      </button>
-                      <button 
-                        onClick={() => handleResolveDispute(d.id, 'Issued 100% Instant Escrow Refund to Customer')}
-                        className="px-3 py-1.5 rounded-lg bg-surface-container text-error text-xs font-bold hover:bg-surface-container-high cursor-pointer"
-                      >
-                        Authorize Refund
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab 4: Financial Settlements & GMV */}
-        {activeTab === 'financials' && (
-          <div className="max-w-6xl mx-auto p-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-headline font-bold text-lg text-primary">Platform Financials & Take-Rate Settlements</h2>
-                <p className="text-xs text-on-surface-variant">Automated 15% Platform Take-Rate accounting and agency settlement batches.</p>
-              </div>
-              <button 
-                onClick={() => showToast('Batch Payout of ₹3,40,000 disbursed via RazorpayX Escrow!')}
-                className="px-4 py-2 rounded-xl bg-secondary text-on-primary font-bold text-xs shadow-md hover:bg-secondary/90 transition-colors cursor-pointer"
-              >
-                Disburse Weekly Payouts (RazorpayX)
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-surface-container-lowest border border-surface-container-high p-5 rounded-2xl shadow-sm">
-                <p className="text-xs font-bold uppercase text-on-surface-variant">Monthly Gross Merchandise Value (GMV)</p>
-                <h3 className="font-headline font-extrabold text-2xl text-primary mt-1">₹14,82,500</h3>
-                <p className="text-[11px] text-emerald-600 font-semibold mt-1">↑ +18.4% vs last month</p>
-              </div>
-
-              <div className="bg-surface-container-lowest border border-surface-container-high p-5 rounded-2xl shadow-sm">
-                <p className="text-xs font-bold uppercase text-on-surface-variant">Platform Take-Rate (15% Net)</p>
-                <h3 className="font-headline font-extrabold text-2xl text-primary mt-1">₹2,22,375</h3>
-                <p className="text-[11px] text-on-surface-variant mt-1">Direct Platform Revenue</p>
-              </div>
-
-              <div className="bg-surface-container-lowest border border-surface-container-high p-5 rounded-2xl shadow-sm">
-                <p className="text-xs font-bold uppercase text-on-surface-variant">Agency Net Settlements</p>
-                <h3 className="font-headline font-extrabold text-2xl text-primary mt-1">₹12,60,125</h3>
-                <p className="text-[11px] text-emerald-600 font-semibold mt-1">98.2% Auto-Disbursed</p>
-              </div>
-            </div>
-          </div>
-        )}
-            {/* Agency KYC Audit Dossier Modal */}
-      {selectedDossier && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl max-w-md w-full p-5 shadow-2xl border border-primary/20 space-y-4">
-            <div className="flex items-center justify-between border-b border-surface-container-high pb-2">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[22px]">policy</span>
-                <h3 className="font-headline font-bold text-sm text-primary">Agency KYC & Compliance Dossier</h3>
-              </div>
-              <button onClick={() => setSelectedDossier(null)} className="text-on-surface-variant hover:text-on-surface cursor-pointer">
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
-
-            <div className="space-y-2.5 text-xs text-on-surface-variant leading-relaxed">
-              <div className="bg-surface-container-low p-3 rounded-xl space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="font-medium text-on-surface-variant">Agency Name:</span>
-                  <strong className="text-primary">{selectedDossier.name}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-on-surface-variant">Registration Code:</span>
-                  <code className="bg-surface-container px-1 py-0.5 rounded font-bold text-primary">{selectedDossier.id}</code>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-on-surface-variant">Operating City:</span>
-                  <span className="font-semibold text-on-surface">{selectedDossier.city}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-on-surface-variant">Managing Owner:</span>
-                  <span className="font-semibold text-on-surface">{selectedDossier.owner}</span>
-                </div>
-              </div>
-
-              <div className="bg-surface-container-low p-3 rounded-xl space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Insecticide Act 1968 License:</span>
-                  <span className="text-emerald-700 font-bold">✓ Verified Active</span>
-                </div>
-                <p className="text-[11px] font-mono text-primary bg-surface-container px-1.5 py-0.5 rounded">{selectedDossier.license}</p>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-medium">GSTIN Tax Registration:</span>
-                  <span className="font-mono text-primary">{selectedDossier.gstin}</span>
-                </div>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-medium">Owner Identity Audit:</span>
-                  <span className="text-emerald-700 font-bold">e-KYC Token Confirmed (Raw PII Masked)</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 pt-2">
-              <button 
-                onClick={() => {
-                  handleApproveAgency(selectedDossier.id, selectedDossier.name);
-                  setSelectedDossier(null);
-                }}
-                className="flex-1 py-2.5 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-bold text-xs flex items-center justify-center gap-1 shadow-sm cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                Approve & Issue Certificate
-              </button>
-              <button 
-                onClick={() => setSelectedDossier(null)}
-                className="px-3 py-2.5 bg-surface-container text-on-surface-variant rounded-xl font-bold text-xs hover:bg-surface-container-high cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      </main>
+        {/* ── Main Content Area ── */}
+        <main className="flex-1 bg-[#fcf9f4]">
+          {activeTab === 'telemetry' && <PlatformOverview showToast={showToast} openSettings={() => setActiveModal('settings')} />}
+          {activeTab === 'kyc' && (
+            <KycTab
+              pendingAgencies={pendingAgencies}
+              setPendingAgencies={setPendingAgencies}
+              approvedAgencies={approvedAgencies}
+              setApprovedAgencies={setApprovedAgencies}
+              showToast={showToast}
+              selectedDossier={selectedDossier}
+              setSelectedDossier={setSelectedDossier}
+              onSelectAgency={setSelectedAgencyForJobs}
+            />
+          )}
+          {activeTab === 'disputes' && (
+            <DisputesTab
+              disputes={disputes}
+              showToast={showToast}
+              onSelectAgency={setSelectedAgencyForJobs}
+            />
+          )}
+          {activeTab === 'financials' && <FinancialsTab showToast={showToast} />}
+        </main>
+      </div>
     </div>
   );
 }
