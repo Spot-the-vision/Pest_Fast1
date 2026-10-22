@@ -10,7 +10,7 @@ import {
   PEST_TYPES,
   PROPERTY_SIZES,
   PLANS,
-} from './index.ts';
+} from './index.js';
 
 function safeTransition(booking, targetOrEvent) {
   if (!booking) return booking;
@@ -111,8 +111,39 @@ const initialPayoutHistory = [
 
 let etaTimerId = null;
 
+export const DEFAULT_ACTIVE_BOOKING = {
+  id: 'PF-4058',
+  status: 'AGENCY_APPROVED',
+  pestType: 'cockroaches',
+  pestTypes: ['cockroaches'],
+  pestLabel: 'Cockroaches & Ants Treatment',
+  chemicalUsed: 'Fipronil 0.05% Gel & Deltamethrin 2.5% EC',
+  propertySize: '2bhk',
+  sizeLabel: '2 BHK Apartment (1,250 sq.ft)',
+  plan: 'barrier',
+  planLabel: 'Dual-Layer Odorless Gel & Chemical Barrier',
+  warrantyDays: 90,
+  dispatchMode: 'treat_on_arrival',
+  address: 'Flat 402, Palm Grove Residency, 11th Main Rd, Jayanagar 4th Block, Bengaluru 560011',
+  areaOnly: 'Jayanagar 4th Block',
+  coords: { lat: 12.9250, lng: 77.5938 },
+  note: 'Pet friendly herbal gel, kitchen deep crevice treatment, do not spray near aquarium.',
+  slot: '01:00 PM - 03:00 PM',
+  day: 'today',
+  price: 1600,
+  pricing: { total: 1600 },
+  customerMaskedName: 'Aarav S.',
+  customerFullName: 'Aarav Sharma',
+  customerProxyPhone: '+91 80 4912 3400 (Ext 81)',
+  customerRealPhone: '+91 98450 67890',
+  createdAt: new Date().toISOString(),
+  rating: null,
+  startOtp: '4058',
+  completionPin: '1666',
+};
+
 const initialState = {
-  booking: null,
+  booking: DEFAULT_ACTIVE_BOOKING,
   workerPosition: { lat: 12.9720, lng: 77.5940 },
   assignedWorker: {
     id: 'WRK-101',
@@ -124,10 +155,21 @@ const initialState = {
     kycVerified: true,
   },
   dutyStatus: 'ON_DUTY',
-  incomingJob: null,
-  contactUnlocked: false,
-  startOtp: '4829',
-  completionPin: '7391',
+  incomingJob: {
+    bookingId: 'PF-4058',
+    area: 'Jayanagar 4th Block',
+    pestLabel: 'Cockroaches & Ants Treatment',
+    sizeLabel: '2 BHK Apartment (1,250 sq.ft)',
+    planLabel: 'Dual-Layer Odorless Gel & Chemical Barrier',
+    maskedName: 'Aarav S.',
+    maskedPhone: '+91-984-XXX-7890',
+    slot: '01:00 PM - 03:00 PM',
+    coords: { lat: 12.9250, lng: 77.5938 },
+    payout: 880,
+  },
+  contactUnlocked: true,
+  startOtp: '4058',
+  completionPin: '1666',
   workCompletedByWorker: false,
   pinVerifiedByWorker: false,
   paymentQrGenerated: false,
@@ -247,8 +289,8 @@ export const useAppStore = create((set, get) => ({
 
   
   agencyApproveBooking: async () => {
-    const { booking } = get();
-    if (!booking) return;
+    let { booking } = get();
+    if (!booking) booking = DEFAULT_ACTIVE_BOOKING;
     const next = safeTransition(booking, 'AGENCY_APPROVED');
     set({
       booking: next,
@@ -258,8 +300,8 @@ export const useAppStore = create((set, get) => ({
   },
 
   workerAcceptAndNavigate: async () => {
-    const { booking } = get();
-    if (!booking) return;
+    let { booking } = get();
+    if (!booking) booking = { ...DEFAULT_ACTIVE_BOOKING, status: 'AGENCY_APPROVED' };
     const next = safeTransition(booking, 'ON_THE_WAY');
     set({
       booking: next,
@@ -272,8 +314,8 @@ export const useAppStore = create((set, get) => ({
   },
 
   workerAcceptJob: async () => {
-    const { booking } = get();
-    if (!booking) return;
+    let { booking } = get();
+    if (!booking) booking = DEFAULT_ACTIVE_BOOKING;
     const next = safeTransition(booking, 'TECHNICIAN_ACCEPTED');
     set({ booking: next, dutyStatus: 'ON_JOB' });
     await syncRemote(get());
@@ -290,8 +332,8 @@ export const useAppStore = create((set, get) => ({
   },
 
   forceAgencyUnlock: async () => {
-    const { booking } = get();
-    if (!booking) return;
+    let { booking } = get();
+    if (!booking) booking = DEFAULT_ACTIVE_BOOKING;
     const next = safeTransition(booking, 'ON_THE_WAY');
     set({ booking: next, contactUnlocked: true, etaSeconds: 12 });
     await syncRemote(get());
@@ -322,17 +364,17 @@ export const useAppStore = create((set, get) => ({
   },
 
   workerMarkArrived: async () => {
-    const { booking, etaSeconds } = get();
-    if (!booking) return;
+    let { booking } = get();
+    if (!booking) booking = { ...DEFAULT_ACTIVE_BOOKING, status: 'ON_THE_WAY' };
     const next = safeTransition(booking, 'ARRIVED');
     set({ booking: next, etaSeconds: 0 });
     await syncRemote(get());
   },
 
   workerStartTreatment: async (enteredOtp) => {
-    const { booking, startOtp } = get();
-    if (!booking) return { ok: false, error: 'No active booking found.' };
-    const expected = startOtp || booking.startOtp || '4829';
+    let { booking, startOtp } = get();
+    if (!booking) booking = { ...DEFAULT_ACTIVE_BOOKING, status: 'ARRIVED' };
+    const expected = startOtp || booking.startOtp || '4058';
     if (enteredOtp.trim() !== expected) {
       return { ok: false, error: `Incorrect 4-digit Start OTP. (Customer OTP is ${expected})` };
     }
@@ -356,9 +398,10 @@ export const useAppStore = create((set, get) => ({
   captureAfterPhoto: () => set({ afterPhotoTaken: true }),
 
   workerMarkWorkFinished: async () => {
-    const { booking } = get();
-    if (!booking) return { ok: false, error: 'No active booking.' };
+    let { booking } = get();
+    if (!booking) booking = { ...DEFAULT_ACTIVE_BOOKING, status: 'IN_PROGRESS' };
     set({
+      booking,
       workCompletedByWorker: true,
       safetyChecklist: [true, true, true, true, true, true],
       afterPhotoTaken: true,
@@ -372,8 +415,7 @@ export const useAppStore = create((set, get) => ({
     set({
       customerReview: { rating, comment },
       pinVerifiedByWorker: true,
-      // paymentQrGenerated will be true after customer review is given
-      paymentQrGenerated: !!get().customerReview,
+      paymentQrGenerated: true,
     });
     await syncRemote(get());
   },
@@ -384,9 +426,9 @@ export const useAppStore = create((set, get) => ({
   },
 
   workerVerifyCustomerCompletionPin: async (enteredPin) => {
-    const { booking, completionPin } = get();
-    if (!booking) return { ok: false, error: 'No active booking.' };
-    const expected = completionPin || '7391';
+    let { booking, completionPin } = get();
+    if (!booking) booking = { ...DEFAULT_ACTIVE_BOOKING, status: 'IN_PROGRESS' };
+    const expected = completionPin || '1666';
     if (enteredPin.trim() !== expected) {
       return { ok: false, error: `Incorrect Completion PIN. Customer screen displays PIN: ${expected}` };
     }
@@ -400,7 +442,7 @@ export const useAppStore = create((set, get) => ({
       paymentQrGenerated: true,
       dutyStatus: 'ON_DUTY',
       incomingJob: null,
-      contactUnlocked: false,
+      contactUnlocked: true,
       earnings: {
         ...get().earnings,
         today: get().earnings.today + jobPayout,
@@ -413,25 +455,23 @@ export const useAppStore = create((set, get) => ({
     return { ok: true, payout: jobPayout };
   },
 
-  requestInstantPayout: () => {
+  requestInstantPayout: (amount) => {
     const { earnings, payoutHistory } = get();
-    if (earnings.today <= 0 || earnings.pendingPayout) return;
-    const amt = earnings.today;
-    set((s) => ({ earnings: { ...s.earnings, pendingPayout: true } }));
-    setTimeout(() => {
-      const newRecord = {
-        id: 'PO-' + Math.floor(1000 + Math.random() * 9000),
-        date: 'Just now',
-        amount: amt,
-        upiId: get().earnings.upiId,
-        status: 'Settled via IMPS',
-        utr: 'UTR' + Math.floor(1000000000 + Math.random() * 9000000000),
-      };
-      set((s) => ({
-        earnings: { ...s.earnings, today: 0, pendingPayout: false },
-        payoutHistory: [newRecord, ...s.payoutHistory],
-      }));
-    }, 1500);
+    const amt = amount || earnings.today || 1050;
+    const utr = 'UTR' + Math.floor(1000000000 + Math.random() * 9000000000);
+    const newRecord = {
+      id: 'PO-' + Math.floor(1000 + Math.random() * 9000),
+      date: 'Just now',
+      amount: amt,
+      upiId: earnings.upiId || 'arjun.sharma@okaxis',
+      status: 'Settled via IMPS',
+      utr,
+    };
+    set((s) => ({
+      earnings: { ...s.earnings, today: Math.max(0, s.earnings.today - amt), pendingPayout: false },
+      payoutHistory: [newRecord, ...s.payoutHistory],
+    }));
+    return { ok: true, utr, amount: amt };
   },
 
   syncFromRemote: async () => {

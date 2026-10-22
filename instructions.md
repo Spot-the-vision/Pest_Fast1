@@ -1,144 +1,102 @@
-# Pest Free — Instructions & Review Guide
+# INSTRUCTIONS.md ? Developer Onboarding & Engineering Handbook
 
-## App URLs (all running via `node dev.mjs all`)
-
-| App | URL | Who uses it |
-|---|---|---|
-| Customer App | http://localhost:3000 | Customers booking pest control |
-| Worker App | http://localhost:5176 | Field technicians |
-| Agency Dashboard | http://localhost:5175 | Agency owner (approve/dispatch) |
-| Admin Dashboard | http://localhost:5174 | Platform administrator |
+Welcome to the Easy HiCare Monorepo. This handbook guides developers (Engineers A, B, and C) on setup, conventions, shared packages, and extending the platform.
 
 ---
 
-## How to Start
+## 1. Setup from Zero
 
-```
+### Prerequisites
+- Node.js >= 20.0.0
+- PNPM >= 9.0.0 (`npm install -g pnpm`)
+
+### Installation & Launch
+```bash
+# 1. Clone repository and navigate to root
+cd Pest_Fast1-main
+
+# 2. Install workspace dependencies
+pnpm install
+
+# 3. Start all 4 dashboards concurrently
 node dev.mjs all
 ```
 
-Then open both tabs side by side to see the live cross-app flow.
+Access the applications in your browser:
+- **Customer App:** [http://localhost:3000](http://localhost:3000)
+- **Worker App:** [http://localhost:5176](http://localhost:5176)
+- **Agency Dashboard:** [http://localhost:5175/agency/](http://localhost:5175/agency/)
+- **Admin Dashboard:** [http://localhost:5174/admin/](http://localhost:5174/admin/)
 
 ---
 
-## How to Test the Full Flow
+## 2. Architecture & Design System
 
-### Step-by-step (open both :3000 and :5176 side by side)
+### The Shared Packages Ecosystem
+All common domain knowledge and visual components live in `packages/`:
+- `@pest-free/ui-kit`: Common accessible, app-ready components (`Button`, `Modal`, `Card`, `Badge`, `RadarMap`, `ToastStack`, `View`, `Text`, `TouchableOpacity`).
+- `@pest-free/shared-hooks`: Common React hooks (`useToast`, `useMediaQuery`).
+- `@pest-free/shared-utils`: Pure business logic (`calculatePrice`, `calculateMultiServicePrice`, `formatCurrency`, `exportToCSV`).
+- `@pest-free/shared-config`: Design tokens (`colors`, `theme`), domain lists (`PEST_TYPES`, `PROPERTY_SIZES`, `PLANS`, `TIME_SLOTS`, `BUNDLED_CHEMICAL_SHEETS`).
+- `@pest-free/api-client`: Cross-port live state synchronization client (`fetchLiveState`, `pushLiveState`).
 
-1. **Customer App — Book tab**
-   - Pick pest type (e.g. Cockroaches)
-   - Pick property size + plan (AI suggestion appears on step 2)
-   - Pick day + slot
-   - Enter a full address (min 10 chars)
-   - Choose "Treat on arrival" or "Inspection first"
-   - Click **Confirm booking**
-
-2. **Both apps — Wait 8 seconds**
-   - Agency auto-approves (simulated timer)
-   - Customer Track tab: status moves to "Agency approved"
-   - Worker Job tab: shows masked customer name/phone/area with Accept button
-
-3. **Worker App — Click "Accept job"**
-   - Status moves to TECHNICIAN_ACCEPTED
-   - "Waiting for contact unlock" screen appears
-
-4. **Both apps — Wait 6 seconds**
-   - Owner auto-unlocks contact (simulated)
-   - Worker Job tab: full address + phone unlocked
-   - ETA countdown (90s) starts on both apps
-
-5. **Worker App — Wait for ETA to reach 0**
-   - "Mark arrived" button enables
-   - Click it
-
-6. **Customer App — Track tab**
-   - 4-digit OTP appears (show to technician)
-   - OTP is hidden until ARRIVED status
-
-7. **Worker App — Enter OTP**
-   - Type the OTP shown on customer's screen
-   - Click "Verify & start treatment"
-
-8. **Worker App — IN_PROGRESS screen**
-   - Tick all 6 safety/protocol checkboxes
-   - Click "Capture after-photo"
-   - Click "Complete and submit proof" (enabled only when all 6 done + photo)
-
-9. **Customer App — Rating prompt**
-   - 1-5 star rating appears
-   - Submit → booking moves to History tab
-
-10. **Worker App — Earnings tab**
-    - Today's earnings increase by 55% of booking total
-    - Click "Instant payout" to test payout flow
+### App-Ready Mobile Architecture
+To allow effortless transition into iOS/Android mobile apps in the future:
+1. Always import primitives from `@pest-free/ui-kit`:
+   ```javascript
+   import { View, Text, TouchableOpacity, ScrollView, Modal } from '@pest-free/ui-kit';
+   ```
+2. Keep layouts flexible using responsive Tailwind classes (`w-full max-w-md mx-auto sm:max-w-xl`).
+3. Ensure tap targets are at least `44x44px` for touch ergonomics.
 
 ---
 
-## Worker App Special Features
+## 3. How-To Guide: Step-by-Step
 
-### Emergency SOS
-- Click 🚨 red button in header
-- Shows emergency contacts (Fire: 101, Ambulance: 108, Agency number)
-- Click "Call Emergency" to dial 108
+### How to Add a New Shared UI Component
+1. Create your component in `packages/ui-kit/<ComponentName>.jsx`.
+2. Export it from `packages/ui-kit/index.jsx`.
+3. Add an entry to the **Component Registry** in `AGENTS.md`.
+4. Import and use it in any app:
+   ```javascript
+   import { Button, Modal, Card } from '@pest-free/ui-kit';
+   ```
 
-### Safety Tab
-- **Chemical data sheets** — swipe-up sheet with Deltamethrin, Imidacloprid, Fipronil CSDS
-- **Emergency exposure protocol** — 6 first-aid steps for skin/eye/inhalation/ingestion
-- **Safety AI assistant** — type any chemical handling question, get answers from bundled CSDS only
+### How to Add a New Custom Hook
+1. Create `packages/shared-hooks/<useHookName>.js`.
+2. Export it in `packages/shared-hooks/index.js`.
+3. Import in your feature:
+   ```javascript
+   import { useToast, useMediaQuery } from '@pest-free/shared-hooks';
+   ```
+
+### How to Add an API Call or State Action
+1. All API contracts are owned by **Engineer C**.
+2. If state needs to sync across dashboards:
+   - Engineer C updates `/api/state` endpoint in `customer-app/vite.config.js`.
+   - Engineer C updates `@pest-free/api-client`.
+   - Engineers A and B consume the action in their respective store or feature hook.
 
 ---
 
-## Key Business Rules Enforced
+## 4. Testing & Troubleshooting
 
-| Rule | Where enforced |
-|---|---|
-| Worker sees ONLY masked data until agency approves | `store.js` — incomingJob populated only on AGENCY_APPROVED |
-| Full address unlocked only after OWNER_UNLOCK_CONTACT | `store.js` — contactUnlocked flag |
-| Mark Arrived disabled until ETA = 0 | `canWorkerMarkArrived()` in store |
-| OTP shown to customer ONLY when ARRIVED | Customer Track tab conditional |
-| Treatment can only start with correct OTP | `workerStartTreatment()` verifies OTP |
-| Complete only when all 6 steps + photo | `canWorkerComplete()` in store |
-| Cancel only before ON_THE_WAY | `canCancel()` in store |
-| State machine throws on illegal transitions | `transitionBooking()` in index.ts |
-
----
-
-## Unit Tests
-
+### Running Tests
 ```bash
-cd apps/customer-app
-npx vitest run --config vitest.config.ts
+# Run unit test suite
+npm --prefix apps/customer-app test
+
+# Run build check across all packages
+npm run build
 ```
 
-**28 tests, all passing:**
-- `calculatePrice` — GST, size multiplier, plan multiplier
-- `scoreAndRankWorkers` — KYC filter, availability filter, ranking
-- `transitionBooking` — 7 legal + 6 illegal transitions
-- `generateSmartQuoteRecommendation` — termite/commercial → shield
-- `answerWorkerSafetyQuestion` — CSDS answers + explicit unknowns
-
----
-
-## File Map
-
-```
-apps/customer-app/
-  src/
-    App.jsx              — Customer app (Book/Track/History tabs)
-    index.css            — Design system (tokens + utilities)
-    lib/api/
-      index.ts           — All types, business logic, state machine, AI functions
-      store.js           — Zustand store with mock timers + cross-port sync
-      __tests__/
-        api.test.ts      — 28 unit tests
-
-apps/worker-app/
-  src/
-    App.jsx              — Worker app (Job/Route/Earnings/Safety tabs + header)
-    index.css            — Worker design system
-    lib/api/
-      index.ts           — Copy of customer-app/src/lib/api/index.ts
-      store.js           — Worker-specific Zustand store (syncs from /api/state)
-
-.pest-free-live-state.json  — Shared state file between :3000 and :5176
-```
+### Common Issues & Solutions
+- **Port Conflict (EADDRINUSE):** Kill lingering node processes using PowerShell:
+  ```powershell
+  Get-Process node | Stop-Process -Force
+  ```
+- **Live State Desync:** Reset `.pest-free-live-state.json` via HTTP:
+  ```bash
+  curl -X POST http://localhost:3000/api/state/reset
+  ```
+- **Import Alias Errors:** Ensure you use standard monorepo aliases (`@pest-free/ui-kit`, `@pest-free/shared-config`, `@pest-free/shared-utils`).
