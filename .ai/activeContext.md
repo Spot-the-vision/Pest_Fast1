@@ -3,11 +3,12 @@
 ## 1. Current Sprint & Focus
 - **Primary Objective:** Monorepo governance stabilization, AI pair programming context bootstrap, and end-to-end flow integrity verification.
 - **Current Workspace Target:** `c:\Users\ajith\Downloads\Pest_Fast1-main\Pest_Fast1-main` confirmed as the primary active codebase (containing full git history, latest UI polish, and production dist builds).
-- **Secondary Focus:** Verifying that all 4 portals (`:3000`, `:5174`, `:5175`, `:5176`) boot and synchronize seamlessly without port collisions.
+- **Secondary Focus:** Unified Single-Port Host (`dev.mjs`). All 4 dashboards (`/customer`, `/technician`, `/agency`, `/admin`) + `/api/state` run exclusively on a single dynamic port (default 3000) via URL path routing. Legacy multi-port mode (`--multi` on 5174/5175/5176) removed.
 
 ---
 
 ## 2. Recent Decisions in Flight
+- **Unified Single-Port Enforcement:** Removed legacy `--multi` multi-port spawning code from `dev.mjs` and cleaned `package.json`. Single dynamic port hosts all 4 portals seamlessly via path routing.
 - **Folder Selection Resolution:** Confirmed `Pest_Fast1-main` is the latest and most complete codebase compared to `Pest_Portal` (which was an older mirror from refactor task REF-09 lacking `.git` and subsequent UI/build updates).
 - **Strict JavaScript Preservation:** Maintained zero TypeScript and zero raw HTML across all apps and shared packages.
 - **Shared Package Convergence:** Replaced scattered duplicate code with centralized `@pest-free/ui-kit`, `@pest-free/shared-config`, `@pest-free/shared-utils`, `@pest-free/shared-hooks`, and `@pest-free/api-client`.
@@ -16,10 +17,9 @@
 ---
 
 ## 3. Immediate Blockers & Known Risks
-- **Port Collisions (EADDRINUSE):** Lingering background Node/Vite processes on ports 3000, 5174, 5175, or 5176 can block server startup.
-  - *Mitigation:* Run `Get-Process node | Stop-Process -Force` in PowerShell before launching `node dev.mjs all`.
+- **Port Collisions (EADDRINUSE):** If port 3000 is occupied, `dev.mjs` auto-discovers and binds the next available port dynamically (e.g. 3001). Lingering processes can be killed via PowerShell: `Get-Process node | Stop-Process -Force`.
 - **Live State Desynchronization:** If `.pest-free-live-state.json` gets corrupted or holds stale booking IDs, UI transitions may fail.
-  - *Mitigation:* Reset state using `curl -X POST http://localhost:3000/api/state/reset` or delete and regenerate the file.
+  - *Mitigation:* Reset state using `curl -X POST http://localhost:<PORT>/api/state/reset` or delete and regenerate the file.
 
 ---
 

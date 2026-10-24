@@ -37,9 +37,6 @@ const requestedPort = parseInt(
   10
 );
 
-const isMultiMode = process.argv.includes('--multi');
-const target = (process.argv[2] || 'unified').toLowerCase();
-
 function spawnViteApp(appDir, port, name, apiUrl) {
   const env = {
     ...process.env,
@@ -77,37 +74,7 @@ function spawnViteApp(appDir, port, name, apiUrl) {
 }
 
 async function main() {
-  if (isMultiMode) {
-    // Legacy multi-port mode (spawns 4 ports)
-    const APPS = {
-      customer: { name: 'Customer App', dir: 'apps/customer-app', defaultPort: 3000, port: 3000 },
-      admin: { name: 'Admin Dashboard', dir: 'apps/admin-dashboard', defaultPort: 5174, port: 5174 },
-      agency: { name: 'Agency Dashboard', dir: 'apps/agency-dashboard', defaultPort: 5175, port: 5175 },
-      worker: { name: 'Worker App', dir: 'apps/worker-app', defaultPort: 5176, port: 5176 },
-    };
-
-    for (const [k, app] of Object.entries(APPS)) {
-      app.port = await findAvailablePort(app.defaultPort);
-    }
-
-    const apiUrl = `http://localhost:${APPS.customer.port}`;
-    console.log('\n======================================================');
-    console.log('  🚀 Starting Multi-Port Legacy Mode');
-    console.log('======================================================');
-    Object.entries(APPS).forEach(([k, app]) => {
-      console.log(`  • ${app.name.padEnd(18)}: http://localhost:${app.port}`);
-    });
-    console.log(`  • Shared State API  : ${apiUrl}/api/state`);
-    console.log('======================================================\n');
-
-    const children = Object.values(APPS).map(a => spawnViteApp(path.resolve(__dirname, a.dir), a.port, a.name, apiUrl));
-    const cleanup = () => { children.forEach(c => { try { c.kill(); } catch (_) {} }); process.exit(0); };
-    process.on('SIGINT', cleanup);
-    process.on('SIGTERM', cleanup);
-    return;
-  }
-
-  // DEFAULT / RECOMMENDED: Unified Single-Port Host
+  // Enforce Unified Single-Port Host (All 4 dashboards accessible via single port + URL paths)
   const dynamicPort = await findAvailablePort(requestedPort);
   if (dynamicPort !== requestedPort) {
     console.log(`\x1b[33m[Notice]\x1b[0m Port ${requestedPort} is occupied. Dynamically allocated port ${dynamicPort}`);
@@ -139,3 +106,4 @@ main().catch((err) => {
   console.error('Failed to initialize development runner:', err);
   process.exit(1);
 });
+

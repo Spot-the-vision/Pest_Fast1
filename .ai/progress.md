@@ -24,6 +24,7 @@
 - [x] **Unified Single-Port Platform Host:**
   - All 4 portals (`/customer`, `/technician`, `/agency`, `/admin`) + `/api/state` served from a single dynamic port.
   - Zero CORS overhead, instant client-side switching, and dynamic collision avoidance.
+  - Removed legacy multi-port mode (`--multi` and ports 5174/5175/5176) to guarantee single-port execution.
 
 ---
 
@@ -53,12 +54,10 @@
 ## 4. Known Bugs & Gotchas
 
 1. **Port Collisions (EADDRINUSE):**
-   - *Symptom:* `dev.mjs` throws `Error: listen EADDRINUSE: address already in use :::3000`.
+   - *Behavior:* `dev.mjs` automatically finds the next open port (e.g., 3001, 3002) if 3000 is occupied.
    - *Fix:* Stop lingering node processes with `Get-Process node | Stop-Process -Force` in PowerShell.
 2. **State File Corruption:**
    - *Symptom:* UI stalls or displays "Booking Not Found" after manual edits.
-   - *Fix:* Reset state via POST to `http://localhost:3000/api/state/reset` or delete `.pest-free-live-state.json`.
+   - *Fix:* Reset state via POST to `http://localhost:<PORT>/api/state/reset` or delete `.pest-free-live-state.json`.
 3. **Pure JS Constraint:**
    - *Gotcha:* Never create `.ts` or `.tsx` files. Vitest is configured for pure JavaScript module resolution.
-4. **Vite Dynamic Port vs Fixed dev.mjs:**
-   - *Gotcha:* While individual apps can run on dynamic ports (e.g. `npx vite --port 0`), `dev.mjs` binds fixed ports (`:3000`, `:5174`, `:5175`, `:5176`) to allow cross-dashboard linking. Use `CUSTOMER_PORT` env var if port 3000 is occupied.
